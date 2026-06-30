@@ -175,7 +175,11 @@ public class EvalController {
         return Map.of(
             "success", true,
             "summary", report.getSummary(),
-            "evaluations", report.getEvaluations()
+            "evaluations", report.getEvaluations(),
+            "totalTestCases", report.getTotalTestCases(),
+            "passedTestCases", report.getPassedTestCases(),
+            "failedTestCases", report.getFailedTestCases(),
+            "executionTimeMs", report.getExecutionTimeMs()
         );
     }
 

@@ -103,23 +103,25 @@ public class Evaluator {
             scorerResults.put(scorer.getName(), result);
         }
 
-        return new Evaluation(testCase.getId(), scorerResults);
+        return new Evaluation(testCase.getId(), output, scorerResults);
     }
 
     private Evaluation createTimeoutEvaluation() {
         Map<String, ScorerResult> results = new HashMap<>();
+        AgentOutput timeoutOutput = new AgentOutput("TIMEOUT", Map.of(), 0);
         for (EvaluationScorer scorer : scorers) {
             results.put(scorer.getName(), ScorerResult.failed("Evaluation timeout"));
         }
-        return new Evaluation("timeout", results);
+        return new Evaluation("timeout", timeoutOutput, results);
     }
 
     private Evaluation createErrorEvaluation(Exception e) {
         Map<String, ScorerResult> results = new HashMap<>();
+        AgentOutput errorOutput = new AgentOutput(e);
         for (EvaluationScorer scorer : scorers) {
             results.put(scorer.getName(), ScorerResult.failed("Error: " + e.getMessage()));
         }
-        return new Evaluation("error", results);
+        return new Evaluation("error", errorOutput, results);
     }
 
     /**

@@ -10,12 +10,14 @@ import java.util.Map;
 public class Evaluation {
 
     private final String testCaseId;
+    private final AgentOutput agentOutput;
     private final Map<String, ScorerResult> scorerResults;
     private final boolean passed;
     private final double overallScore;
 
-    public Evaluation(String testCaseId, Map<String, ScorerResult> scorerResults) {
+    public Evaluation(String testCaseId, AgentOutput agentOutput, Map<String, ScorerResult> scorerResults) {
         this.testCaseId = testCaseId;
+        this.agentOutput = agentOutput;
         this.scorerResults = scorerResults;
         this.passed = scorerResults.values().stream().allMatch(ScorerResult::isPassed);
         this.overallScore = scorerResults.values().stream()
@@ -30,6 +32,10 @@ public class Evaluation {
 
     public Map<String, ScorerResult> getScorerResults() {
         return scorerResults;
+    }
+
+    public AgentOutput getAgentOutput() {
+        return agentOutput;
     }
 
     public boolean isPassed() {
