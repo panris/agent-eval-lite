@@ -567,6 +567,7 @@
             <div class="action-bar" style="margin-bottom: 15px;">
                 <button class="btn btn-danger btn-sm" onclick="deleteSelectedReports()">🗑️ 删除选中</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteAllReports()">⚠️ 清空全部</button>
+                <button class="btn btn-primary btn-sm" onclick="openImportModal()">📥 批量导入</button>
             </div>
 
             <div class="loading" id="history-loading">
@@ -1328,6 +1329,92 @@
             loadTestCases();
             loadGroups();
         };
+
+        
+        // 批量导入相关函数
+        function openImportModal() {
+            document.getElementById('import-modal').style.display = 'block';
+        }
+        
+        function closeImportModal() {
+            document.getElementById('import-modal').style.display = 'none';
+            document.getElementById('import-data').value = '';
+        }
+        
+        async function importTestCases() {
+            const data = document.getElementById('import-data').value.trim();
+            if (!data) {
+                showToast('请输入导入数据', 'error');
+                return;
+            }
+            
+            let testCases = [];
+            let format = '';
+            
+            // 检测格式并解析
+            try {
+                if (data.startsWith('[') || data.startsWith('{')) {
+                    // JSON 格式
+                    format = 'json';
+                    const parsed = JSON.parse(data);
+                    testCases = Array.isArray(parsed) ? parsed : [parsed];
+                } else {
+                    // CSV 格式
+                    format = 'csv';
+                    const lines = data.split('\n').filter(l => l.trim());
+                    if (lines.length < 2) {
+                        showToast('CSV 格式错误：需要表头和数据行', 'error');
+                        return;
+                    }
+                    
+                    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                    const nameIdx = headers.indexOf('name');
+                    const inputIdx = headers.indexOf('input');
+                    const expectedIdx = headers.indexOf('expected');
+                    
+                    if (inputIdx === -1 || expectedIdx === -1) {
+                        showToast('CSV 格式错误：需要 input 和 expected 列', 'error');
+                        return;
+                    }
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        testCases.push({
+                            name: nameIdx !== -1 ? values[nameIdx] : `用例${i}`,
+                            input: values[inputIdx],
+                            expected: values[expectedIdx]
+                        });
+                    }
+                }
+                
+                // 过滤无效数据
+                testCases = testCases.filter(tc => tc.input && tc.expected);
+                
+                if (testCases.length === 0) {
+                    showToast('没有找到有效数据', 'error');
+                    return;
+                }
+                
+                // 逐个创建
+                let successCount = 0;
+                for (const tc of testCases) {
+                    await fetch('/api/testcases', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(tc)
+                    });
+                    successCount++;
+                }
+                
+                showToast(`成功导入 ${successCount} 条测试用例`, 'success');
+                closeImportModal();
+                loadTestCases();
+                
+            } catch (e) {
+                showToast(`解析失败: ${e.message}`, 'error');
+            }
+        }
+
     </script>
 </body>
 </html>
