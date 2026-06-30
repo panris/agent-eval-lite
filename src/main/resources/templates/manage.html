@@ -476,6 +476,11 @@
         <div id="history-card" class="card">
             <h2 class="card-title">评测历史记录</h2>
 
+            <div class="action-bar" style="margin-bottom: 15px;">
+                <button class="btn btn-danger btn-sm" onclick="deleteSelectedReports()">🗑️ 删除选中</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteAllReports()">⚠️ 清空全部</button>
+            </div>
+
             <div class="loading" id="history-loading">
                 <div class="spinner"></div>
                 <p>加载中...</p>
@@ -484,6 +489,7 @@
             <table class="table" id="history-table">
                 <thead>
                     <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
                         <th>报告ID</th>
                         <th>时间</th>
                         <th>通过率</th>
@@ -667,6 +673,56 @@
             } finally {
                 document.getElementById('history-loading').classList.remove('show');
             }
+        }
+
+        // 全选/取消全选历史记录
+        function toggleAllHistory() {
+            const checked = document.getElementById('select-all-history').checked;
+            document.querySelectorAll('.history-checkbox').forEach(cb => {
+                cb.checked = checked;
+            });
+        }
+
+        // 删除选中的历史记录
+        async function deleteSelectedReports() {
+            const checkboxes = document.querySelectorAll('.history-checkbox:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (ids.length === 0) {
+                showToast('请至少选择一条记录', 'info');
+                return;
+            }
+            
+            showConfirm('删除记录', \`确定要删除选中的 \${ids.length} 条记录吗？\`, async () => {
+                try {
+                    for (const id of ids) {
+                        await fetch(\`/api/reports/\${id}\`, { method: 'DELETE' });
+                    }
+                    showToast(\`已删除 \${ids.length} 条记录\`, 'success');
+                    loadHistory();
+                } catch (error) {
+                    console.error('Failed to delete reports:', error);
+                    showToast('删除失败', 'error');
+                }
+            });
+        }
+
+        // 清空全部历史记录
+        async function deleteAllReports() {
+            showConfirm('清空全部', '⚠️ 确定要清空所有评测历史记录吗？此操作不可恢复！', async () => {
+                try {
+                    await fetch('/api/reports', { 
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'clearAll' })
+                    });
+                    showToast('已清空全部历史记录', 'success');
+                    loadHistory();
+                } catch (error) {
+                    console.error('Failed to clear reports:', error);
+                    showToast('清空失败', 'error');
+                }
+            });
         }
 
         // 查看历史报告详情

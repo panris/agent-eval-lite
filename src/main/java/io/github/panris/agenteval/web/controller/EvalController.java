@@ -201,14 +201,14 @@ public class EvalController {
     public List<Map<String, Object>> getReports() {
         List<Map<String, Object>> reports = new ArrayList<>();
         reportHistory.forEach((id, report) -> {
-            reports.add(Map.of(
-                "id", id,
-                "summary", report.get("summary"),
-                "totalTestCases", report.get("totalTestCases"),
-                "passedTestCases", report.get("passedTestCases"),
-                "executionTimeMs", report.get("executionTimeMs"),
-                "timestamp", report.get("timestamp")
-            ));
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", id);
+            item.put("summary", report.get("summary"));
+            item.put("totalTestCases", report.get("totalTestCases"));
+            item.put("passedTestCases", report.get("passedTestCases"));
+            item.put("executionTimeMs", report.get("executionTimeMs"));
+            item.put("timestamp", report.get("timestamp"));
+            reports.add(item);
         });
         return reports;
     }
@@ -230,6 +230,27 @@ public class EvalController {
             "failedTestCases", report.get("failedTestCases"),
             "executionTimeMs", report.get("executionTimeMs")
         );
+    }
+
+    @DeleteMapping("/api/reports/{id}")
+    @ResponseBody
+    public Map<String, Object> deleteReport(@PathVariable String id) {
+        if (reportHistory.remove(id) != null) {
+            saveReportHistory();
+            return Map.of("success", true, "message", "Report deleted");
+        }
+        return Map.of("success", false, "error", "Report not found");
+    }
+
+    @RequestMapping(value = "/api/reports", method = RequestMethod.DELETE)
+    @ResponseBody
+    public Map<String, Object> clearAllReports(@RequestBody(required = false) Map<String, String> body) {
+        if (body != null && "clearAll".equals(body.get("action"))) {
+            reportHistory.clear();
+            saveReportHistory();
+            return Map.of("success", true, "message", "All reports cleared");
+        }
+        return Map.of("success", false, "error", "Invalid action");
     }
 
     @GetMapping("/api/reports/{id}/export")
