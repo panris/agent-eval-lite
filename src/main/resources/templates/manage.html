@@ -748,7 +748,9 @@
                             <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
                             <td>${report.summary ? report.summary.total_test_cases : 0}</td>
                             <td>
-                                <button class="btn btn-primary btn-sm" onclick="viewHistoryDetails('${report.id}')">查看详情</button>
+                                <button class="btn btn-primary btn-sm" ⭐</button>
+                                <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">查看详情</button>
+                                <button class="btn btn-sm btn-warning" onclick="toggleFavorite('${report.id}')" title="收藏">⭐</button>
                                 <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.id}', 'json')">导出 JSON</button>
                                 <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.id}', 'csv')">导出 CSV</button>
                             </td>
@@ -761,6 +763,44 @@
                 showToast('加载评测历史失败', 'error');
             } finally {
                 document.getElementById('history-loading').classList.remove('show');
+            }
+        }
+
+        // 收藏/取消收藏
+        async function toggleFavorite(reportId) {
+            try {
+                const response = await fetch(`/api/reports/${reportId}/favorite`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast(data.favorite ? '已收藏' : '已取消收藏', 'success');
+                    loadHistory();
+                }
+            } catch (error) {
+                showToast('操作失败', 'error');
+            }
+        }
+
+        // 对比选中报告
+        async function compareSelectedReports() {
+            const checkboxes = document.querySelectorAll('.history-checkbox:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            if (ids.length < 2) {
+                showToast('请至少选择 2 条报告进行对比', 'info');
+                return;
+            }
+            if (ids.length > 5) {
+                showToast('最多对比 5 条报告', 'info');
+                return;
+            }
+            try {
+                const response = await fetch(`/api/reports/compare?ids=${ids.join(",")}`);
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.comparison.scoreStats;
+                    showToast(`对比完成: 平均分 ${stats.avg.toFixed(1)}, 最高 ${stats.max.toFixed(1)}, 最低 ${stats.min.toFixed(1)}`, 'info');
+                }
+            } catch (error) {
+                showToast('对比失败', 'error');
             }
         }
 
@@ -812,7 +852,7 @@
             });
         }
 
-        // 清空全部历史记录
+        // 对比选中报告
         async function deleteAllReports() {
             showConfirm('清空全部', '⚠️ 确定要清空所有评测历史记录吗？此操作不可恢复！', async () => {
                 try {
@@ -821,7 +861,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'clearAll' })
                     });
-                    showToast('已清空全部历史记录', 'success');
+                    showToast('已对比选中报告', 'success');
                     loadHistory();
                 } catch (error) {
                     console.error('Failed to clear reports:', error);

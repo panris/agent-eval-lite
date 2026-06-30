@@ -350,6 +350,96 @@ public class EvalController {
         return csv.toString();
     }
 
+    // 复制报告
+    @PostMapping("/api/reports/{id}/copy")
+    @ResponseBody
+    public Map<String, Object> copyReport(@PathVariable String id) {
+        Map<String, Object> original = reportHistory.get(id);
+        if (original == null) {
+            return Map.of("success", false, "error", "Report not found");
+        }
+        String newId = "report_" + System.currentTimeMillis();
+        reportHistory.put(newId, new LinkedHashMap<>(original));
+        saveReportHistory();
+        return Map.of("success", true, "newId", newId, "message", "Report copied");
+    }
+
+    // 收藏/取消收藏
+    @PostMapping("/api/reports/{id}/favorite")
+    @ResponseBody
+    public Map<String, Object> toggleFavorite(@PathVariable String id) {
+        Map<String, Object> report = reportHistory.get(id);
+        if (report == null) {
+            return Map.of("success", false, "error", "Report not found");
+        }
+        boolean current = (boolean) report.getOrDefault("favorite", false);
+        report.put("favorite", !current);
+        saveReportHistory();
+        return Map.of("success", true, "favorite", !current);
+    }
+
+    // 获取收藏列表
+    @GetMapping("/api/reports/favorites")
+    @ResponseBody
+    public Map<String, Object> getFavorites() {
+        Map<String, Map<String, Object>> favorites = new LinkedHashMap<>();
+        reportHistory.forEach((reportId, report) -> {
+            if ((boolean) report.getOrDefault("favorite", false)) {
+                favorites.put(reportId, report);
+            }
+        });
+        return Map.of("success", true, "favorites", favorites);
+    }
+
+    // 对比报告
+    @GetMapping("/api/reports/compare")
+    @ResponseBody
+    public Map<String, Object> compareReports(
+            @RequestParam String ids,
+            @RequestParam(required = false) String metric) {
+        String[] reportIds = ids.split(",");
+        List<Map<String, Object>> reports = new ArrayList<>();
+        for (String reportId : reportIds) {
+            Map<String, Object> report = reportHistory.get(reportId.trim());
+            if (report != null) {
+                reports.add(report);
+            }
+        }
+        
+        if (reports.isEmpty()) {
+            return Map.of("success", false, "error", "No valid reports found");
+        }
+        
+        // 计算对比数据
+        Map<String, Object> comparison = new LinkedHashMap<>();
+        comparison.put("count", reports.size());
+        comparison.put("reports", reports);
+        
+        // 计算各指标统计
+        if ("score".equals(metric) || metric == null) {
+            List<Double> scores = new ArrayList<>();
+            for (Map<String, Object> r : reports) {
+                Object summaryObj = r.get("summary");
+                if (summaryObj instanceof Map) {
+                    Object scoreObj = ((Map<?, ?>) summaryObj).get("averageScore");
+                    if (scoreObj instanceof Number) {
+                        scores.add(((Number) scoreObj).doubleValue());
+                    }
+                }
+            }
+            if (!scores.isEmpty()) {
+                scores.sort(Double::compareTo);
+                comparison.put("scoreStats", Map.of(
+                    "min", scores.get(0),
+                    "max", scores.get(scores.size() - 1),
+                    "avg", scores.stream().mapToDouble(Double::doubleValue).average().orElse(0)
+                ));
+            }
+        }
+        
+        return Map.of("success", true, "comparison", comparison);
+    }
+
     private Agent createAgent(String type, Map<String, Object> config) {
         // For demo, create a simple echo agent
         // In production, this would create real agents based on type
@@ -414,19 +504,6 @@ class EvaluateByCaseIdsRequest {
 }
 
 class EvaluateByGroupRequest {
-
-    @PostMapping("/api/reports/{id}/copy")
-    @ResponseBody
-    public Map<String, Object> copyReport(@PathVariable String id) {
-        Map<String, Object> original = reportHistory.get(id);
-        if (original == null) {
-            return Map.of("success", false, "error", "Report not found");
-        }
-        String newId = "report_" + System.currentTimeMillis();
-        reportHistory.put(newId, new LinkedHashMap<>(original));
-        saveReportHistory();
-        return Map.of("success", true, "newId", newId, "message", "Report copied");
-    }
     private List<String> metrics;
     private String agentType;
 
