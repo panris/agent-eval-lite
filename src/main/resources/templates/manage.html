@@ -471,6 +471,8 @@
                 </span>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-primary btn-sm" onclick="runSelectedEvaluation()">🚀 评测选中用例</button>
+                    <button class="btn btn-warning btn-sm" onclick="openBatchEditModal()">✏️ 批量编辑</button>
+                    <button class="btn btn-danger btn-sm" onclick="batchDeleteCases()">🗑️ 批量删除</button>
                     <button class="btn btn-secondary btn-sm" onclick="selectAllCases()">全选</button>
                     <button class="btn btn-secondary btn-sm" onclick="deselectAllCases()">取消全选</button>
                 </div>
@@ -578,6 +580,16 @@
         <div id="history-card" class="card">
             <h2 class="card-title">评测历史记录</h2>
 
+            <!-- 趋势图表 -->
+            <div class="chart-container" style="margin-bottom: 20px;">
+                <div class="chart-box" style="flex: 2; max-width: 100%;">
+                    <div class="chart-title">📈 评测趋势</div>
+                    <div class="chart-wrapper" style="height: 200px;">
+                        <canvas id="trend-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="action-bar" style="margin-bottom: 15px;">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..." 
@@ -588,6 +600,12 @@
                         <option value="passed">✅ 已通过</option>
                         <option value="failed">❌ 未通过</option>
                     </select>
+                    <div style="display: flex; gap: 5px; align-items: center;">
+                        <input type="date" id="history-date-start" class="form-control" style="width: 140px;" onchange="filterHistory()">
+                        <span>至</span>
+                        <input type="date" id="history-date-end" class="form-control" style="width: 140px;" onchange="filterHistory()">
+                    </div>
+                    <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除日期</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-sm" onclick="compareSelectedReports()">📊 对比选中</button>
@@ -689,6 +707,56 @@
             <div style="text-align: right;">
                 <button class="btn btn-primary btn-sm" onclick="saveNote()">保存</button>
                 <button class="btn btn-sm" onclick="closeNoteModal()" style="background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量编辑模态框 -->
+    <div id="batch-edit-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog" style="max-width: 600px;">
+            <h3>✏️ 批量编辑测试用例</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">将为选中的 <span id="batch-edit-count">0</span> 个用例应用以下修改：</p>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-name-enabled" onchange="toggleBatchEditField('name')"> 名称
+                </label>
+                <input type="text" id="batch-edit-name" class="form-control" placeholder="统一修改为..." disabled>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-expected-enabled" onchange="toggleBatchEditField('expected')"> 期望输出
+                </label>
+                <input type="text" id="batch-edit-expected" class="form-control" placeholder="统一修改为..." disabled>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-group-enabled" onchange="toggleBatchEditField('group')"> 分组
+                </label>
+                <select id="batch-edit-group" class="form-control" disabled>
+                    <option value="">移除分组</option>
+                </select>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-tags-enabled" onchange="toggleBatchEditField('tags')"> 标签
+                </label>
+                <div style="display: flex; gap: 10px;">
+                    <select id="batch-edit-tags-action" class="form-control" style="width: 120px;" onchange="toggleBatchTagsAction()">
+                        <option value="add">添加标签</option>
+                        <option value="remove">移除标签</option>
+                        <option value="replace">替换标签</option>
+                    </select>
+                    <input type="text" id="batch-edit-tags" class="form-control" placeholder="标签1, 标签2..." disabled>
+                </div>
+            </div>
+            
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn btn-primary btn-sm" onclick="applyBatchEdit()">应用修改</button>
+                <button class="btn btn-sm" onclick="closeBatchEditModal()" style="background: #6c757d; color: white;">取消</button>
             </div>
         </div>
     </div>
@@ -804,6 +872,8 @@
             }
         }
 
+        let trendChart = null;
+        
         // 加载评测历史
         async function loadHistory() {
             try {
@@ -813,6 +883,7 @@
                 window._allReports = await response.json();
                 
                 filterHistory();
+                renderTrendChart();
                 
             } catch (error) {
                 console.error('Failed to load history:', error);
@@ -822,9 +893,17 @@
             }
         }
         
+        function clearDateFilter() {
+            document.getElementById('history-date-start').value = '';
+            document.getElementById('history-date-end').value = '';
+            filterHistory();
+        }
+        
         function filterHistory() {
             const searchText = (document.getElementById('history-search')?.value || '').toLowerCase();
             const filterValue = document.getElementById('history-filter')?.value || '';
+            const dateStart = document.getElementById('history-date-start')?.value || '';
+            const dateEnd = document.getElementById('history-date-end')?.value || '';
             const reports = window._allReports || [];
             
             // 应用过滤
@@ -842,6 +921,16 @@
                 if (filterValue === 'favorites' && !report.favorite) return false;
                 if (filterValue === 'passed' && (report.summary?.pass_rate || 0) < 70) return false;
                 if (filterValue === 'failed' && (report.summary?.pass_rate || 0) >= 70) return false;
+                // 日期范围过滤
+                if (dateStart || dateEnd) {
+                    const reportDate = new Date(report.timestamp);
+                    if (dateStart && reportDate < new Date(dateStart)) return false;
+                    if (dateEnd) {
+                        const endDate = new Date(dateEnd);
+                        endDate.setHours(23, 59, 59, 999);
+                        if (reportDate > endDate) return false;
+                    }
+                }
                 return true;
             });
             
@@ -1440,6 +1529,116 @@
             }
         });
         
+        // 渲染趋势图表
+        function renderTrendChart() {
+            const reports = window._allReports || [];
+            if (reports.length < 2) {
+                // 数据不足时显示提示
+                const ctx = document.getElementById('trend-chart');
+                if (ctx && ctx.parentElement) {
+                    ctx.parentElement.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 40px;">📊 评测趋势图需要至少 2 条历史记录</div>';
+                }
+                return;
+            }
+            
+            // 按时间排序
+            const sorted = [...reports].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            
+            // 获取最近 10 条记录
+            const recent = sorted.slice(-10);
+            
+            const labels = recent.map(r => {
+                const d = new Date(r.timestamp);
+                return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+            });
+            const passRates = recent.map(r => r.summary?.pass_rate || 0);
+            const avgScores = recent.map(r => r.summary?.average_score || 0);
+            
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textColor = isDark ? '#e0e0e0' : '#333';
+            const gridColor = isDark ? '#3d3d5c' : '#e0e0e0';
+            
+            if (trendChart) trendChart.destroy();
+            
+            const ctx = document.getElementById('trend-chart');
+            if (!ctx) return;
+            
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '通过率 (%)',
+                            data: passRates,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '平均分',
+                            data: avgScores.map(s => s * 100),
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 500 },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { color: textColor }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.raw.toFixed(1) + (context.datasetIndex === 0 ? '%' : '');
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: '通过率 (%)', color: textColor },
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: '平均分', color: textColor },
+                            ticks: { color: textColor },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: {
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+        }
+        
         function showEvalDetails() {
             const detailsDiv = document.getElementById('eval-details');
             const tbody = document.getElementById('details-tbody');
@@ -1856,6 +2055,179 @@
             document.querySelectorAll('#cases-tbody .case-checkbox').forEach(cb => cb.checked = false);
             document.getElementById('select-all-cases').checked = false;
             updateSelectedCaseCount();
+        }
+        
+        // 打开批量编辑模态框
+        function openBatchEditModal() {
+            const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
+            if (checked.length === 0) {
+                showToast('请先选择测试用例', 'info');
+                return;
+            }
+            
+            document.getElementById('batch-edit-count').textContent = checked.length;
+            document.getElementById('batch-edit-modal').classList.add('show');
+            
+            // 加载分组列表
+            loadGroupsForBatchEdit();
+        }
+        
+        // 加载分组列表到批量编辑
+        async function loadGroupsForBatchEdit() {
+            try {
+                const response = await fetch('/api/groups');
+                const data = await response.json();
+                const groups = data.groups || [];
+                
+                const select = document.getElementById('batch-edit-group');
+                select.innerHTML = '<option value="">移除分组</option>';
+                groups.forEach(g => {
+                    select.innerHTML += `<option value="${g.id}">${g.name}</option>`;
+                });
+            } catch (e) {
+                console.error('Failed to load groups:', e);
+            }
+        }
+        
+        // 切换批量编辑字段可用状态
+        function toggleBatchEditField(field) {
+            const checkbox = document.getElementById(`batch-edit-${field}-enabled`);
+            const input = document.getElementById(`batch-edit-${field}`);
+            if (checkbox && input) {
+                input.disabled = !checkbox.checked;
+            }
+        }
+        
+        function toggleBatchTagsAction() {
+            const action = document.getElementById('batch-edit-tags-action')?.value;
+            const input = document.getElementById('batch-edit-tags');
+            if (input) {
+                input.disabled = document.getElementById('batch-edit-tags-enabled')?.checked !== true;
+            }
+        }
+        
+        // 关闭批量编辑模态框
+        function closeBatchEditModal() {
+            document.getElementById('batch-edit-modal').classList.remove('show');
+            // 重置表单
+            document.getElementById('batch-edit-name-enabled').checked = false;
+            document.getElementById('batch-edit-expected-enabled').checked = false;
+            document.getElementById('batch-edit-group-enabled').checked = false;
+            document.getElementById('batch-edit-tags-enabled').checked = false;
+            toggleBatchEditField('name');
+            toggleBatchEditField('expected');
+            toggleBatchEditField('group');
+            toggleBatchEditField('tags');
+        }
+        
+        // 批量编辑用例
+        async function applyBatchEdit() {
+            const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
+            const ids = Array.from(checked).map(cb => cb.value);
+            
+            if (ids.length === 0) {
+                showToast('请先选择测试用例', 'info');
+                return;
+            }
+            
+            const updates = [];
+            
+            // 收集需要更新的字段
+            if (document.getElementById('batch-edit-name-enabled')?.checked) {
+                const name = document.getElementById('batch-edit-name')?.value;
+                if (name) updates.push({ field: 'name', value: name });
+            }
+            if (document.getElementById('batch-edit-expected-enabled')?.checked) {
+                const expected = document.getElementById('batch-edit-expected')?.value;
+                if (expected) updates.push({ field: 'expected', value: expected });
+            }
+            if (document.getElementById('batch-edit-group-enabled')?.checked) {
+                const groupId = document.getElementById('batch-edit-group')?.value;
+                updates.push({ field: 'groupId', value: groupId || null });
+            }
+            if (document.getElementById('batch-edit-tags-enabled')?.checked) {
+                const action = document.getElementById('batch-edit-tags-action')?.value;
+                const tagsStr = document.getElementById('batch-edit-tags')?.value || '';
+                const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
+                updates.push({ field: 'tags', value: { action, tags } });
+            }
+            
+            if (updates.length === 0) {
+                showToast('请至少选择一项进行修改', 'info');
+                return;
+            }
+            
+            // 逐个更新用例
+            let successCount = 0;
+            for (const id of ids) {
+                try {
+                    // 获取当前用例
+                    const tc = window._testCases?.find(t => t.id === id);
+                    if (!tc) continue;
+                    
+                    let updateData = { ...tc };
+                    
+                    for (const update of updates) {
+                        if (update.field === 'name') {
+                            updateData.name = update.value;
+                        } else if (update.field === 'expected') {
+                            updateData.expected = update.value;
+                        } else if (update.field === 'groupId') {
+                            updateData.groupId = update.value;
+                        } else if (update.field === 'tags') {
+                            const currentTags = tc.metadata?.tags || [];
+                            if (update.value.action === 'add') {
+                                updateData.metadata = updateData.metadata || {};
+                                updateData.metadata.tags = [...new Set([...currentTags, ...update.value.tags])];
+                            } else if (update.value.action === 'remove') {
+                                updateData.metadata = updateData.metadata || {};
+                                updateData.metadata.tags = currentTags.filter(t => !update.value.tags.includes(t));
+                            } else if (update.value.action === 'replace') {
+                                updateData.metadata = updateData.metadata || {};
+                                updateData.metadata.tags = update.value.tags;
+                            }
+                        }
+                    }
+                    
+                    await fetch(`/api/testcases/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updateData)
+                    });
+                    successCount++;
+                } catch (e) {
+                    console.error(`Failed to update case ${id}:`, e);
+                }
+            }
+            
+            closeBatchEditModal();
+            showToast(`成功更新 ${successCount} 个用例`, 'success');
+            loadTestCases();
+        }
+        
+        // 批量删除用例
+        async function batchDeleteCases() {
+            const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
+            const ids = Array.from(checked).map(cb => cb.value);
+            
+            if (ids.length === 0) {
+                showToast('请先选择测试用例', 'info');
+                return;
+            }
+            
+            showConfirm('批量删除', `确定要删除选中的 ${ids.length} 个测试用例吗？`, async () => {
+                let successCount = 0;
+                for (const id of ids) {
+                    try {
+                        await fetch(`/api/testcases/${id}`, { method: 'DELETE' });
+                        successCount++;
+                    } catch (e) {
+                        console.error(`Failed to delete case ${id}:`, e);
+                    }
+                }
+                showToast(`成功删除 ${successCount} 个用例`, 'success');
+                loadTestCases();
+            });
         }
         
         async function runSelectedEvaluation() {

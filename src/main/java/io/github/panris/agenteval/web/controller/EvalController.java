@@ -81,13 +81,58 @@ public class EvalController {
     @PostMapping("/api/evaluate")
     @ResponseBody
     public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
+        // Validate request
+        if (request == null) {
+            return Map.of("success", false, "error", "请求体不能为空");
+        }
+        
+        if (request.getTestCases() == null || request.getTestCases().isEmpty()) {
+            return Map.of("success", false, "error", "测试用例列表不能为空");
+        }
+        
+        if (request.getTestCases().size() > 100) {
+            return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+        }
+        
+        if (request.getMetrics() == null || request.getMetrics().isEmpty()) {
+            return Map.of("success", false, "error", "评测指标不能为空");
+        }
+        
+        // Validate each test case
+        for (int i = 0; i < request.getTestCases().size(); i++) {
+            TestCaseDto dto = request.getTestCases().get(i);
+            if (dto.getInput() == null || dto.getInput().trim().isEmpty()) {
+                return Map.of("success", false, "error", "第 " + (i + 1) + " 个测试用例的输入不能为空");
+            }
+            if (dto.getInput().length() > 10000) {
+                return Map.of("success", false, "error", "第 " + (i + 1) + " 个测试用例的输入过长（最大 10000 字符）");
+            }
+            if (dto.getExpected() != null && dto.getExpected().length() > 10000) {
+                return Map.of("success", false, "error", "第 " + (i + 1) + " 个测试用例的期望输出过长（最大 10000 字符）");
+            }
+        }
+        
+        // Validate agent type
+        String agentType = request.getAgentType();
+        if (agentType == null || agentType.trim().isEmpty()) {
+            agentType = "demo";
+        }
+        
+        // Validate metrics
+        List<String> validMetrics = List.of("correctness", "safety", "response_time");
+        for (String metric : request.getMetrics()) {
+            if (!validMetrics.contains(metric)) {
+                return Map.of("success", false, "error", "不支持的评测指标: " + metric);
+            }
+        }
+        
         // Create test cases
         List<TestCase> testCases = new ArrayList<>();
         for (TestCaseDto dto : request.getTestCases()) {
             testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
         }
 
-        return runEvaluation(testCases, request.getMetrics(), request.getAgentType());
+        return runEvaluation(testCases, request.getMetrics(), agentType);
     }
 
     /**
@@ -96,6 +141,19 @@ public class EvalController {
     @PostMapping("/api/evaluate/cases")
     @ResponseBody
     public Map<String, Object> evaluateByCaseIds(@RequestBody EvaluateByCaseIdsRequest request) {
+        // Validate request
+        if (request == null) {
+            return Map.of("success", false, "error", "请求体不能为空");
+        }
+        
+        if (request.getCaseIds() == null || request.getCaseIds().isEmpty()) {
+            return Map.of("success", false, "error", "测试用例 ID 列表不能为空");
+        }
+        
+        if (request.getCaseIds().size() > 100) {
+            return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+        }
+        
         // Get test cases by IDs
         List<TestCase> testCases = request.getCaseIds().stream()
             .map(caseId -> testCaseRepository.findTestCaseById(caseId))
