@@ -461,6 +461,17 @@
                 </thead>
                 <tbody id="cases-tbody"></tbody>
             </table>
+            
+            <div style="margin-top: 15px; padding: 15px; background: var(--bg-checkbox-item); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <span style="color: var(--text-secondary);">
+                    已选择 <span id="selected-case-count">0</span> 个用例
+                </span>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary btn-sm" onclick="runSelectedEvaluation()">🚀 评测选中用例</button>
+                    <button class="btn btn-secondary btn-sm" onclick="selectAllCases()">全选</button>
+                    <button class="btn btn-secondary btn-sm" onclick="deselectAllCases()">取消全选</button>
+                </div>
+            </div>
         </div>
 
         <!-- 分组管理 -->
@@ -1664,6 +1675,73 @@
                 showToast('复制失败', 'error');
             }
         }
+        
+        // ===== 批量评测功能 =====
+        function updateSelectedCaseCount() {
+            const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked').length;
+            document.getElementById('selected-case-count').textContent = checked;
+        }
+        
+        function selectAllCases() {
+            document.querySelectorAll('#cases-tbody .case-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedCaseCount();
+        }
+        
+        function deselectAllCases() {
+            document.querySelectorAll('#cases-tbody .case-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('select-all-cases').checked = false;
+            updateSelectedCaseCount();
+        }
+        
+        async function runSelectedEvaluation() {
+            const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
+            if (checked.length === 0) {
+                showToast('请先选择测试用例', 'info');
+                return;
+            }
+            
+            const caseIds = Array.from(checked).map(cb => cb.value);
+            
+            try {
+                document.getElementById('cases-loading').classList.add('show');
+                
+                const response = await fetch('/api/evaluate/cases', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        caseIds: caseIds,
+                        metrics: ['correctness', 'safety', 'response_time'],
+                        agentType: 'demo'
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('cases-loading').classList.remove('show');
+                
+                if (data.success) {
+                    showToast(`评测完成！通过率: ${data.summary?.pass_rate?.toFixed(1) || 0}%`, 'success');
+                    loadHistory();
+                    switchTab('history');
+                } else {
+                    showToast(data.error || '评测失败', 'error');
+                }
+            } catch (e) {
+                document.getElementById('cases-loading').classList.remove('show');
+                showToast('评测请求失败', 'error');
+            }
+        }
+        
+        // 复选框变化时更新计数
+        document.addEventListener('DOMContentLoaded', () => {
+            const casesTbody = document.getElementById('cases-tbody');
+            if (casesTbody) {
+                casesTbody.addEventListener('change', (e) => {
+                    if (e.target.classList.contains('case-checkbox')) {
+                        updateSelectedCaseCount();
+                    }
+                });
+            }
+        });
 
         // 键盘快捷键
         document.addEventListener('keydown', (e) => {
