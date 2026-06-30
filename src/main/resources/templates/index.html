@@ -403,6 +403,59 @@
             background: #dc3545;
             color: white;
         }
+
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 0;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .checkbox-group {
+                flex-direction: column;
+            }
+            .checkbox-item {
+                width: 100%;
+            }
+            
+            .history-table {
+                font-size: 12px;
+            }
+            .history-table th, .history-table td {
+                padding: 8px 4px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-title {
+                font-size: 1.2rem;
+            }
+        }
     </style>
 </head>
 <body>
