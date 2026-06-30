@@ -12,9 +12,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.annotation.PostConstruct;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,11 +26,40 @@ import java.util.concurrent.ConcurrentHashMap;
 @Controller
 public class EvalController {
 
-    private final Map<String, EvaluationReport> reportHistory = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Object>> reportHistory = new ConcurrentHashMap<>();
     private final TestCaseRepository testCaseRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public EvalController(TestCaseRepository testCaseRepository) {
         this.testCaseRepository = testCaseRepository;
+        loadReportHistory();
+    }
+
+    @PostConstruct
+    public void loadReportHistory() {
+        Path dataFile = Paths.get("data/reports.json");
+        if (Files.exists(dataFile)) {
+            try {
+                String content = Files.readString(dataFile);
+                Map<String, Map<String, Object>> loaded = objectMapper.readValue(content,
+                    objectMapper.getTypeFactory().constructMapType(LinkedHashMap.class, String.class, Map.class));
+                reportHistory.putAll(loaded);
+                System.out.println("Loaded " + reportHistory.size() + " historical reports");
+            } catch (Exception e) {
+                System.err.println("Failed to load report history: " + e.getMessage());
+            }
+        }
+    }
+
+    private void saveReportHistory() {
+        try {
+            Path dataFile = Paths.get("data/reports.json");
+            Files.createDirectories(dataFile.getParent());
+            String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
+            Files.writeString(dataFile, json);
+        } catch (Exception e) {
+            System.err.println("Failed to save report history: " + e.getMessage());
+        }
     }
 
     @GetMapping("/")
@@ -137,9 +170,19 @@ public class EvalController {
         // Run evaluation
         EvaluationReport report = evaluator.evaluate(agent, testCases);
 
-        // Save to history
+        // Save to history (convert to serializable map)
         String reportId = "report_" + System.currentTimeMillis();
-        reportHistory.put(reportId, report);
+        Map<String, Object> reportData = Map.of(
+            "summary", report.getSummary(),
+            "evaluations", report.getEvaluations(),
+            "totalTestCases", report.getTotalTestCases(),
+            "passedTestCases", report.getPassedTestCases(),
+            "failedTestCases", report.getFailedTestCases(),
+            "executionTimeMs", report.getExecutionTimeMs(),
+            "timestamp", System.currentTimeMillis()
+        );
+        reportHistory.put(reportId, reportData);
+        saveReportHistory();
 
         // Return result
         return Map.of(
@@ -160,10 +203,11 @@ public class EvalController {
         reportHistory.forEach((id, report) -> {
             reports.add(Map.of(
                 "id", id,
-                "summary", report.getSummary(),
-                "totalTestCases", report.getTotalTestCases(),
-                "passedTestCases", report.getPassedTestCases(),
-                "executionTimeMs", report.getExecutionTimeMs()
+                "summary", report.get("summary"),
+                "totalTestCases", report.get("totalTestCases"),
+                "passedTestCases", report.get("passedTestCases"),
+                "executionTimeMs", report.get("executionTimeMs"),
+                "timestamp", report.get("timestamp")
             ));
         });
         return reports;
@@ -172,18 +216,19 @@ public class EvalController {
     @GetMapping("/api/reports/{id}")
     @ResponseBody
     public Map<String, Object> getReport(@PathVariable String id) {
-        EvaluationReport report = reportHistory.get(id);
+        Map<String, Object> report = reportHistory.get(id);
         if (report == null) {
             return Map.of("success", false, "error", "Report not found");
         }
         return Map.of(
             "success", true,
-            "summary", report.getSummary(),
-            "evaluations", report.getEvaluations(),
-            "totalTestCases", report.getTotalTestCases(),
-            "passedTestCases", report.getPassedTestCases(),
-            "failedTestCases", report.getFailedTestCases(),
-            "executionTimeMs", report.getExecutionTimeMs()
+            "reportId", id,
+            "summary", report.get("summary"),
+            "evaluations", report.get("evaluations"),
+            "totalTestCases", report.get("totalTestCases"),
+            "passedTestCases", report.get("passedTestCases"),
+            "failedTestCases", report.get("failedTestCases"),
+            "executionTimeMs", report.get("executionTimeMs")
         );
     }
 
@@ -192,7 +237,7 @@ public class EvalController {
             @PathVariable String id,
             @RequestParam(defaultValue = "json") String format) {
         
-        EvaluationReport report = reportHistory.get(id);
+        Map<String, Object> report = reportHistory.get(id);
         if (report == null) {
             return ResponseEntity.notFound().build();
         }
@@ -204,12 +249,12 @@ public class EvalController {
         }
     }
     
-    private ResponseEntity<?> exportAsJson(EvaluationReport report, String reportId) {
+    private ResponseEntity<?> exportAsJson(Map<String, Object> report, String reportId) {
         try {
             Map<String, Object> json = Map.of(
                 "reportId", reportId,
-                "summary", report.getSummary(),
-                "evaluations", report.getEvaluations(),
+                "summary", report.get("summary"),
+                "evaluations", report.get("evaluations"),
                 "exportTime", Instant.now().toString()
             );
             
@@ -225,8 +270,8 @@ public class EvalController {
         }
     }
     
-    private ResponseEntity<?> exportAsCsv(EvaluationReport report, String reportId) {
-        String csv = generateCsv(report);
+    private ResponseEntity<?> exportAsCsv(Map<String, Object> report, String reportId) {
+        String csv = generateCsvFromMap(report);
         byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
         
         return ResponseEntity.ok()
@@ -235,31 +280,50 @@ public class EvalController {
             .body(bytes);
     }
     
-    private String generateCsv(EvaluationReport report) {
+    @SuppressWarnings("unchecked")
+    private String generateCsvFromMap(Map<String, Object> report) {
         StringBuilder csv = new StringBuilder();
         csv.append("Test Case ID,Passed,Overall Score");
         
-        if (!report.getEvaluations().isEmpty()) {
-            var firstResults = report.getEvaluations().get(0).getScorerResults();
-            for (String scorerName : firstResults.keySet()) {
-                csv.append(",").append(scorerName).append(" Score");
-                csv.append(",").append(scorerName).append(" Passed");
-                csv.append(",").append(scorerName).append(" Rationale");
+        Object evaluationsObj = report.get("evaluations");
+        if (evaluationsObj instanceof List<?> list && !list.isEmpty()) {
+            Object first = list.get(0);
+            if (first instanceof Map) {
+                Map<String, Object> firstMap = (Map<String, Object>) first;
+                Object results = firstMap.get("scorerResults");
+                if (results instanceof Map) {
+                    for (String name : ((Map<String, Object>) results).keySet()) {
+                        csv.append(",").append(name).append(" Score");
+                        csv.append(",").append(name).append(" Passed");
+                        csv.append(",").append(name).append(" Rationale");
+                    }
+                }
             }
         }
         csv.append("\n");
         
-        for (Evaluation ev : report.getEvaluations()) {
-            csv.append(ev.getTestCaseId()).append(",");
-            csv.append(ev.isPassed() ? "true," : "false,");
-            csv.append(String.format("%.2f", ev.getOverallScore()));
-            
-            for (var sr : ev.getScorerResults().values()) {
-                csv.append(",").append(String.format("%.2f", sr.getScore()));
-                csv.append(",").append(sr.isPassed() ? "true" : "false");
-                csv.append(",\"").append(sr.getRationale().replace("\"", "'" )).append("\"");
+        if (evaluationsObj instanceof List<?> list) {
+            for (Object item : list) {
+                if (item instanceof Map) {
+                    Map<String, Object> m = (Map<String, Object>) item;
+                    csv.append(m.get("testCaseId") != null ? m.get("testCaseId") : "").append(",");
+                    csv.append(m.get("passed") != null ? m.get("passed") : "").append(",");
+                    csv.append(m.get("overallScore") != null ? m.get("overallScore") : "");
+                    
+                    Object results = m.get("scorerResults");
+                    if (results instanceof Map) {
+                        for (Object sr : ((Map<String, Object>) results).values()) {
+                            if (sr instanceof Map) {
+                                Map<String, Object> srMap = (Map<String, Object>) sr;
+                                csv.append(",").append(srMap.get("score") != null ? srMap.get("score") : "");
+                                csv.append(",").append(srMap.get("passed") != null ? srMap.get("passed") : "");
+                                csv.append(",\"").append(srMap.get("rationale") != null ? srMap.get("rationale").toString().replace("\"", "'") : "").append("\"");
+                            }
+                        }
+                    }
+                    csv.append("\n");
+                }
             }
-            csv.append("\n");
         }
         
         return csv.toString();

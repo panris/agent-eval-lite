@@ -1,0 +1,67 @@
+{
+  "report_1782741470381" : {
+    "evaluations" : [ {
+      "testCaseId" : "tc_1782741470378_4354",
+      "agentOutput" : {
+        "output" : "4",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    } ],
+    "summary" : {
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 1.0
+    },
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 2
+  },
+  "report_1782741793425" : {
+    "executionTimeMs" : 2,
+    "failedTestCases" : 0,
+    "passedTestCases" : 1,
+    "totalTestCases" : 1,
+    "summary" : {
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 1.0,
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0
+    },
+    "timestamp" : 1782741793425,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1782741793422_2730",
+      "agentOutput" : {
+        "output" : "4",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    } ]
+  }
+}
