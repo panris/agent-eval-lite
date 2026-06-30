@@ -1319,80 +1319,99 @@
         // Global chart instances
         let passRateChart = null;
         let scoreChart = null;
+        let chartRenderPending = false;
         
         function renderCharts(evaluations) {
-            // Get theme colors
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const textColor = isDark ? '#e0e0e0' : '#333';
-            const gridColor = isDark ? '#3d3d5c' : '#e0e0e0';
+            // 防止重复渲染
+            if (chartRenderPending) return;
+            chartRenderPending = true;
             
-            // Pass Rate Pie Chart
-            const passed = evaluations.filter(e => e.passed).length;
-            const failed = evaluations.length - passed;
-            
-            if (passRateChart) passRateChart.destroy();
-            passRateChart = new Chart(document.getElementById('passRateChart'), {
-                type: 'pie',
-                data: {
-                    labels: ['通过', '失败'],
-                    datasets: [{
-                        data: [passed, failed],
-                        backgroundColor: ['#28a745', '#dc3545'],
-                        borderWidth: 2,
-                        borderColor: isDark ? '#252542' : 'white'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: textColor }
-                        }
-                    }
-                }
-            });
-            
-            // Score Distribution Bar Chart
-            const scores = evaluations.map(e => ({
-                score: e.overallScore || 0,
-                name: e.testCaseId ? e.testCaseId.substring(0, 10) : 'N/A'
-            }));
-            
-            if (scoreChart) scoreChart.destroy();
-            scoreChart = new Chart(document.getElementById('scoreChart'), {
-                type: 'bar',
-                data: {
-                    labels: scores.map(s => s.name),
-                    datasets: [{
-                        label: '评分',
-                        data: scores.map(s => s.score),
-                        backgroundColor: scores.map(s => s.score >= 0.7 ? '#28a745' : s.score >= 0.4 ? '#ffc107' : '#dc3545'),
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 1,
-                            ticks: { color: textColor },
-                            grid: { color: gridColor }
-                        },
-                        x: {
-                            ticks: { color: textColor },
-                            grid: { color: gridColor }
-                        }
+            requestAnimationFrame(() => {
+                // Get theme colors
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const textColor = isDark ? '#e0e0e0' : '#333';
+                const gridColor = isDark ? '#3d3d5c' : '#e0e0e0';
+                
+                // Pass Rate Pie Chart
+                const passed = evaluations.filter(e => e.passed).length;
+                const failed = evaluations.length - passed;
+                
+                if (passRateChart) passRateChart.destroy();
+                passRateChart = new Chart(document.getElementById('passRateChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['通过', '失败'],
+                        datasets: [{
+                            data: [passed, failed],
+                            backgroundColor: ['#28a745', '#dc3545'],
+                            borderWidth: 2,
+                            borderColor: isDark ? '#252542' : 'white'
+                        }]
                     },
-                    plugins: {
-                        legend: { display: false }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 300 },  // 减少动画时间
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor }
+                            }
+                        }
                     }
-                }
+                });
+                
+                // Score Distribution Bar Chart
+                const scores = evaluations.map(e => ({
+                    score: e.overallScore || 0,
+                    name: e.testCaseId ? e.testCaseId.substring(0, 10) : 'N/A'
+                }));
+                
+                if (scoreChart) scoreChart.destroy();
+                scoreChart = new Chart(document.getElementById('scoreChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: scores.map(s => s.name),
+                        datasets: [{
+                            label: '评分',
+                            data: scores.map(s => s.score),
+                            backgroundColor: scores.map(s => s.score >= 0.7 ? '#28a745' : s.score >= 0.4 ? '#ffc107' : '#dc3545'),
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 300 },  // 减少动画时间
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 1,
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            },
+                            x: {
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+                
+                chartRenderPending = false;
             });
         }
+        
+        // 页面隐藏时销毁图表节省资源
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (passRateChart) { passRateChart.destroy(); passRateChart = null; }
+                if (scoreChart) { scoreChart.destroy(); scoreChart = null; }
+            }
+        });
         
         function showEvalDetails() {
             const detailsDiv = document.getElementById('eval-details');
