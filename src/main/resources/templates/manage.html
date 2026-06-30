@@ -5,74 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>样例管理 - Agent Eval Lite</title>
     <style>
+        /* CSS Variables for Theme */
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-card: white;
+            --bg-header: transparent;
+            --bg-table-header: #f8f9fa;
+            --bg-table-row-hover: #f8f9fa;
+            --bg-input: white;
+            --bg-loading: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-inverse: white;
+            --border-color: #e0e0e0;
+            --border-focus: #667eea;
+            --shadow: 0 10px 30px rgba(0,0,0,0.2);
+            --spinner-border: #f3f3f3;
+            --spinner-top: #667eea;
+            --success-bg: #d4edda;
+            --success-text: #155724;
+            --overlay-bg: rgba(0,0,0,0.5);
+            --badge-text: white;
+            --btn-text: white;
+        }
+        
+        /* Dark Theme */
+        [data-theme="dark"] {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --bg-card: #252542;
+            --bg-header: transparent;
+            --bg-table-header: #1e1e36;
+            --bg-table-row-hover: #2d2d4a;
+            --bg-input: #1e1e36;
+            --bg-loading: #252542;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --text-inverse: #e0e0e0;
+            --border-color: #3d3d5c;
+            --border-focus: #667eea;
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+            --spinner-border: #3d3d5c;
+            --spinner-top: #667eea;
+            --success-bg: #1e4d3a;
+            --success-text: #7ddfb8;
+            --overlay-bg: rgba(0,0,0,0.7);
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-body);
             min-height: 100vh;
             padding: 20px;
+            transition: background 0.3s;
         }
+        
         .container { max-width: 1400px; margin: 0 auto; }
+        
         .header {
-            text-align: center;
-            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
+            padding: 0 20px;
         }
-        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
-        .header p { font-size: 1.1rem; opacity: 0.9; }
+        .header-content { text-align: center; flex: 1; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-inverse); }
+        .header p { font-size: 1.1rem; opacity: 0.9; color: var(--text-inverse); }
+        
+        .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
         .tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
+        
         .tab {
             padding: 12px 24px;
-            background: white;
-            border: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            color: var(--text-primary);
         }
         .tab:hover { transform: translateY(-2px); }
         .tab.active {
             background: #667eea;
             color: white;
         }
+        
         .card {
-            background: white;
+            background: var(--bg-card);
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow);
             display: none;
+            transition: background 0.3s, box-shadow 0.3s;
         }
         .card.show { display: block; }
+        
         .card-title {
             font-size: 1.5rem;
             margin-bottom: 20px;
-            color: #333;
+            color: var(--text-primary);
             border-bottom: 2px solid #667eea;
             padding-bottom: 10px;
         }
+        
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr auto;
             gap: 10px;
             margin-bottom: 15px;
         }
+        
         .form-control {
             width: 100%;
             padding: 10px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 14px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            transition: background 0.3s, border-color 0.3s, color 0.3s;
         }
         .form-control:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--border-focus);
         }
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+        
         .btn {
             padding: 10px 20px;
             border: none;
@@ -82,13 +169,12 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .btn-danger { background: #dc3545; color: white; }
         .btn-success { background: #28a745; color: white; }
+        .btn-cancel { background: #6c757d; color: white; }
         .btn:hover { transform: translateY(-2px); }
+        
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -97,41 +183,39 @@
         .table th, .table td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
         .table th {
-            background: #f8f9fa;
+            background: var(--bg-table-header);
             font-weight: 600;
         }
-        .table tr:hover { background: #f8f9fa; }
-        .checkbox-cell {
-            width: 40px;
-            text-align: center;
-        }
-        .checkbox-cell input {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
+        .table tr:hover { background: var(--bg-table-row-hover); }
+        
+        .checkbox-cell { width: 40px; text-align: center; }
+        .checkbox-cell input { width: 18px; height: 18px; cursor: pointer; }
+        
         .action-bar {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
+            align-items: center;
         }
-        .badge {
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
+        
+        .badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .badge-info { background: #17a2b8; color: white; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        
         .actions { display: flex; gap: 5px; }
-        .loading { display: none; text-align: center; padding: 20px; }
+        
+        .loading { display: none; text-align: center; padding: 20px; background: var(--bg-loading); border-radius: 8px; }
         .loading.show { display: block; }
+        
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 4px solid var(--spinner-border);
+            border-top: 4px solid var(--spinner-top);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -151,7 +235,7 @@
             z-index: 2000;
         }
         .toast {
-            background: white;
+            background: var(--bg-card);
             padding: 15px 20px;
             margin-bottom: 10px;
             border-radius: 8px;
@@ -161,6 +245,7 @@
             gap: 10px;
             min-width: 300px;
             animation: slideIn 0.3s ease;
+            color: var(--text-primary);
         }
         .toast.success { border-left: 4px solid #28a745; }
         .toast.error { border-left: 4px solid #dc3545; }
@@ -182,31 +267,41 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: var(--overlay-bg);
             z-index: 3000;
             justify-content: center;
             align-items: center;
         }
         .confirm-overlay.show { display: flex; }
         .confirm-dialog {
-            background: white;
+            background: var(--bg-card);
             padding: 30px;
             border-radius: 12px;
             max-width: 400px;
             width: 90%;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow);
         }
-        .confirm-dialog h3 { margin-bottom: 15px; color: #333; }
-        .confirm-dialog p { margin-bottom: 20px; color: #666; line-height: 1.6; }
+        .confirm-dialog h3 { margin-bottom: 15px; color: var(--text-primary); }
+        .confirm-dialog p { margin-bottom: 20px; color: var(--text-secondary); line-height: 1.6; }
         .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        .btn-cancel { background: #6c757d; color: white; }
+        
+        /* Result box */
+        #eval-result { background: var(--success-bg); color: var(--success-text); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        
+        /* Modal */
+        #add-to-group-modal { background: var(--overlay-bg); }
+        #add-to-group-modal > div { background: var(--bg-card); color: var(--text-primary); }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 样例管理</h1>
-            <p>测试用例集管理与选择性评测</p>
+            <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" id="theme-btn">🌙</button>
+            <div class="header-content">
+                <h1>📊 样例管理</h1>
+                <p>测试用例集管理与选择性评测</p>
+            </div>
+            <div style="width: 60px;"></div>
         </div>
 
         <div class="tabs">
@@ -228,7 +323,7 @@
             </div>
 
             <div style="margin-bottom: 15px;">
-                <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例（按名称、输入、期望输出搜索）" onkeyup="filterTestCases()" style="width: 100%;">
+                <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="width: 100%;">
             </div>
 
             <div class="loading" id="cases-loading">
@@ -297,23 +392,22 @@
             </div>
 
             <div id="eval-result" style="display: none;">
-                <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="margin-bottom: 10px;">
                     ✅ 评测完成！通过率: <span id="pass-rate">0%</span>
-                    <button class="btn btn-primary btn-sm" style="margin-left: 20px;" onclick="showEvalDetails()">查看详情</button>
-                    <button class="btn btn-success btn-sm" style="margin-left: 10px;" onclick="exportReport('json')">导出 JSON</button>
-                    <button class="btn btn-success btn-sm" style="margin-left: 5px;" onclick="exportReport('csv')">导出 CSV</button>
                 </div>
+                <button class="btn btn-primary btn-sm" onclick="showEvalDetails()">查看详情</button>
+                <button class="btn btn-success btn-sm" onclick="exportReport('json')">导出 JSON</button>
+                <button class="btn btn-success btn-sm" onclick="exportReport('csv')">导出 CSV</button>
             </div>
 
             <div id="eval-details" style="display: none; margin-bottom: 20px;">
-                <h3>评测详情</h3>
+                <h3 style="color: var(--text-primary); margin-bottom: 15px;">评测详情</h3>
                 <table class="table" id="details-table">
                     <thead>
                         <tr>
                             <th>用例名称</th>
                             <th>输入</th>
                             <th>期望输出</th>
-                            <th>实际输出</th>
                             <th>评分</th>
                             <th>状态</th>
                         </tr>
@@ -360,7 +454,64 @@
         </div>
     </div>
 
+    <!-- 批量添加到分组模态框 -->
+    <div id="add-to-group-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;">
+        <div style="position: relative; width: 80%; max-width: 800px; margin: 50px auto; padding: 30px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
+            <h2>批量添加用例到分组</h2>
+            <button onclick="closeAddToGroupModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            
+            <table class="table" style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell"><input type="checkbox" id="modal-select-all" onchange="toggleModalSelectAll()"></th>
+                        <th>名称</th>
+                        <th>输入</th>
+                        <th>期望输出</th>
+                    </tr>
+                </thead>
+                <tbody id="modal-cases-tbody"></tbody>
+            </table>
+            
+            <div style="margin-top: 20px; text-align: right;">
+                <button class="btn btn-success" onclick="addSelectedToGroup()">添加选中</button>
+                <button class="btn" onclick="closeAddToGroupModal()" style="margin-left: 10px; background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div id="confirm-overlay" class="confirm-overlay">
+        <div class="confirm-dialog">
+            <h3 id="confirm-title">确认操作</h3>
+            <p id="confirm-message">确定要执行此操作吗？</p>
+            <div class="confirm-actions">
+                <button class="btn btn-cancel" id="confirm-no">取消</button>
+                <button class="btn btn-danger" id="confirm-yes">确定</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update button icon
+            document.getElementById('theme-btn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+        
+        // Load saved theme
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-btn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+
         // Toast Notification System
         function showToast(message, type = 'info', duration = 3000) {
             let container = document.querySelector('.toast-container');
@@ -448,20 +599,24 @@
                 const reports = await response.json();
                 
                 const tbody = document.getElementById('history-tbody');
-                tbody.innerHTML = reports.map(report => `
-                    <tr>
-                        <td>${report.reportId}</td>
-                        <td>${new Date(report.timestamp).toLocaleString()}</td>
-                        <td>${report.summary.pass_rate.toFixed(1)}%</td>
-                        <td>${report.summary.average_score.toFixed(2)}</td>
-                        <td>${report.summary.total_test_cases}</td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="viewHistoryDetails('${report.reportId}')">查看详情</button>
-                            <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.reportId}', 'json')">导出 JSON</button>
-                            <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.reportId}', 'csv')">导出 CSV</button>
-                        </td>
-                    </tr>
-                `).join('');
+                if (reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">暂无评测记录</td></tr>';
+                } else {
+                    tbody.innerHTML = reports.map(report => `
+                        <tr>
+                            <td>${report.id}</td>
+                            <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
+                            <td>${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%</td>
+                            <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
+                            <td>${report.summary ? report.summary.total_test_cases : 0}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="viewHistoryDetails('${report.id}')">查看详情</button>
+                                <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.id}', 'json')">导出 JSON</button>
+                                <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.id}', 'csv')">导出 CSV</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
                 
             } catch (error) {
                 console.error('Failed to load history:', error);
@@ -477,12 +632,18 @@
                 const response = await fetch(`/api/reports/${reportId}`);
                 const report = await response.json();
                 
-                // 显示详情（复用 showEvalDetails 的逻辑）
                 window.lastEvaluation = report;
-                showEvalDetails();
+                window.lastReportId = reportId;
                 
-                // 切换到评测标签页
+                // 显示通过率
+                if (report.success && report.summary) {
+                    document.getElementById('pass-rate').textContent = report.summary.pass_rate.toFixed(1) + '%';
+                    document.getElementById('eval-result').style.display = 'block';
+                }
+                
+                showEvalDetails();
                 switchTab('evaluate');
+                
             } catch (error) {
                 console.error('Failed to load report details:', error);
                 showToast('加载报告详情失败', 'error');
@@ -551,12 +712,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, input, expected })
                 });
+                showToast('测试用例已添加', 'success');
                 loadTestCases();
                 document.getElementById('case-name').value = '';
                 document.getElementById('case-input').value = '';
                 document.getElementById('case-expected').value = '';
             } catch (error) {
                 console.error('Failed to create test case:', error);
+                showToast('添加失败', 'error');
             }
         }
 
@@ -583,18 +746,22 @@
                 groups = data.groups || [];
 
                 const tbody = document.getElementById('groups-tbody');
-                tbody.innerHTML = groups.map(g => `
-                    <tr>
-                        <td>${g.name}</td>
-                        <td>${g.description || '-'}</td>
-                        <td>${g.testCaseIds ? g.testCaseIds.length : 0}</td>
-                        <td class="actions">
-                            <button class="btn btn-primary btn-sm" onclick="viewGroupCases('${g.id}')">查看用例</button>
-                            <button class="btn btn-success btn-sm" onclick="showAddToGroupModal('${g.id}')">批量添加</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">删除</button>
-                        </td>
-                    </tr>
-                `).join('');
+                if (groups.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">暂无分组</td></tr>';
+                } else {
+                    tbody.innerHTML = groups.map(g => `
+                        <tr>
+                            <td>${g.name}</td>
+                            <td>${g.description || '-'}</td>
+                            <td>${g.testCaseIds ? g.testCaseIds.length : 0}</td>
+                            <td class="actions">
+                                <button class="btn btn-primary btn-sm" onclick="viewGroupCases('${g.id}')">查看用例</button>
+                                <button class="btn btn-success btn-sm" onclick="showAddToGroupModal('${g.id}')">批量添加</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">删除</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
 
                 // 更新分组选择器
                 const select = document.getElementById('eval-group');
@@ -613,12 +780,18 @@
                 const response = await fetch(`/api/groups/${groupId}`);
                 const group = await response.json();
                 
+                // 加载所有测试用例
+                const tcResponse = await fetch('/api/testcases');
+                const tcData = await tcResponse.json();
+                const allTestCases = tcData.testCases || [];
+                
                 const testCaseList = group.testCaseIds.map(id => {
-                    const tc = testCases.find(t => t.id === id);
+                    const tc = allTestCases.find(t => t.id === id);
                     return tc ? `- ${tc.name}: ${tc.input} → ${tc.expected}` : `- ${id} (未找到)`;
                 }).join('\n');
                 
-                alert(`分组: ${group.name}\n\n用例列表:\n${testCaseList}`);
+                showConfirm(`分组: ${group.name}`, `用例列表:\n${testCaseList || '无'}`, () => {});
+                
             } catch (error) {
                 console.error('Failed to load group cases:', error);
                 showToast('加载分组用例失败', 'error');
@@ -708,11 +881,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, description })
                 });
+                showToast('分组已创建', 'success');
                 loadGroups();
                 document.getElementById('group-name').value = '';
                 document.getElementById('group-desc').value = '';
             } catch (error) {
                 console.error('Failed to create group:', error);
+                showToast('创建失败', 'error');
             }
         }
 
@@ -760,13 +935,14 @@
                     const passRate = data.summary.pass_rate.toFixed(1);
                     document.getElementById('pass-rate').textContent = passRate + '%';
                     document.getElementById('eval-result').style.display = 'block';
+                    showToast(`评测完成！通过率: ${passRate}%`, 'success');
                     
-                    // 保存评测结果供详情查看和导出
                     window.lastEvaluation = data;
                     window.lastReportId = data.reportId;
                 }
             } catch (error) {
                 console.error('Evaluation failed:', error);
+                showToast('评测失败', 'error');
             } finally {
                 document.getElementById('eval-loading').classList.remove('show');
             }
@@ -785,16 +961,15 @@
             const evaluations = window.lastEvaluation.evaluations;
             tbody.innerHTML = evaluations.map(ev => {
                 const testCase = testCases.find(tc => tc.id === ev.testCaseId) || {};
-                const scorerNames = Object.keys(ev.scorerResults).join(', ');
-                const scorerScores = Object.values(ev.scorerResults).map(sr => sr.score.toFixed(2)).join(', ');
+                const scorerNames = Object.keys(ev.scorerResults || {}).join(', ');
+                const scorerScores = Object.values(ev.scorerResults || {}).map(sr => sr.score.toFixed(2)).join(', ');
                 
                 return `
                     <tr>
                         <td>${testCase.name || ev.testCaseId}</td>
                         <td>${testCase.input || '-'}</td>
                         <td>${testCase.expected || '-'}</td>
-                        <td>${testCase.actual || '-'}</td>
-                        <td>${scorerScores} (${scorerNames})</td>
+                        <td>${scorerScores || '-'} (${scorerNames || '-'})</td>
                         <td>
                             <span class="badge ${ev.passed ? 'badge-success' : 'badge-danger'}">
                                 ${ev.passed ? '通过' : '失败'}
@@ -828,6 +1003,7 @@
 
             document.getElementById('eval-loading').classList.add('show');
             document.getElementById('eval-result').style.display = 'none';
+            document.getElementById('eval-details').style.display = 'none';
 
             try {
                 const response = await fetch(`/api/evaluate/group/${groupId}`, {
@@ -844,9 +1020,14 @@
                     const passRate = data.summary.pass_rate.toFixed(1);
                     document.getElementById('pass-rate').textContent = passRate + '%';
                     document.getElementById('eval-result').style.display = 'block';
+                    showToast(`评测完成！通过率: ${passRate}%`, 'success');
+                    
+                    window.lastEvaluation = data;
+                    window.lastReportId = data.reportId;
                 }
             } catch (error) {
                 console.error('Evaluation failed:', error);
+                showToast('评测失败', 'error');
             } finally {
                 document.getElementById('eval-loading').classList.remove('show');
             }
@@ -870,46 +1051,10 @@
 
         // 页面加载时初始化
         window.onload = function() {
+            loadTheme();
             loadTestCases();
             loadGroups();
         };
     </script>
-
-    <!-- 批量添加到分组模态框 -->
-    <div id="add-to-group-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-        <div style="position: relative; width: 80%; max-width: 800px; margin: 50px auto; background: white; padding: 30px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
-            <h2>批量添加用例到分组</h2>
-            <button onclick="closeAddToGroupModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
-            
-            <table class="table" style="margin-top: 20px;">
-                <thead>
-                    <tr>
-                        <th class="checkbox-cell"><input type="checkbox" id="modal-select-all" onchange="toggleModalSelectAll()"></th>
-                        <th>名称</th>
-                        <th>输入</th>
-                        <th>期望输出</th>
-                    </tr>
-                </thead>
-                <tbody id="modal-cases-tbody"></tbody>
-            </table>
-            
-            <div style="margin-top: 20px; text-align: right;">
-                <button class="btn btn-success" onclick="addSelectedToGroup()">添加选中</button>
-                <button class="btn" onclick="closeAddToGroupModal()" style="margin-left: 10px;">取消</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 确认弹窗 -->
-    <div id="confirm-overlay" class="confirm-overlay">
-        <div class="confirm-dialog">
-            <h3 id="confirm-title">确认操作</h3>
-            <p id="confirm-message">确定要执行此操作吗？</p>
-            <div class="confirm-actions">
-                <button class="btn btn-cancel" id="confirm-no">取消</button>
-                <button class="btn btn-danger" id="confirm-yes">确定</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
