@@ -711,7 +711,79 @@
                 <div class="alert alert-success">
                     ✅ 评测完成！执行时间: ${result.executionTimeMs} ms
                 </div>
+                <button class="btn btn-primary" onclick="showResultDetails('${result.reportId}')" style="margin-top: 10px;">
+                    🔍 查看详情
+                </button>
             `;
+        }
+        
+        async function showResultDetails(reportId) {
+            try {
+                const response = await fetch(`/api/reports/${reportId}`);
+                const data = await response.json();
+                if (!data.success) {
+                    alert('获取详情失败');
+                    return;
+                }
+                
+                const evaluations = data.evaluations || [];
+                const modal = document.getElementById('result-detail-modal');
+                const modalContent = document.getElementById('result-detail-content');
+                
+                modalContent.innerHTML = `
+                    <div style="margin-bottom: 20px;">
+                        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="stat-box">
+                                <div class="stat-value">${data.totalTestCases}</div>
+                                <div class="stat-label">总用例数</div>
+                            </div>
+                            <div class="stat-box" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                                <div class="stat-value">${data.passedTestCases}</div>
+                                <div class="stat-label">通过数</div>
+                            </div>
+                            <div class="stat-box" style="background: linear-gradient(135deg, #dc3545, #c82333);">
+                                <div class="stat-value">${data.failedTestCases}</div>
+                                <div class="stat-label">失败数</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h4 style="margin-bottom: 10px;">📋 各用例评测结果</h4>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${evaluations.map((ev, i) => `
+                            <div style="background: var(--bg-checkbox-item); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <strong>#${i + 1} 测试用例</strong>
+                                    <span class="badge ${ev.passed ? 'badge-success' : 'badge-danger'}">
+                                        ${ev.passed ? '✅ 通过' : '❌ 失败'}
+                                    </span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary);">
+                                    <p><strong>输入:</strong> ${ev.testCase?.input || ev.testCaseId || '-'}</p>
+                                    <p><strong>期望:</strong> ${ev.testCase?.expected || '-'}</p>
+                                    <p><strong>Agent 输出:</strong> ${ev.agentOutput || '-'}</p>
+                                    <p><strong>评分:</strong> ${((ev.overallScore || 0) * 100).toFixed(0)}%</p>
+                                    ${ev.scorerResults ? Object.entries(ev.scorerResults).map(([name, sr]) => `
+                                        <div style="margin-left: 15px; margin-top: 5px; padding: 5px 10px; background: var(--bg-card); border-radius: 4px;">
+                                            <span>${name}: ${((sr.score || 0) * 100).toFixed(0)}%</span>
+                                            <span style="margin-left: 10px; color: ${sr.passed ? '#28a745' : '#dc3545'};">${sr.passed ? '✓' : '✗'}</span>
+                                            ${sr.rationale ? `<p style="margin: 3px 0 0 0; font-size: 12px;">${sr.rationale}</p>` : ''}
+                                        </div>
+                                    `).join('') : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                modal.style.display = 'flex';
+            } catch (error) {
+                console.error('获取详情失败:', error);
+                alert('获取详情失败');
+            }
+        }
+        
+        function closeResultDetailModal() {
+            document.getElementById('result-detail-modal').style.display = 'none';
         }
 
         async function loadHistory() {
@@ -763,5 +835,16 @@
         loadTheme();
         loadHistory();
     </script>
+
+    <!-- 评测详情模态框 -->
+    <div id="result-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-card); border-radius: 12px; padding: 30px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="color: var(--text-primary);">📊 评测详情</h2>
+                <button onclick="closeResultDetailModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-secondary);">×</button>
+            </div>
+            <div id="result-detail-content"></div>
+        </div>
+    </div>
 </body>
 </html>
