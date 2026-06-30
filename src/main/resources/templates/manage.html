@@ -857,6 +857,7 @@
                                 <button class="btn btn-sm" onclick="openNoteModal('${report.id}', '${(report.note || '').replace(/'/g, "&#39;")}')">📝</button>
                                 <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${report.id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
                                 <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">详情</button>
+                                <button class="btn btn-sm" onclick="shareReport('${report.id}')" title="分享">🔗</button>
                                 <button class="btn btn-sm" onclick="copyReport('${report.id}')">📋</button>
                             </div>
                         </td>
@@ -916,6 +917,24 @@
                 }
             } catch (error) {
                 showToast('复制失败', 'error');
+            }
+        }
+        
+        // 分享报告
+        async function shareReport(reportId) {
+            try {
+                const response = await fetch(`/api/reports/${reportId}/share`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    const shareUrl = window.location.origin + data.url;
+                    // 复制链接到剪贴板
+                    await navigator.clipboard.writeText(shareUrl);
+                    showToast(`分享链接已复制到剪贴板: ${shareUrl}`, 'success');
+                } else {
+                    showToast(data.error || '分享失败', 'error');
+                }
+            } catch (error) {
+                showToast('分享失败', 'error');
             }
         }
 

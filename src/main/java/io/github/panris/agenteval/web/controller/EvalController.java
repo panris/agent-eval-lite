@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EvalController {
 
     private final Map<String, Map<String, Object>> reportHistory = new ConcurrentHashMap<>();
+    private final Map<String, String> sharedReports = new ConcurrentHashMap<>();  // shareId -> reportId
     private final TestCaseRepository testCaseRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
@@ -381,7 +382,22 @@ public class EvalController {
         return Map.of("success", true, "favorite", !current);
     }
 
-    // 获取收藏列表
+    // 生成报告分享链接
+    @PostMapping("/api/reports/{id}/share")
+    @ResponseBody
+    public Map<String, Object> shareReport(@PathVariable String id) {
+        Map<String, Object> report = reportHistory.get(id);
+        if (report == null) {
+            return Map.of("success", false, "error", "Report not found");
+        }
+        // 生成简短的分享 ID (8位)
+        String shareId = java.util.UUID.randomUUID().toString().substring(0, 8);
+        // 存储分享映射
+        sharedReports.put(shareId, id);
+        return Map.of("success", true, "shareId", shareId, "url", "/share/" + shareId);
+    }
+
+    // 获取分享列表
     @GetMapping("/api/reports/favorites")
     @ResponseBody
     public Map<String, Object> getFavorites() {
@@ -557,5 +573,41 @@ class EvaluateByGroupRequest {
 
     public void setAgentType(String agentType) {
         this.agentType = agentType;
+    }
+}
+
+// 分享页面控制器
+@Controller
+class ShareController {
+    private final Map<String, Map<String, Object>> reportHistory;
+    private final Map<String, String> sharedReports;
+
+    public ShareController(Map<String, Map<String, Object>> reportHistory,
+                           Map<String, String> sharedReports) {
+        this.reportHistory = reportHistory;
+        this.sharedReports = sharedReports;
+    }
+
+    @GetMapping("/share/{shareId}")
+    public String showSharedReport(@PathVariable String shareId, Model model) {
+        String reportId = sharedReports.get(shareId);
+        if (reportId == null) {
+            return "redirect:/";
+        }
+        
+        Map<String, Object> report = reportHistory.get(reportId);
+        if (report == null) {
+            return "redirect:/";
+        }
+        
+        model.addAttribute("reportId", reportId);
+        model.addAttribute("summary", report.get("summary"));
+        model.addAttribute("timestamp", report.get("timestamp"));
+        model.addAttribute("evaluations", report.get("evaluations"));
+        model.addAttribute("totalTestCases", report.getOrDefault("totalTestCases", 0));
+        model.addAttribute("passedTestCases", report.getOrDefault("passedTestCases", 0));
+        model.addAttribute("failedTestCases", report.getOrDefault("failedTestCases", 0));
+        
+        return "share";
     }
 }

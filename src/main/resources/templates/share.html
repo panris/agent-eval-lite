@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评测报告 - Agent Eval Lite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-box.green { background: linear-gradient(135deg, #28a745, #20c997); }
+        .stat-box.red { background: linear-gradient(135deg, #dc3545, #c82333); }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-success { background: #28a745; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        
+        .eval-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .eval-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .eval-item-body {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .eval-item-body p {
+            margin: 5px 0;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>📊 评测报告</h1>
+            <p class="subtitle" th:text="${#temporals.format(T(java.time.Instant).atZone(T(java.time.ZoneId).systemDefault()).toLocalDateTime().minusSeconds(0), 'yyyy-MM-dd HH:mm:ss')}">报告时间</p>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" th:text="${totalTestCases}">0</div>
+                    <div class="stat-label">总用例数</div>
+                </div>
+                <div class="stat-box green">
+                    <div class="stat-value" th:text="${passedTestCases}">0</div>
+                    <div class="stat-label">通过数</div>
+                </div>
+                <div class="stat-box red">
+                    <div class="stat-value" th:text="${failedTestCases}">0</div>
+                    <div class="stat-label">失败数</div>
+                </div>
+            </div>
+            
+            <div th:if="${summary}" style="text-align: center; margin-bottom: 30px;">
+                <span class="badge" th:classappend="${summary.pass_rate >= 70 ? 'badge-success' : 'badge-danger'}"
+                      style="font-size: 18px; padding: 10px 25px;">
+                    通过率: <span th:text="${#numbers.formatDecimal(summary.pass_rate, 1, 1)}">0.0</span>%
+                </span>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📋 评测详情</h2>
+            <div th:if="${evaluations}" th:each="ev, iter : ${evaluations}" class="eval-item">
+                <div class="eval-item-header">
+                    <strong>测试用例 #<span th:text="${iter.index + 1}">1</span></strong>
+                    <span class="badge" th:classappend="${ev.passed ? 'badge-success' : 'badge-danger'}"
+                          th:text="${ev.passed ? '✅ 通过' : '❌ 失败'}">状态</span>
+                </div>
+                <div class="eval-item-body">
+                    <p><strong>输入:</strong> <span th:text="${ev.testCase?.input ?: ev.testCaseId ?: '-'}">-</span></p>
+                    <p><strong>期望:</strong> <span th:text="${ev.testCase?.expected ?: '-'}">-</span></p>
+                    <p><strong>Agent 输出:</strong> <span th:text="${ev.agentOutput ?: '-'}">-</span></p>
+                    <p><strong>评分:</strong> <span th:text="${#numbers.formatDecimal((ev.overallScore ?: 0) * 100, 1, 0)}">0</span>%</p>
+                </div>
+            </div>
+            <div th:unless="${evaluations}" style="color: #666; text-align: center; padding: 20px;">
+                暂无详细数据
+            </div>
+        </div>
+        
+        <a href="/" class="back-link">← 返回首页</a>
+    </div>
+</body>
+</html>
