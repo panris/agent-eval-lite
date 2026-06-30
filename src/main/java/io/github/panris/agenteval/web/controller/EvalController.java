@@ -208,6 +208,9 @@ public class EvalController {
             item.put("passedTestCases", report.get("passedTestCases"));
             item.put("executionTimeMs", report.get("executionTimeMs"));
             item.put("timestamp", report.get("timestamp"));
+            item.put("favorite", report.getOrDefault("favorite", false));
+            item.put("tags", report.getOrDefault("tags", List.of()));
+            item.put("note", report.getOrDefault("note", ""));
             reports.add(item);
         });
         return reports;
@@ -389,6 +392,39 @@ public class EvalController {
             }
         });
         return Map.of("success", true, "favorites", favorites);
+    }
+
+    // 更新报告标签
+    @PutMapping("/api/reports/{id}/tags")
+    @ResponseBody
+    public Map<String, Object> updateTags(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> body) {
+        Map<String, Object> report = reportHistory.get(id);
+        if (report == null) {
+            return Map.of("success", false, "error", "Report not found");
+        }
+        Object tags = body.get("tags");
+        if (tags instanceof List) {
+            report.put("tags", tags);
+        }
+        saveReportHistory();
+        return Map.of("success", true, "tags", report.get("tags"));
+    }
+
+    // 更新报告备注
+    @PutMapping("/api/reports/{id}/note")
+    @ResponseBody
+    public Map<String, Object> updateNote(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> body) {
+        Map<String, Object> report = reportHistory.get(id);
+        if (report == null) {
+            return Map.of("success", false, "error", "Report not found");
+        }
+        report.put("note", body.getOrDefault("note", ""));
+        saveReportHistory();
+        return Map.of("success", true, "note", report.get("note"));
     }
 
     // 对比报告

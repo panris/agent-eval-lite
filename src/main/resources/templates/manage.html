@@ -583,7 +583,8 @@
                         <th>时间</th>
                         <th>通过率</th>
                         <th>平均分</th>
-                        <th>用例数</th>
+                        <th>标签</th>
+                        <th>备注</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -613,6 +614,38 @@
             <div style="margin-top: 20px; text-align: right;">
                 <button class="btn btn-success" onclick="addSelectedToGroup()">添加选中</button>
                 <button class="btn" onclick="closeAddToGroupModal()" style="margin-left: 10px; background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 标签编辑模态框 -->
+    <div id="tags-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog">
+            <h3>📌 编辑标签</h3>
+            <input type="hidden" id="tags-report-id">
+            <div style="margin: 15px 0;">
+                <input type="text" id="tags-input" class="form-control" placeholder="输入标签后按回车添加" 
+                    onkeypress="if(event.key==='Enter'){addTag();event.preventDefault();}">
+            </div>
+            <div id="tags-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; min-height: 30px;"></div>
+            <div style="text-align: right;">
+                <button class="btn btn-primary btn-sm" onclick="saveTags()">保存</button>
+                <button class="btn btn-sm" onclick="closeTagsModal()" style="background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 备注编辑模态框 -->
+    <div id="note-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog">
+            <h3>📝 编辑备注</h3>
+            <input type="hidden" id="note-report-id">
+            <div style="margin: 15px 0;">
+                <textarea id="note-input" class="form-control" rows="4" placeholder="输入备注..." style="resize: vertical;"></textarea>
+            </div>
+            <div style="text-align: right;">
+                <button class="btn btn-primary btn-sm" onclick="saveNote()">保存</button>
+                <button class="btn btn-sm" onclick="closeNoteModal()" style="background: #6c757d; color: white;">取消</button>
             </div>
         </div>
     </div>
@@ -742,17 +775,33 @@
                 } else {
                     tbody.innerHTML = reports.map(report => `
                         <tr>
-                            <td>${report.id}</td>
+                            <td><input type="checkbox" class="history-checkbox" value="${report.id}"></td>
+                            <td><code>${report.id}</code></td>
                             <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
-                            <td>${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%</td>
-                            <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
-                            <td>${report.summary ? report.summary.total_test_cases : 0}</td>
                             <td>
-                                <button class="btn btn-primary btn-sm" ⭐</button>
-                                <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">查看详情</button>
-                                <button class="btn btn-sm btn-warning" onclick="toggleFavorite('${report.id}')" title="收藏">⭐</button>
-                                <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.id}', 'json')">导出 JSON</button>
-                                <button class="btn btn-success btn-sm" onclick="exportHistoryReport('${report.id}', 'csv')">导出 CSV</button>
+                                <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
+                                    ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
+                                </span>
+                            </td>
+                            <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
+                            <td>
+                                <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                                    ${(report.tags || []).map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                                    <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${report.id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${report.note || ''}">
+                                    ${report.note ? report.note.substring(0, 15) + (report.note.length > 15 ? '...' : '') : '<span style="color: var(--text-secondary);">无</span>'}
+                                </div>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                    <button class="btn btn-sm" onclick="openNoteModal('${report.id}', '${(report.note || '').replace(/'/g, "&#39;")}')">📝</button>
+                                    <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${report.id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
+                                    <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">详情</button>
+                                    <button class="btn btn-sm" onclick="copyReport('${report.id}')">📋</button>
+                                </div>
                             </td>
                         </tr>
                     `).join('');
@@ -1468,6 +1517,112 @@
                 
             } catch (e) {
                 showToast(`解析失败: ${e.message}`, 'error');
+            }
+        }
+
+        // ===== 报告标签功能 =====
+        let currentTags = [];
+        
+        function openTagsModal(reportId, existingTags) {
+            currentTags = [...(existingTags || [])];
+            document.getElementById('tags-report-id').value = reportId;
+            renderTags();
+            document.getElementById('tags-modal').style.display = 'flex';
+            document.getElementById('tags-input').focus();
+        }
+        
+        function closeTagsModal() {
+            document.getElementById('tags-modal').style.display = 'none';
+            document.getElementById('tags-input').value = '';
+        }
+        
+        function renderTags() {
+            const container = document.getElementById('tags-list');
+            container.innerHTML = currentTags.map((tag, i) => `
+                <span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+                    ${tag}
+                    <span style="cursor: pointer; font-weight: bold;" onclick="removeTag(${i})">×</span>
+                </span>
+            `).join('');
+        }
+        
+        function addTag() {
+            const input = document.getElementById('tags-input');
+            const tag = input.value.trim();
+            if (tag && !currentTags.includes(tag)) {
+                currentTags.push(tag);
+                renderTags();
+            }
+            input.value = '';
+        }
+        
+        function removeTag(index) {
+            currentTags.splice(index, 1);
+            renderTags();
+        }
+        
+        async function saveTags() {
+            const reportId = document.getElementById('tags-report-id').value;
+            try {
+                const response = await fetch(`/api/reports/${reportId}/tags`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tags: currentTags })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('标签已保存', 'success');
+                    closeTagsModal();
+                    loadHistory();
+                }
+            } catch (e) {
+                showToast('保存失败', 'error');
+            }
+        }
+        
+        // ===== 报告备注功能 =====
+        function openNoteModal(reportId, existingNote) {
+            document.getElementById('note-report-id').value = reportId;
+            document.getElementById('note-input').value = existingNote || '';
+            document.getElementById('note-modal').style.display = 'flex';
+            document.getElementById('note-input').focus();
+        }
+        
+        function closeNoteModal() {
+            document.getElementById('note-modal').style.display = 'none';
+        }
+        
+        async function saveNote() {
+            const reportId = document.getElementById('note-report-id').value;
+            const note = document.getElementById('note-input').value;
+            try {
+                const response = await fetch(`/api/reports/${reportId}/note`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('备注已保存', 'success');
+                    closeNoteModal();
+                    loadHistory();
+                }
+            } catch (e) {
+                showToast('保存失败', 'error');
+            }
+        }
+        
+        // ===== 报告复制功能 =====
+        async function copyReport(reportId) {
+            try {
+                const response = await fetch(`/api/reports/${reportId}/copy`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('报告已复制', 'success');
+                    loadHistory();
+                }
+            } catch (e) {
+                showToast('复制失败', 'error');
             }
         }
 
