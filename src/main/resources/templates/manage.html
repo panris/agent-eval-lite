@@ -458,6 +458,7 @@
                         <th>输入</th>
                         <th>期望输出</th>
                         <th>分组</th>
+                        <th>标签</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -656,6 +657,23 @@
             <div style="text-align: right;">
                 <button class="btn btn-primary btn-sm" onclick="saveTags()">保存</button>
                 <button class="btn btn-sm" onclick="closeTagsModal()" style="background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试用例标签模态框 -->
+    <div id="case-tags-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog">
+            <h3>🏷️ 编辑用例标签</h3>
+            <input type="hidden" id="case-tags-report-id">
+            <div style="margin: 15px 0;">
+                <input type="text" id="case-tags-input" class="form-control" placeholder="输入标签后按回车添加" 
+                    onkeypress="if(event.key==='Enter'){addCaseTag();event.preventDefault();}">
+            </div>
+            <div id="case-tags-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; min-height: 30px;"></div>
+            <div style="text-align: right;">
+                <button class="btn btn-primary btn-sm" onclick="saveCaseTags()">保存</button>
+                <button class="btn btn-sm" onclick="closeCaseTagsModal()" style="background: #6c757d; color: white;">取消</button>
             </div>
         </div>
     </div>
@@ -1042,6 +1060,12 @@
                         <td>${tc.input}</td>
                         <td>${tc.expected}</td>
                         <td><span class="badge badge-info">${tc.groupId || '未分组'}</span></td>
+                        <td>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                                ${(tc.metadata?.tags || []).map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${tc.id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                            </div>
+                        </td>
                         <td class="actions">
                             <button class="btn btn-danger btn-sm" onclick="deleteTestCase('${tc.id}')">删除</button>
                         </td>
@@ -1651,6 +1675,66 @@
             }
         }
 
+        // ===== 测试用例标签功能 =====
+        let currentCaseTags = [];
+        let currentCaseId = '';
+        
+        function openCaseTagsModal(caseId, existingTags) {
+            currentCaseId = caseId;
+            currentCaseTags = [...(existingTags || [])];
+            document.getElementById('case-tags-report-id').value = caseId;
+            renderCaseTags();
+            document.getElementById('case-tags-modal').style.display = 'flex';
+            document.getElementById('case-tags-input').focus();
+        }
+        
+        function closeCaseTagsModal() {
+            document.getElementById('case-tags-modal').style.display = 'none';
+        }
+        
+        function renderCaseTags() {
+            const container = document.getElementById('case-tags-list');
+            container.innerHTML = currentCaseTags.map((tag, i) => `
+                <span class="badge" style="background: #667eea; padding: 5px 10px; margin: 3px; display: inline-flex; align-items: center; gap: 5px;">
+                    ${tag}
+                    <span style="cursor: pointer; font-weight: bold;" onclick="removeCaseTag(${i})">×</span>
+                </span>
+            `).join('') || '<span style="color: var(--text-secondary);">暂无标签</span>';
+        }
+        
+        function addCaseTag() {
+            const input = document.getElementById('case-tags-input');
+            const tag = input.value.trim();
+            if (tag && !currentCaseTags.includes(tag)) {
+                currentCaseTags.push(tag);
+                input.value = '';
+                renderCaseTags();
+            }
+        }
+        
+        function removeCaseTag(index) {
+            currentCaseTags.splice(index, 1);
+            renderCaseTags();
+        }
+        
+        async function saveCaseTags() {
+            try {
+                const response = await fetch(`/api/testcases/${currentCaseId}/tags`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tags: currentCaseTags })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('标签已保存', 'success');
+                    closeCaseTagsModal();
+                    loadTestCases();
+                }
+            } catch (e) {
+                showToast('保存失败', 'error');
+            }
+        }
+        
         // ===== 报告标签功能 =====
         let currentTags = [];
         

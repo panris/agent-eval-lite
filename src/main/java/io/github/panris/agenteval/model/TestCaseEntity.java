@@ -101,4 +101,18 @@ public class TestCaseEntity {
     public void updateTimestamp() {
         this.updatedAt = LocalDateTime.now();
     }
+    
+    @SuppressWarnings("unchecked")
+    public java.util.List<String> getTags() {
+        Object tags = metadata.get("tags");
+        if (tags instanceof java.util.List) {
+            return (java.util.List<String>) tags;
+        }
+        return new java.util.ArrayList<>();
+    }
+    
+    @SuppressWarnings("unchecked")
+    public void setTags(java.util.List<String> tags) {
+        metadata.put("tags", tags != null ? tags : new java.util.ArrayList<>());
+    }
 }

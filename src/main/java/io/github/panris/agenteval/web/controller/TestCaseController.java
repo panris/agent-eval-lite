@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * REST API for test case management.
@@ -126,7 +127,25 @@ public class TestCaseController {
             "error", "Test case not found"
         );
     }
-
+    
+    /**
+     * Update test case tags.
+     */
+    @PutMapping("/{id}/tags")
+    public Map<String, Object> updateTags(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> body) {
+        Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
+        if (opt.isEmpty()) {
+            return Map.of("success", false, "error", "Test case not found");
+        }
+        TestCaseEntity tc = opt.get();
+        tc.getMetadata().put("tags", body.get("tags"));
+        tc.updateTimestamp();
+        repository.saveTestCase(tc);
+        return Map.of("success", true, "tags", tc.getMetadata().get("tags"));
+    }
+    
     /**
      * Batch import test cases.
      */
