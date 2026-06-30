@@ -237,6 +237,8 @@
                 <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     ✅ 评测完成！通过率: <span id="pass-rate">0%</span>
                     <button class="btn btn-primary btn-sm" style="margin-left: 20px;" onclick="showEvalDetails()">查看详情</button>
+                    <button class="btn btn-success btn-sm" style="margin-left: 10px;" onclick="exportReport('json')">导出 JSON</button>
+                    <button class="btn btn-success btn-sm" style="margin-left: 5px;" onclick="exportReport('csv')">导出 CSV</button>
                 </div>
             </div>
 
@@ -463,8 +465,9 @@
                     document.getElementById('pass-rate').textContent = passRate + '%';
                     document.getElementById('eval-result').style.display = 'block';
                     
-                    // 保存评测结果供详情查看
+                    // 保存评测结果供详情查看和导出
                     window.lastEvaluation = data;
+                    window.lastReportId = data.reportId;
                 }
             } catch (error) {
                 console.error('Evaluation failed:', error);
@@ -506,6 +509,17 @@
             }).join('');
             
             detailsDiv.style.display = 'block';
+        }
+
+        // 导出报告
+        function exportReport(format) {
+            if (!window.lastReportId) {
+                alert('没有可导出的评测报告');
+                return;
+            }
+            
+            const url = `/api/reports/${window.lastReportId}/export?format=${format}`;
+            window.open(url, '_blank');
         }
 
         // 按分组评测

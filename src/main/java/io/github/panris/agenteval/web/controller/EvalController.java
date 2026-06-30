@@ -1,15 +1,19 @@
 package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.Agent;
+import io.github.panris.agenteval.Evaluation;
 import io.github.panris.agenteval.EvaluationReport;
 import io.github.panris.agenteval.Evaluator;
 import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -181,6 +185,84 @@ public class EvalController {
             "failedTestCases", report.getFailedTestCases(),
             "executionTimeMs", report.getExecutionTimeMs()
         );
+    }
+
+    @GetMapping("/api/reports/{id}/export")
+    public ResponseEntity<?> exportReport(
+            @PathVariable String id,
+            @RequestParam(defaultValue = "json") String format) {
+        
+        EvaluationReport report = reportHistory.get(id);
+        if (report == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        if ("csv".equalsIgnoreCase(format)) {
+            return exportAsCsv(report, id);
+        } else {
+            return exportAsJson(report, id);
+        }
+    }
+    
+    private ResponseEntity<?> exportAsJson(EvaluationReport report, String reportId) {
+        try {
+            Map<String, Object> json = Map.of(
+                "reportId", reportId,
+                "summary", report.getSummary(),
+                "evaluations", report.getEvaluations(),
+                "exportTime", Instant.now().toString()
+            );
+            
+            String jsonStr = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(json);
+            byte[] bytes = jsonStr.getBytes(StandardCharsets.UTF_8);
+            
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report_" + reportId + ".json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(bytes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    private ResponseEntity<?> exportAsCsv(EvaluationReport report, String reportId) {
+        String csv = generateCsv(report);
+        byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
+        
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report_" + reportId + ".csv")
+            .contentType(MediaType.parseMediaType("text/csv"))
+            .body(bytes);
+    }
+    
+    private String generateCsv(EvaluationReport report) {
+        StringBuilder csv = new StringBuilder();
+        csv.append("Test Case ID,Passed,Overall Score");
+        
+        if (!report.getEvaluations().isEmpty()) {
+            var firstResults = report.getEvaluations().get(0).getScorerResults();
+            for (String scorerName : firstResults.keySet()) {
+                csv.append(",").append(scorerName).append(" Score");
+                csv.append(",").append(scorerName).append(" Passed");
+                csv.append(",").append(scorerName).append(" Rationale");
+            }
+        }
+        csv.append("\n");
+        
+        for (Evaluation ev : report.getEvaluations()) {
+            csv.append(ev.getTestCaseId()).append(",");
+            csv.append(ev.isPassed() ? "true," : "false,");
+            csv.append(String.format("%.2f", ev.getOverallScore()));
+            
+            for (var sr : ev.getScorerResults().values()) {
+                csv.append(",").append(String.format("%.2f", sr.getScore()));
+                csv.append(",").append(sr.isPassed() ? "true" : "false");
+                csv.append(",\"").append(sr.getRationale().replace("\"", "'" )).append("\"");
+            }
+            csv.append("\n");
+        }
+        
+        return csv.toString();
     }
 
     private Agent createAgent(String type, Map<String, Object> config) {
