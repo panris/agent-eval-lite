@@ -1,0 +1,28 @@
+[ {
+  "id" : "ab03c241-cf0b-4a82-8db6-ee5bfdefc29d",
+  "name" : "加法测试",
+  "input" : "2+2=?",
+  "expected" : "4",
+  "groupId" : "474ea4e4-4064-4abd-bf9a-8ee075de9e2f",
+  "metadata" : null,
+  "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411428000 ],
+  "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 411488000 ]
+}, {
+  "id" : "a29625dc-853f-4894-8f97-fb76961ed151",
+  "name" : "减法测试",
+  "input" : "10-5=?",
+  "expected" : "5",
+  "groupId" : null,
+  "metadata" : null,
+  "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411475000 ],
+  "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 418551000 ]
+}, {
+  "id" : "84df1e28-6ea4-4269-8a25-1c601072415b",
+  "name" : "乘法测试",
+  "input" : "3*3=?",
+  "expected" : "9",
+  "groupId" : null,
+  "metadata" : null,
+  "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411461000 ],
+  "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 418296000 ]
+} ]
