@@ -35,6 +35,11 @@ public class EvalController {
         return "index";
     }
 
+    @GetMapping("/manage")
+    public String manage() {
+        return "manage";
+    }
+
     @PostMapping("/api/evaluate")
     @ResponseBody
     public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
