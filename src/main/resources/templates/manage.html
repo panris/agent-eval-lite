@@ -565,9 +565,21 @@
             <h2 class="card-title">评测历史记录</h2>
 
             <div class="action-bar" style="margin-bottom: 15px;">
-                <button class="btn btn-danger btn-sm" onclick="deleteSelectedReports()">🗑️ 删除选中</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteAllReports()">⚠️ 清空全部</button>
-                <button class="btn btn-primary btn-sm" onclick="openImportModal()">📥 批量导入</button>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..." 
+                        style="width: 200px;" oninput="filterHistory()">
+                    <select id="history-filter" class="form-control" style="width: 120px;" onchange="filterHistory()">
+                        <option value="">全部报告</option>
+                        <option value="favorites">⭐ 收藏</option>
+                        <option value="passed">✅ 已通过</option>
+                        <option value="failed">❌ 未通过</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-sm" onclick="compareSelectedReports()">📊 对比选中</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteSelectedReports()">🗑️ 删除选中</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAllReports()">⚠️ 清空全部</button>
+                </div>
             </div>
 
             <div class="loading" id="history-loading">
@@ -767,51 +779,78 @@
                 document.getElementById('history-loading').classList.add('show');
                 
                 const response = await fetch('/api/reports');
-                const reports = await response.json();
+                window._allReports = await response.json();
                 
-                const tbody = document.getElementById('history-tbody');
-                if (reports.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">暂无评测记录</td></tr>';
-                } else {
-                    tbody.innerHTML = reports.map(report => `
-                        <tr>
-                            <td><input type="checkbox" class="history-checkbox" value="${report.id}"></td>
-                            <td><code>${report.id}</code></td>
-                            <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
-                            <td>
-                                <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
-                                    ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
-                                </span>
-                            </td>
-                            <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
-                            <td>
-                                <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                                    ${(report.tags || []).map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
-                                    <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${report.id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
-                                </div>
-                            </td>
-                            <td>
-                                <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${report.note || ''}">
-                                    ${report.note ? report.note.substring(0, 15) + (report.note.length > 15 ? '...' : '') : '<span style="color: var(--text-secondary);">无</span>'}
-                                </div>
-                            </td>
-                            <td>
-                                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                    <button class="btn btn-sm" onclick="openNoteModal('${report.id}', '${(report.note || '').replace(/'/g, "&#39;")}')">📝</button>
-                                    <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${report.id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
-                                    <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">详情</button>
-                                    <button class="btn btn-sm" onclick="copyReport('${report.id}')">📋</button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('');
-                }
+                filterHistory();
                 
             } catch (error) {
                 console.error('Failed to load history:', error);
                 showToast('加载评测历史失败', 'error');
             } finally {
                 document.getElementById('history-loading').classList.remove('show');
+            }
+        }
+        
+        function filterHistory() {
+            const searchText = (document.getElementById('history-search')?.value || '').toLowerCase();
+            const filterValue = document.getElementById('history-filter')?.value || '';
+            const reports = window._allReports || [];
+            
+            // 应用过滤
+            let filtered = reports.filter(report => {
+                // 搜索过滤
+                if (searchText) {
+                    const id = (report.id || '').toLowerCase();
+                    const note = (report.note || '').toLowerCase();
+                    const tags = (report.tags || []).join(' ').toLowerCase();
+                    if (!id.includes(searchText) && !note.includes(searchText) && !tags.includes(searchText)) {
+                        return false;
+                    }
+                }
+                // 分类过滤
+                if (filterValue === 'favorites' && !report.favorite) return false;
+                if (filterValue === 'passed' && (report.summary?.pass_rate || 0) < 70) return false;
+                if (filterValue === 'failed' && (report.summary?.pass_rate || 0) >= 70) return false;
+                return true;
+            });
+            
+            // 渲染
+            const tbody = document.getElementById('history-tbody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
+            } else {
+                tbody.innerHTML = filtered.map(report => `
+                    <tr>
+                        <td><input type="checkbox" class="history-checkbox" value="${report.id}"></td>
+                        <td><code>${report.id}</code></td>
+                        <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
+                        <td>
+                            <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
+                                ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
+                            </span>
+                        </td>
+                        <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                                ${(report.tags || []).map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${report.id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${report.note || ''}">
+                                ${report.note ? report.note.substring(0, 15) + (report.note.length > 15 ? '...' : '') : '<span style="color: var(--text-secondary);">无</span>'}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                <button class="btn btn-sm" onclick="openNoteModal('${report.id}', '${(report.note || '').replace(/'/g, "&#39;")}')">📝</button>
+                                <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${report.id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
+                                <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">详情</button>
+                                <button class="btn btn-sm" onclick="copyReport('${report.id}')">📋</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
             }
         }
 
