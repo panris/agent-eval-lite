@@ -409,6 +409,8 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -545,6 +547,7 @@
                 <button class="btn btn-primary btn-sm" onclick="showEvalDetails()">查看详情</button>
                 <button class="btn btn-success btn-sm" onclick="exportReport('json')">导出 JSON</button>
                 <button class="btn btn-success btn-sm" onclick="exportReport('csv')">导出 CSV</button>
+                <button class="btn btn-success btn-sm" onclick="exportReportPdf()">📄 导出 PDF</button>
             </div>
 
             <div id="eval-details" style="display: none; margin-bottom: 20px;">
@@ -1684,6 +1687,95 @@
             
             const url = `/api/reports/${window.lastReportId}/export?format=${format}`;
             window.open(url, '_blank');
+        }
+        
+        // 导出 PDF 报告
+        async function exportReportPdf() {
+            if (!window.lastReportId) {
+                showToast('没有可导出的评测报告', 'info');
+                return;
+            }
+            
+            try {
+                // 获取报告详情
+                const response = await fetch(`/api/reports/${window.lastReportId}`);
+                const report = await response.json();
+                
+                if (!report || !report.reportId) {
+                    showToast('获取报告数据失败', 'error');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // 设置中文字体支持
+                doc.setFont('helvetica');
+                
+                // 标题
+                doc.setFontSize(20);
+                doc.text('Agent Eval Lite - 评测报告', 20, 20);
+                
+                // 报告信息
+                doc.setFontSize(10);
+                doc.text(`报告ID: ${report.reportId}`, 20, 35);
+                doc.text(`生成时间: ${new Date(report.timestamp).toLocaleString('zh-CN')}`, 20, 42);
+                
+                // 评测摘要
+                doc.setFontSize(14);
+                doc.text('评测摘要', 20, 55);
+                
+                doc.setFontSize(10);
+                const summary = report.summary || {};
+                doc.text(`总测试用例: ${summary.total || 0}`, 25, 65);
+                doc.text(`通过数: ${summary.passed || 0}`, 25, 72);
+                doc.text(`失败数: ${summary.failed || 0}`, 25, 79);
+                doc.text(`通过率: ${(summary.pass_rate || 0).toFixed(1)}%`, 25, 86);
+                doc.text(`平均分: ${(summary.average_score || 0).toFixed(2)}`, 25, 93);
+                doc.text(`执行时间: ${summary.execution_time || 0} ms`, 25, 100);
+                
+                // 详细结果表格
+                doc.setFontSize(14);
+                doc.text('详细结果', 20, 115);
+                
+                const evaluations = report.evaluations || [];
+                const tableData = evaluations.map((ev, i) => [
+                    i + 1,
+                    ev.testCaseId || '-',
+                    ev.passed ? '✅ 通过' : '❌ 失败',
+                    (ev.overallScore || 0).toFixed(2)
+                ]);
+                
+                doc.autoTable({
+                    startY: 120,
+                    head: [['#', '用例ID', '状态', '评分']],
+                    body: tableData,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [102, 126, 234] },
+                    alternateRowStyles: { fillColor: [245, 245, 245] }
+                });
+                
+                // 页脚
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.text(
+                        `第 ${i} 页 / 共 ${pageCount} 页 - 由 Agent Eval Lite 生成`,
+                        doc.internal.pageSize.width / 2,
+                        doc.internal.pageSize.height - 10,
+                        { align: 'center' }
+                    );
+                }
+                
+                // 下载 PDF
+                doc.save(`evaluation_report_${report.reportId}.pdf`);
+                showToast('PDF 报告已下载', 'success');
+                
+            } catch (error) {
+                console.error('PDF export failed:', error);
+                showToast('PDF 导出失败', 'error');
+            }
         }
 
         // 按分组评测
