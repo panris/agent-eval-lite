@@ -439,8 +439,10 @@
                 <button class="btn btn-primary" onclick="createTestCase()">添加</button>
             </div>
 
-            <div style="margin-bottom: 15px;">
-                <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="width: 100%;">
+            <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="flex: 1; min-width: 200px;">
+                <button class="btn btn-success btn-sm" onclick="exportAllTestCases('json')">📤 导出 JSON</button>
+                <button class="btn btn-success btn-sm" onclick="exportAllTestCases('csv')">📤 导出 CSV</button>
             </div>
 
             <div class="loading" id="cases-loading">
@@ -1030,6 +1032,7 @@
                 const response = await fetch('/api/testcases');
                 const data = await response.json();
                 testCases = data.testCases || [];
+                window._testCases = testCases;  // 保存用于导出
 
                 const tbody = document.getElementById('cases-tbody');
                 tbody.innerHTML = testCases.map(tc => `
@@ -1525,6 +1528,46 @@
 
         
         // 批量导入相关函数
+        function exportAllTestCases(format) {
+            const testCases = window._testCases || [];
+            if (testCases.length === 0) {
+                showToast('没有可导出的测试用例', 'info');
+                return;
+            }
+            
+            let content, filename, mimeType;
+            
+            if (format === 'json') {
+                content = JSON.stringify(testCases, null, 2);
+                filename = `testcases_${Date.now()}.json`;
+                mimeType = 'application/json';
+            } else {
+                // CSV 格式
+                const headers = ['name', 'input', 'expected', 'groupId'];
+                const rows = [headers.join(',')];
+                testCases.forEach(tc => {
+                    rows.push([
+                        `"${(tc.name || '').replace(/"/g, '""')}"`,
+                        `"${(tc.input || '').replace(/"/g, '""')}"`,
+                        `"${(tc.expected || '').replace(/"/g, '""')}"`,
+                        `"${tc.groupId || ''}"`
+                    ].join(','));
+                });
+                content = rows.join('\n');
+                filename = `testcases_${Date.now()}.csv`;
+                mimeType = 'text/csv';
+            }
+            
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`已导出 ${testCases.length} 条测试用例`, 'success');
+        }
+        
         function openImportModal() {
             document.getElementById('import-modal').style.display = 'block';
         }
