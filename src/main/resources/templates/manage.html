@@ -764,6 +764,22 @@
             }
         }
 
+        // 复制报告
+        async function copyReport(reportId) {
+            try {
+                const response = await fetch(`/api/reports/${reportId}/copy`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('报告已复制', 'success');
+                    loadHistory();
+                } else {
+                    showToast(data.error || '复制失败', 'error');
+                }
+            } catch (error) {
+                showToast('复制失败', 'error');
+            }
+        }
+
         // 全选/取消全选历史记录
         function toggleAllHistory() {
             const checked = document.getElementById('select-all-history').checked;
@@ -1415,6 +1431,20 @@
             }
         }
 
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter: 提交表单
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab && activeTab.id === 'cases-content') createTestCase();
+                else if (activeTab && activeTab.id === 'groups-content') createGroup();
+            }
+            // Ctrl/Cmd + D: 切换深色模式
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+        });
     </script>
 </body>
 </html>

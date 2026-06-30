@@ -414,6 +414,19 @@ class EvaluateByCaseIdsRequest {
 }
 
 class EvaluateByGroupRequest {
+
+    @PostMapping("/api/reports/{id}/copy")
+    @ResponseBody
+    public Map<String, Object> copyReport(@PathVariable String id) {
+        Map<String, Object> original = reportHistory.get(id);
+        if (original == null) {
+            return Map.of("success", false, "error", "Report not found");
+        }
+        String newId = "report_" + System.currentTimeMillis();
+        reportHistory.put(newId, new LinkedHashMap<>(original));
+        saveReportHistory();
+        return Map.of("success", true, "newId", newId, "message", "Report copied");
+    }
     private List<String> metrics;
     private String agentType;
 
