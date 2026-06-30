@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: agent-eval-lite
+
+logging:
+  level:
+    io.github.panris.agenteval: DEBUG
+    org.springframework.web: INFO
