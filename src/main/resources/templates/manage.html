@@ -468,6 +468,7 @@
                 <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="flex: 1; min-width: 200px;">
                 <button class="btn btn-success btn-sm" onclick="exportAllTestCases('json')">📤 导出 JSON</button>
                 <button class="btn btn-success btn-sm" onclick="exportAllTestCases('csv')">📤 导出 CSV</button>
+                <button class="btn btn-success btn-sm" onclick="exportTestCasesExcel()">📊 导出 Excel</button>
             </div>
 
             <div class="loading" id="cases-loading">
@@ -495,6 +496,7 @@
                     已选择 <span id="selected-case-count">0</span> 个用例
                 </span>
                 <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success btn-sm" onclick="openImportExcelModal()">📥 导入 Excel</button>
                     <button class="btn btn-primary btn-sm" onclick="runSelectedEvaluation()">🚀 评测选中用例</button>
                     <button class="btn btn-warning btn-sm" onclick="openBatchEditModal()">✏️ 批量编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="batchDeleteCases()">🗑️ 批量删除</button>
@@ -783,6 +785,28 @@
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-primary btn-sm" onclick="applyBatchEdit()">应用修改</button>
                 <button class="btn btn-sm" onclick="closeBatchEditModal()" style="background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入 Excel 模态框 -->
+    <div id="import-excel-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog" style="max-width: 500px;">
+            <h3>📥 导入 Excel 文件</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">支持 .xlsx 格式，包含测试用例数据</p>
+            
+            <div style="margin: 20px 0;">
+                <input type="file" id="excel-file-input" accept=".xlsx,.xls" 
+                    style="padding: 10px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
+            </div>
+            
+            <p style="color: var(--text-secondary); font-size: 12px;">
+                Excel 列顺序：名称 | 输入 | 期望输出 | 分组
+            </p>
+            
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn btn-primary btn-sm" onclick="importTestCasesExcel()">导入</button>
+                <button class="btn btn-sm" onclick="closeImportExcelModal()" style="background: #6c757d; color: white;">取消</button>
             </div>
         </div>
     </div>
@@ -1925,6 +1949,73 @@
             a.click();
             URL.revokeObjectURL(url);
             showToast(`已导出 ${testCases.length} 条测试用例`, 'success');
+        }
+        
+        // 导出 Excel
+        async function exportTestCasesExcel() {
+            try {
+                showToast('正在导出 Excel...', 'info');
+                const response = await fetch('/api/testcases/export/excel');
+                if (!response.ok) throw new Error('导出失败');
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'testcases.xlsx';
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast('Excel 导出成功', 'success');
+            } catch (error) {
+                console.error('Excel export failed:', error);
+                showToast('Excel 导出失败', 'error');
+            }
+        }
+        
+        // 打开导入 Excel 模态框
+        function openImportExcelModal() {
+            document.getElementById('import-excel-modal').style.display = 'block';
+            document.getElementById('excel-file-input').value = '';
+        }
+        
+        // 关闭导入 Excel 模态框
+        function closeImportExcelModal() {
+            document.getElementById('import-excel-modal').style.display = 'none';
+        }
+        
+        // 导入 Excel 文件
+        async function importTestCasesExcel() {
+            const fileInput = document.getElementById('excel-file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showToast('请选择 Excel 文件', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                showToast('正在导入...', 'info');
+                const response = await fetch('/api/testcases/import/excel', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`成功导入 ${result.imported} 条测试用例`, 'success');
+                    closeImportExcelModal();
+                    loadTestCases();
+                } else {
+                    showToast(result.message || '导入失败', 'error');
+                }
+            } catch (error) {
+                console.error('Excel import failed:', error);
+                showToast('Excel 导入失败', 'error');
+            }
         }
         
         function openImportModal() {
