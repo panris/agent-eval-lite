@@ -564,7 +564,9 @@ public class EvalController {
             for (Map<String, Object> r : reports) {
                 Object summaryObj = r.get("summary");
                 if (summaryObj instanceof Map) {
-                    Object scoreObj = ((Map<?, ?>) summaryObj).get("averageScore");
+                    Map<?, ?> summary = (Map<?, ?>) summaryObj;
+                    Object scoreObj = summary.get("averageScore");
+                    if (scoreObj == null) scoreObj = summary.get("average_score");
                     if (scoreObj instanceof Number) {
                         scores.add(((Number) scoreObj).doubleValue());
                     }

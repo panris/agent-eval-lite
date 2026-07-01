@@ -1051,7 +1051,8 @@
             }
         }
 
-        // 对比选中报告
+        
+// 对比选中报告（增强版：可视化对比弹窗）
         async function compareSelectedReports() {
             const checkboxes = document.querySelectorAll('.history-checkbox:checked');
             const ids = Array.from(checkboxes).map(cb => cb.value);
@@ -1064,16 +1065,109 @@
                 return;
             }
             try {
+                showToast('正在对比分析...', 'info');
                 const response = await fetch(`/api/reports/compare?ids=${ids.join(",")}`);
                 const data = await response.json();
-                if (data.success) {
-                    const stats = data.comparison.scoreStats;
-                    showToast(`对比完成: 平均分 ${stats.avg.toFixed(1)}, 最高 ${stats.max.toFixed(1)}, 最低 ${stats.min.toFixed(1)}`, 'info');
+                if (!data.success) {
+                    showToast(data.error || '对比失败', 'error');
+                    return;
                 }
+
+                const reports = data.comparison.reports;
+                const stats = data.comparison.scoreStats;
+
+                // 构建对比结果弹窗
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center;
+                    z-index: 9999; overflow-y: auto; padding: 20px;
+                `;
+
+                let rowsHtml = reports.map((r, i) => {
+                    const summary = r.summary || {};
+                    const ts = new Date(r.timestamp || Date.now()).toLocaleString('zh-CN');
+                    const passRate = (summary.pass_rate || 0).toFixed(1);
+                    const avgScore = (summary.average_score || 0).toFixed(2);
+                    return `<tr>
+                        <td>${i + 1}</td>
+                        <td><code>${r.reportId || '-'}</code></td>
+                        <td>${ts}</td>
+                        <td>${r.totalCases || summary.total || '-'}</td>
+                        <td style="color: #4CAF50; font-weight: bold;">${passRate}%</td>
+                        <td style="color: #2196F3; font-weight: bold;">${avgScore}</td>
+                        <td>${summary.execution_time || '-'}ms</td>
+                    </tr>`;
+                }).join('');
+
+                const scoreBarHtml = stats ? `<div style="margin: 16px 0; padding: 16px; background: var(--bg-card,#f5f7fa); border-radius: 8px;">
+                    <h4 style="margin: 0 0 12px 0;">📊 评分统计</h4>
+                    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                        <div><strong>最低分</strong><br><span style="font-size: 20px; color: #f44336;">${stats.min.toFixed(2)}</span></div>
+                        <div><strong>平均分</strong><br><span style="font-size: 20px; color: #2196F3;">${stats.avg.toFixed(2)}</span></div>
+                        <div><strong>最高分</strong><br><span style="font-size: 20px; color: #4CAF50;">${stats.max.toFixed(2)}</span></div>
+                    </div>
+                </div>` : '';
+
+                overlay.innerHTML = `
+                    <div style="
+                        background: var(--bg-main, white);
+                        border-radius: 16px;
+                        max-width: 900px;
+                        width: 100%;
+                        padding: 24px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                        max-height: 85vh;
+                        overflow-y: auto;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 style="margin: 0;">📊 报告对比</h2>
+                            <button onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="
+                                background: none; border: none; font-size: 24px; cursor: pointer; color: #999;
+                            ">&times;</button>
+                        </div>
+
+                        <p style="color: var(--text-secondary, #666); margin-bottom: 16px;">
+                            对比 ${reports.length} 份报告
+                        </p>
+
+                        ${scoreBarHtml}
+
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: var(--bg-card, #f0f0f0);">
+                                        <th style="padding: 8px 12px; text-align: left;">#</th>
+                                        <th style="padding: 8px 12px; text-align: left;">报告 ID</th>
+                                        <th style="padding: 8px 12px; text-align: left;">时间</th>
+                                        <th style="padding: 8px 12px; text-align: left;">用例数</th>
+                                        <th style="padding: 8px 12px; text-align: left;">通过率</th>
+                                        <th style="padding: 8px 12px; text-align: left;">平均分</th>
+                                        <th style="padding: 8px 12px; text-align: left;">耗时</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="this.closest('[style*=\\'position: fixed\\']').remove()">
+                                ✅ 关闭
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+                showToast('对比完成', 'success');
             } catch (error) {
+                console.error('Compare failed:', error);
                 showToast('对比失败', 'error');
             }
         }
+
 
         // 复制报告
         async function copyReport(reportId) {
@@ -1141,7 +1235,7 @@
             });
         }
 
-        // 对比选中报告
+        // 清空全部报告
         async function deleteAllReports() {
             showConfirm('清空全部', '⚠️ 确定要清空所有评测历史记录吗？此操作不可恢复！', async () => {
                 try {
@@ -1150,7 +1244,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'clearAll' })
                     });
-                    showToast('已对比选中报告', 'success');
+                    showToast('已清空全部报告', 'success');
                     loadHistory();
                 } catch (error) {
                     console.error('Failed to clear reports:', error);
