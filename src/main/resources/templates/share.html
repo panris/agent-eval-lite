@@ -125,7 +125,7 @@
     <div class="container">
         <div class="card">
             <h1>📊 评测报告</h1>
-            <p class="subtitle" th:text="${#temporals.format(T(java.time.Instant).atZone(T(java.time.ZoneId).systemDefault()).toLocalDateTime().minusSeconds(0), 'yyyy-MM-dd HH:mm:ss')}">报告时间</p>
+            <p class="subtitle" th:text="${#dates.format(#dates.createNow(), 'yyyy-MM-dd HH:mm:ss')}">报告时间</p>
             
             <div class="stats-grid">
                 <div class="stat-box">
@@ -159,9 +159,8 @@
                           th:text="${ev.passed ? '✅ 通过' : '❌ 失败'}">状态</span>
                 </div>
                 <div class="eval-item-body">
-                    <p><strong>输入:</strong> <span th:text="${ev.testCase?.input ?: ev.testCaseId ?: '-'}">-</span></p>
-                    <p><strong>期望:</strong> <span th:text="${ev.testCase?.expected ?: '-'}">-</span></p>
-                    <p><strong>Agent 输出:</strong> <span th:text="${ev.agentOutput ?: '-'}">-</span></p>
+                    <p><strong>用例ID:</strong> <span th:text="${ev.testCaseId ?: '-'}">-</span></p>
+                    <p><strong>Agent 输出:</strong> <span th:text="${ev.agentOutput?.output ?: '-'}">-</span></p>
                     <p><strong>评分:</strong> <span th:text="${#numbers.formatDecimal((ev.overallScore ?: 0) * 100, 1, 0)}">0</span>%</p>
                 </div>
             </div>
@@ -170,7 +169,20 @@
             </div>
         </div>
         
-        <a href="/" class="back-link">← 返回首页</a>
+        <div style="display: flex; gap: 16px; justify-content: center; margin-top: 20px;">
+            <a href="/" class="back-link">← 返回首页</a>
+            <a th:href="@{'/api/reports/' + ${reportId} + '/export/pdf'}" 
+               class="btn-pdf" style="
+                display: inline-block;
+                color: white;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                text-decoration: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: bold;
+            " target="_blank">📄 下载 PDF 报告</a>
+        </div>
     </div>
 </body>
 </html>

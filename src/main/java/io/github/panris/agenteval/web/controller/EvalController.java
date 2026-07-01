@@ -26,13 +26,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Controller
 public class EvalController {
 
-    private final Map<String, Map<String, Object>> reportHistory = new ConcurrentHashMap<>();
-    private final Map<String, String> sharedReports = new ConcurrentHashMap<>();  // shareId -> reportId
+    private final Map<String, Map<String, Object>> reportHistory;
+    private final Map<String, String> sharedReports;  // shareId -> reportId
     private final TestCaseRepository testCaseRepository;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
-    public EvalController(TestCaseRepository testCaseRepository) {
+    public EvalController(TestCaseRepository testCaseRepository,
+                           Map<String, Map<String, Object>> reportHistory,
+                           Map<String, String> sharedReports) {
         this.testCaseRepository = testCaseRepository;
+        this.reportHistory = reportHistory;
+        this.sharedReports = sharedReports;
         loadReportHistory();
         // Clean up old reports if too many
         cleanupOldReports(100);  // Keep latest 100 reports
@@ -666,41 +670,5 @@ class EvaluateByGroupRequest {
 
     public void setAgentType(String agentType) {
         this.agentType = agentType;
-    }
-}
-
-// 分享页面控制器
-@Controller
-class ShareController {
-    private final Map<String, Map<String, Object>> reportHistory;
-    private final Map<String, String> sharedReports;
-
-    public ShareController(Map<String, Map<String, Object>> reportHistory,
-                           Map<String, String> sharedReports) {
-        this.reportHistory = reportHistory;
-        this.sharedReports = sharedReports;
-    }
-
-    @GetMapping("/share/{shareId}")
-    public String showSharedReport(@PathVariable String shareId, Model model) {
-        String reportId = sharedReports.get(shareId);
-        if (reportId == null) {
-            return "redirect:/";
-        }
-        
-        Map<String, Object> report = reportHistory.get(reportId);
-        if (report == null) {
-            return "redirect:/";
-        }
-        
-        model.addAttribute("reportId", reportId);
-        model.addAttribute("summary", report.get("summary"));
-        model.addAttribute("timestamp", report.get("timestamp"));
-        model.addAttribute("evaluations", report.get("evaluations"));
-        model.addAttribute("totalTestCases", report.getOrDefault("totalTestCases", 0));
-        model.addAttribute("passedTestCases", report.getOrDefault("passedTestCases", 0));
-        model.addAttribute("failedTestCases", report.getOrDefault("failedTestCases", 0));
-        
-        return "share";
     }
 }
