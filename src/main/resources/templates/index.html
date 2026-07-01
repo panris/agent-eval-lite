@@ -828,6 +828,7 @@
                 `;
             } catch (error) {
                 console.error('加载历史记录失败:', error);
+                historyList.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">加载历史记录失败</p>';
             }
         }
 

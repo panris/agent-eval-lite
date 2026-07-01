@@ -1176,6 +1176,7 @@
                 `).join('');
             } catch (error) {
                 console.error('Failed to load test cases:', error);
+                showToast('加载测试用例失败', 'error');
             } finally {
                 document.getElementById('cases-loading').classList.remove('show');
             }

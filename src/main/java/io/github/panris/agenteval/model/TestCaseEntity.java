@@ -75,11 +75,14 @@ public class TestCaseEntity {
     }
 
     public Map<String, Object> getMetadata() {
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
         return metadata;
     }
 
     public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
+        this.metadata = metadata != null ? metadata : new HashMap<>();
     }
 
     public LocalDateTime getCreatedAt() {
@@ -104,6 +107,9 @@ public class TestCaseEntity {
     
     @SuppressWarnings("unchecked")
     public java.util.List<String> getTags() {
+        if (metadata == null) {
+            return new java.util.ArrayList<>();
+        }
         Object tags = metadata.get("tags");
         if (tags instanceof java.util.List) {
             return (java.util.List<String>) tags;
@@ -113,6 +119,9 @@ public class TestCaseEntity {
     
     @SuppressWarnings("unchecked")
     public void setTags(java.util.List<String> tags) {
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
         metadata.put("tags", tags != null ? tags : new java.util.ArrayList<>());
     }
 }

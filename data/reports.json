@@ -1,55 +1,4 @@
 {
-  "report_1782742919277" : {
-    "summary" : {
-      "failed_test_cases" : 0.0,
-      "pass_rate" : 100.0,
-      "average_score" : 1.0,
-      "total_test_cases" : 2.0,
-      "passed_test_cases" : 2.0
-    },
-    "totalTestCases" : 2,
-    "passedTestCases" : 2,
-    "failedTestCases" : 0,
-    "executionTimeMs" : 2,
-    "evaluations" : [ {
-      "testCaseId" : "tc_1782742919274_2983",
-      "agentOutput" : {
-        "output" : "4",
-        "metadata" : { },
-        "executionTimeMs" : 0,
-        "error" : null
-      },
-      "scorerResults" : {
-        "correctness" : {
-          "score" : 1.0,
-          "passed" : true,
-          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
-          "metadata" : { }
-        }
-      },
-      "passed" : true,
-      "overallScore" : 1.0
-    }, {
-      "testCaseId" : "tc_1782742919275_6835",
-      "agentOutput" : {
-        "output" : "9",
-        "metadata" : { },
-        "executionTimeMs" : 0,
-        "error" : null
-      },
-      "scorerResults" : {
-        "correctness" : {
-          "score" : 1.0,
-          "passed" : true,
-          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
-          "metadata" : { }
-        }
-      },
-      "passed" : true,
-      "overallScore" : 1.0
-    } ],
-    "timestamp" : 1782742919277
-  },
   "report_1782741470381" : {
     "evaluations" : [ {
       "testCaseId" : "tc_1782741470378_4354",
@@ -114,5 +63,207 @@
       "passed" : true,
       "overallScore" : 1.0
     } ]
+  },
+  "report_1782742919277" : {
+    "summary" : {
+      "failed_test_cases" : 0.0,
+      "pass_rate" : 100.0,
+      "average_score" : 1.0,
+      "total_test_cases" : 2.0,
+      "passed_test_cases" : 2.0
+    },
+    "totalTestCases" : 2,
+    "passedTestCases" : 2,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 2,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1782742919274_2983",
+      "agentOutput" : {
+        "output" : "4",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    }, {
+      "testCaseId" : "tc_1782742919275_6835",
+      "agentOutput" : {
+        "output" : "9",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    } ],
+    "timestamp" : 1782742919277
+  },
+  "report_1782823397539" : {
+    "summary" : {
+      "pass_rate" : 75.0,
+      "average_score" : 0.9416666666666667,
+      "total_test_cases" : 4.0,
+      "passed_test_cases" : 3.0,
+      "failed_test_cases" : 1.0
+    },
+    "totalTestCases" : 4,
+    "passedTestCases" : 3,
+    "failedTestCases" : 1,
+    "executionTimeMs" : 9,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1782823397525_8558",
+      "agentOutput" : {
+        "output" : "4",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    }, {
+      "testCaseId" : "tc_1782823397525_513",
+      "agentOutput" : {
+        "output" : "9",
+        "metadata" : { },
+        "executionTimeMs" : 1,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 1 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 1,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    }, {
+      "testCaseId" : "tc_1782823397525_5450",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: 10-5=?",
+        "metadata" : { },
+        "executionTimeMs" : 1,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 1 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 1,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 0.9666666666666667
+    }, {
+      "testCaseId" : "tc_1782823397525_663",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: What is Java?",
+        "metadata" : { },
+        "executionTimeMs" : 1,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.4,
+          "passed" : false,
+          "rationale" : "Similarity: 0.40 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 1 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 1,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.7999999999999999
+    } ],
+    "timestamp" : 1782823397539
   }
 }
