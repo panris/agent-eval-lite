@@ -411,6 +411,29 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+<!-- Loading Progress Bar -->
+    <style>
+        #loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 9999;
+            transition: width 0.3s ease;
+        }
+        #loading-bar.loading { width: 70%; }
+        #loading-bar.loaded { width: 100%; transition: width 0.2s ease; }
+    </style>
+    <script>
+        // Create loading bar
+        const loadingBar = document.createElement("div");
+        loadingBar.id = "loading-bar";
+        document.head.appendChild(loadingBar);
+        // Start loading animation
+        setTimeout(() => loadingBar.classList.add("loading"), 10);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -856,8 +879,21 @@
             else if (tab === 'history') loadHistory();
         }
 
+        // Debounce function for search optimization
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // 过滤测试用例
-        function filterTestCases() {
+        const filterTestCases = debounce(function() {
             const searchTerm = document.getElementById('case-search').value.toLowerCase();
             const tbody = document.getElementById('cases-tbody');
             const rows = tbody.getElementsByTagName('tr');
@@ -873,7 +909,7 @@
                 const match = name.includes(searchTerm) || input.includes(searchTerm) || expected.includes(searchTerm);
                 row.style.display = match ? '' : 'none';
             }
-        }
+        }, 300);
 
         let trendChart = null;
         
@@ -1837,6 +1873,13 @@
 
         // 页面加载时初始化
         window.onload = function() {
+            // Complete loading bar
+            const loadingBar = document.getElementById("loading-bar");
+            if (loadingBar) {
+                loadingBar.classList.remove("loading");
+                loadingBar.classList.add("loaded");
+                setTimeout(() => loadingBar.remove(), 500);
+            }
             loadTheme();
             loadTestCases();
             loadGroups();
@@ -2385,6 +2428,11 @@
             if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
                 e.preventDefault();
                 toggleTheme();
+            }
+            // Ctrl/Cmd + F: 聚焦搜索框
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('case-search')?.focus();
             }
         });
     </script>
