@@ -1,83 +1,97 @@
 # Agent Eval Lite
 
-A simple and easy-to-use Agent evaluation framework for Java.
+轻量级 Java Agent 评测系统 — 独立部署，开箱即用。
 
-## Quick Start (5 minutes)
+## 🚀 快速开始
 
-### 1. Add dependency
+### 方式一：直接运行（推荐）
+```bash
+# 1. 编译
+mvn compile
 
-```xml
-<dependency>
-    <groupId>io.github.panris</groupId>
-    <artifactId>agent-eval-lite</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-</dependency>
+# 2. 启动
+mvn spring-boot:run
+
+# 3. 访问
+# 首页: http://localhost:8080
+# 管理页: http://localhost:8080/manage
 ```
 
-### 2. Basic Evaluation
+### 方式二：Docker 部署
+```bash
+# 1. 打包
+mvn package -DskipTests
 
-```java
-import io.github.panris.agenteval.Evaluation;
-import io.github.panris.agenteval.Evaluator;
-import java.util.List;
+# 2. 构建镜像
+docker build -t agent-eval-lite .
 
-public class QuickStart {
-    public static void main(String[] args) {
-        // Define test cases
-        List<TestCase> testCases = List.of(
-            new TestCase("2+2=?", "4"),
-            new TestCase("3*3=?", "9")
-        );
-
-        // Create evaluator with built-in metrics
-        Evaluator evaluator = Evaluator.builder()
-            .metrics("correctness", "response_time")
-            .build();
-
-        // Run evaluation
-        EvaluationReport report = evaluator.evaluate(myAgent, testCases);
-
-        // View results
-        System.out.println(report.getSummary());
-    }
-}
+# 3. 运行
+docker run -p 8080:8080 agent-eval-lite
 ```
 
-## Features
+## 📚 API 文档
 
-- ✅ **Simple API**: Single entry point `Evaluator.evaluate()`
-- ✅ **Built-in Metrics**: Correctness, Safety, Relevance, ResponseTime, etc.
-- ✅ **Custom Scorers**: Easily create your own evaluation metrics
-- ✅ **Multiple Formats**: Support JSON, CSV, YAML test cases
-- ✅ **Rich Reports**: JSON, Markdown, DataFrame-style output
+### 测试用例管理
+- `GET /api/testcases` — 获取所有测试用例
+- `POST /api/testcases` — 创建测试用例
+- `PUT /api/testcases/{id}` — 更新测试用例
+- `DELETE /api/testcases/{id}` — 删除测试用例
 
-## Built-in Metrics
+### 评测
+- `POST /api/evaluate` — 运行评测
+  ```json
+  {
+    "testCaseIds": ["id1", "id2"],
+    "metrics": ["correctness", "safety"]
+  }
+  ```
 
-| Metric | Description |
-|--------|-------------|
-| `correctness` | Evaluates if the output matches expected result |
-| `safety` | Checks for harmful, toxic, or inappropriate content |
-| `relevance` | Measures how relevant the response is to the input |
-| `response_time` | Tracks execution time |
-| `tool_call_correctness` | Validates tool calls for agents |
+### 报告
+- `GET /api/reports` — 获取评测历史
+- `GET /api/reports/{id}` — 获取报告详情
+- `POST /api/reports/{id}/share` — 分享报告
 
-## Custom Scorer
+## ⌨️ 键盘快捷键
 
-```java
-@Scorer("my_custom_metric")
-public class MyCustomScorer implements EvaluationScorer {
-    @Override
-    public ScorerResult evaluate(TestCase testCase, AgentOutput output) {
-        // Your custom logic here
-        return ScorerResult.builder()
-            .score(0.9)
-            .passed(true)
-            .rationale("Custom evaluation passed")
-            .build();
-    }
-}
-```
+| 快捷键 | 功能 |
+|--------|------|
+| Ctrl/Cmd + Enter | 提交表单 |
+| Ctrl/Cmd + D | 切换深色模式 |
+| Ctrl/Cmd + F | 聚焦搜索框 |
+| Esc | 关闭模态框 |
 
-## License
+## 🛠️ 技术栈
+
+- **后端**: Java 17 + Spring Boot 3.2 + Thymeleaf
+- **前端**: Vanilla JS + Chart.js + Flatpickr
+- **存储**: JSON 文件（无需数据库）
+- **构建**: Maven
+
+## 📊 功能特性
+
+- ✅ 测试用例 CRUD
+- ✅ 分组管理
+- ✅ 多指标评测（Correctness / Safety / ResponseTime）
+- ✅ 评测历史趋势图
+- ✅ 报告分享
+- ✅ 深色模式
+- ✅ 响应式设计
+- ✅ 搜索防抖
+- ✅ 自动数据清理
+
+## 📝 开发计划
+
+- [ ] 支持 Excel 导入/导出
+- [ ] 添加更多评测指标
+- [ ] 邮件通知
+- [ ] 多用户支持
+- [ ] 数据库持久化（可选）
+
+## 📄 许可证
 
 MIT License
+
+---
+
+**作者**: panris  
+**GitHub**: [github.com/panris/agent-eval-lite](https://github.com/panris/agent-eval-lite)
