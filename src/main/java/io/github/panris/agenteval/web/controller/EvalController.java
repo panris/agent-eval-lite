@@ -34,6 +34,39 @@ public class EvalController {
     public EvalController(TestCaseRepository testCaseRepository) {
         this.testCaseRepository = testCaseRepository;
         loadReportHistory();
+        // Clean up old reports if too many
+        cleanupOldReports(100);  // Keep latest 100 reports
+    }
+
+    /**
+     * Clean up old reports if count exceeds limit.
+     */
+    private void cleanupOldReports(int maxReports) {
+        if (reportHistory.size() <= maxReports) return;
+        
+        System.out.println("Cleaning up old reports. Current count: " + reportHistory.size());
+        
+        // Sort by timestamp and keep latest maxReports
+        var sorted = reportHistory.entrySet().stream()
+            .sorted((a, b) -> {
+                Long tsA = getTimestamp(a.getValue());
+                Long tsB = getTimestamp(b.getValue());
+                return tsB.compareTo(tsA);  // Descending
+            })
+            .toList();
+        
+        // Clear and reload latest maxReports
+        reportHistory.clear();
+        sorted.stream().limit(maxReports).forEach(e -> reportHistory.put(e.getKey(), e.getValue()));
+        
+        saveReportHistory();
+        System.out.println("Cleanup complete. Kept " + reportHistory.size() + " reports");
+    }
+    
+    private Long getTimestamp(Map<String, Object> report) {
+        Object timestamp = report.get("timestamp");
+        if (timestamp instanceof Number) return ((Number) timestamp).longValue();
+        return 0L;
     }
 
     @PostConstruct
