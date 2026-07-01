@@ -1751,6 +1751,7 @@
         }
         
         // 导出 PDF 报告
+        // 导出 PDF 报告（服务器端生成，支持中文）
         async function exportReportPdf() {
             if (!window.lastReportId) {
                 showToast('没有可导出的评测报告', 'info');
@@ -1758,79 +1759,18 @@
             }
             
             try {
-                // 获取报告详情
-                const response = await fetch(`/api/reports/${window.lastReportId}`);
-                const report = await response.json();
+                showToast('正在生成 PDF...', 'info');
+                const response = await fetch(`/api/reports/${window.lastReportId}/export/pdf`);
                 
-                if (!report || !report.reportId) {
-                    showToast('获取报告数据失败', 'error');
-                    return;
-                }
+                if (!response.ok) throw new Error('PDF 生成失败');
                 
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                
-                // 设置中文字体支持
-                doc.setFont('helvetica');
-                
-                // 标题
-                doc.setFontSize(20);
-                doc.text('Agent Eval Lite - 评测报告', 20, 20);
-                
-                // 报告信息
-                doc.setFontSize(10);
-                doc.text(`报告ID: ${report.reportId}`, 20, 35);
-                doc.text(`生成时间: ${new Date(report.timestamp).toLocaleString('zh-CN')}`, 20, 42);
-                
-                // 评测摘要
-                doc.setFontSize(14);
-                doc.text('评测摘要', 20, 55);
-                
-                doc.setFontSize(10);
-                const summary = report.summary || {};
-                doc.text(`总测试用例: ${summary.total || 0}`, 25, 65);
-                doc.text(`通过数: ${summary.passed || 0}`, 25, 72);
-                doc.text(`失败数: ${summary.failed || 0}`, 25, 79);
-                doc.text(`通过率: ${(summary.pass_rate || 0).toFixed(1)}%`, 25, 86);
-                doc.text(`平均分: ${(summary.average_score || 0).toFixed(2)}`, 25, 93);
-                doc.text(`执行时间: ${summary.execution_time || 0} ms`, 25, 100);
-                
-                // 详细结果表格
-                doc.setFontSize(14);
-                doc.text('详细结果', 20, 115);
-                
-                const evaluations = report.evaluations || [];
-                const tableData = evaluations.map((ev, i) => [
-                    i + 1,
-                    ev.testCaseId || '-',
-                    ev.passed ? '✅ 通过' : '❌ 失败',
-                    (ev.overallScore || 0).toFixed(2)
-                ]);
-                
-                doc.autoTable({
-                    startY: 120,
-                    head: [['#', '用例ID', '状态', '评分']],
-                    body: tableData,
-                    styles: { fontSize: 8 },
-                    headStyles: { fillColor: [102, 126, 234] },
-                    alternateRowStyles: { fillColor: [245, 245, 245] }
-                });
-                
-                // 页脚
-                const pageCount = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= pageCount; i++) {
-                    doc.setPage(i);
-                    doc.setFontSize(8);
-                    doc.text(
-                        `第 ${i} 页 / 共 ${pageCount} 页 - 由 Agent Eval Lite 生成`,
-                        doc.internal.pageSize.width / 2,
-                        doc.internal.pageSize.height - 10,
-                        { align: 'center' }
-                    );
-                }
-                
-                // 下载 PDF
-                doc.save(`evaluation_report_${report.reportId}.pdf`);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = response.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'report.pdf';
+                a.click();
+                URL.revokeObjectURL(url);
                 showToast('PDF 报告已下载', 'success');
                 
             } catch (error) {
