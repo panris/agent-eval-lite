@@ -7,6 +7,7 @@ import io.github.panris.agenteval.Evaluator;
 import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.service.AsyncEvalService;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,14 +30,17 @@ public class EvalController {
     private final Map<String, Map<String, Object>> reportHistory;
     private final Map<String, String> sharedReports;  // shareId -> reportId
     private final TestCaseRepository testCaseRepository;
+    private final AsyncEvalService asyncEvalService;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public EvalController(TestCaseRepository testCaseRepository,
                            Map<String, Map<String, Object>> reportHistory,
-                           Map<String, String> sharedReports) {
+                           Map<String, String> sharedReports,
+                           AsyncEvalService asyncEvalService) {
         this.testCaseRepository = testCaseRepository;
         this.reportHistory = reportHistory;
         this.sharedReports = sharedReports;
+        this.asyncEvalService = asyncEvalService;
         loadReportHistory();
         // Clean up old reports if too many
         cleanupOldReports(100);  // Keep latest 100 reports
@@ -106,7 +110,7 @@ public class EvalController {
             new TestCase("2+2=?", "4"),
             new TestCase("3*3=?", "9")
         ));
-        model.addAttribute("metrics", List.of("correctness", "safety", "response_time"));
+        model.addAttribute("metrics", List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity"));
         return "index";
     }
 
@@ -156,7 +160,7 @@ public class EvalController {
         }
         
         // Validate metrics
-        List<String> validMetrics = List.of("correctness", "safety", "response_time");
+        List<String> validMetrics = List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
         for (String metric : request.getMetrics()) {
             if (!validMetrics.contains(metric)) {
                 return Map.of("success", false, "error", "不支持的评测指标: " + metric);
@@ -246,6 +250,80 @@ public class EvalController {
                 "success", false,
                 "error", "Group not found"
             ));
+    }
+
+    /**
+     * Submit async batch evaluation task.
+     */
+    @PostMapping("/api/evaluate/async")
+    @ResponseBody
+    public Map<String, Object> evaluateAsync(@RequestBody EvalRequest request) {
+        if (request == null || request.getTestCases() == null || request.getTestCases().isEmpty()) {
+            return Map.of("success", false, "error", "测试用例列表不能为空");
+        }
+        if (request.getTestCases().size() > 100) {
+            return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+        }
+        if (request.getMetrics() == null || request.getMetrics().isEmpty()) {
+            return Map.of("success", false, "error", "评测指标不能为空");
+        }
+        List<String> validMetrics = List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
+        for (String m : request.getMetrics()) {
+            if (!validMetrics.contains(m)) {
+                return Map.of("success", false, "error", "不支持的评测指标: " + m);
+            }
+        }
+        List<TestCase> testCases = new ArrayList<>();
+        for (TestCaseDto dto : request.getTestCases()) {
+            testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
+        }
+        String agentType = request.getAgentType() != null ? request.getAgentType() : "demo";
+        String taskId = asyncEvalService.submitTask(testCases, request.getMetrics(), agentType);
+        return Map.of("success", true, "taskId", taskId, "status", "PENDING");
+    }
+
+    /**
+     * Get async task status.
+     */
+    @GetMapping("/api/tasks/{taskId}")
+    @ResponseBody
+    public Map<String, Object> getTaskStatus(@PathVariable String taskId) {
+        AsyncEvalService.TaskStatus status = asyncEvalService.getStatus(taskId);
+        if (status == null) {
+            return Map.of("success", false, "error", "Task not found");
+        }
+        return Map.of(
+            "success", true,
+            "taskId", status.taskId,
+            "status", status.status,
+            "reportId", status.reportId != null ? status.reportId : "",
+            "error", status.error != null ? status.error : "",
+            "totalCases", status.totalCases,
+            "completedCases", status.completedCases,
+            "createdAt", status.createdAt,
+            "completedAt", status.completedAt
+        );
+    }
+
+    /**
+     * List all async tasks.
+     */
+    @GetMapping("/api/tasks")
+    @ResponseBody
+    public List<Map<String, Object>> listTasks() {
+        return asyncEvalService.getAllStatuses().stream()
+            .sorted((a, b) -> Long.compare(b.createdAt, a.createdAt))
+            .limit(50)
+            .map(s -> Map.<String, Object>of(
+                "taskId", s.taskId,
+                "status", s.status,
+                "reportId", s.reportId != null ? s.reportId : "",
+                "totalCases", s.totalCases,
+                "completedCases", s.completedCases,
+                "createdAt", s.createdAt,
+                "completedAt", s.completedAt
+            ))
+            .toList();
     }
 
     private Map<String, Object> runEvaluation(

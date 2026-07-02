@@ -318,6 +318,51 @@
     "totalTestCases" : 1,
     "passedTestCases" : 1
   },
+  "report_1783000288170" : {
+    "timestamp" : 1783000288170,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783000288165_5449",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: Hello world",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 25.00%",
+          "metadata" : { }
+        },
+        "similarity" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 23.68%",
+          "metadata" : { }
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%",
+          "metadata" : { }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.3333333333333333
+    } ],
+    "executionTimeMs" : 2,
+    "failedTestCases" : 1,
+    "passedTestCases" : 0,
+    "totalTestCases" : 1,
+    "summary" : {
+      "failed_test_cases" : 1.0,
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.3333333333333333,
+      "pass_rate" : 0.0
+    }
+  },
   "report_1782875802442" : {
     "totalTestCases" : 3,
     "passedTestCases" : 1,
@@ -699,5 +744,26 @@
       "passed" : true,
       "overallScore" : 1.0
     } ]
+  },
+  "report_1783000187601" : {
+    "summary" : {
+      "pass_rate" : 100.0,
+      "average_score" : 1.0,
+      "total_test_cases" : 1.0,
+      "passed_test_cases" : 1.0,
+      "failed_test_cases" : 0.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783000187596_4819",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "Hello"
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 3,
+    "timestamp" : 1783000187602,
+    "asyncTaskId" : "task_1783000187596"
   }
 }

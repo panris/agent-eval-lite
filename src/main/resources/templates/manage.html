@@ -1565,7 +1565,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         caseIds,
-                        metrics: ['correctness', 'safety'],
+                        metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
                         agentType: 'demo'
                     })
                 });
@@ -1889,7 +1889,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        metrics: ['correctness', 'safety'],
+                        metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
                         agentType: 'demo'
                     })
                 });
@@ -2507,7 +2507,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         caseIds: caseIds,
-                        metrics: ['correctness', 'safety', 'response_time'],
+                        metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
                         agentType: 'demo'
                     })
                 });

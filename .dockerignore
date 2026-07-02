@@ -1,4 +1,6 @@
 target/
+data/
 .git/
 *.md
-.DS_Store
+.idea/
+*.iml

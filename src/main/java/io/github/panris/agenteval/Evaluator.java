@@ -201,6 +201,9 @@ public class Evaluator {
                 case "correctness" -> new CorrectnessScorer();
                 case "safety" -> new SafetyScorer();
                 case "response_time" -> new ResponseTimeScorer();
+                case "bleu" -> new io.github.panris.agenteval.scorer.builtin.BleuScorer();
+                case "rouge" -> new io.github.panris.agenteval.scorer.builtin.RougeScorer();
+                case "similarity" -> new io.github.panris.agenteval.scorer.builtin.SimilarityScorer();
                 default -> null;
             };
         }
