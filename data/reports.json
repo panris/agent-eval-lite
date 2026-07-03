@@ -903,6 +903,296 @@
     "passedTestCases" : 1,
     "failedTestCases" : 0
   },
+  "report_1783093846942" : {
+    "timestamp" : 1783093846942,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783093846941_4253",
+      "agentOutput" : {
+        "output" : "4",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "bleu" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "BLEU: 100.00%",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "similarity" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 100.00%",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    } ],
+    "executionTimeMs" : 1,
+    "failedTestCases" : 0,
+    "passedTestCases" : 1,
+    "totalTestCases" : 1,
+    "summary" : {
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 1.0
+    }
+  },
+  "report_1783093832820" : {
+    "timestamp" : 1783093832820,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783093832812_1139",
+      "agentOutput" : {
+        "output" : "4",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "bleu" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "BLEU: 100.00%",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "similarity" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 100.00%",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    }, {
+      "testCaseId" : "tc_1783093832813_1467",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: 10/2=?",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 0.00%",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "similarity" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00%",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        },
+        "rouge" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "ROUGE-L: 0.00%",
+          "metadata" : { }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.3333333333333333
+    }, {
+      "testCaseId" : "tc_1783093832813_3715",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: 10-5=?",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 0.00%",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "similarity" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00%",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%",
+          "metadata" : { }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.65
+    }, {
+      "testCaseId" : "tc_1783093832813_8906",
+      "agentOutput" : {
+        "output" : "9",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "bleu" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "BLEU: 100.00%",
+          "metadata" : { }
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected",
+          "metadata" : { }
+        },
+        "similarity" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 100.00%",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    } ],
+    "executionTimeMs" : 3,
+    "failedTestCases" : 2,
+    "passedTestCases" : 2,
+    "totalTestCases" : 4,
+    "summary" : {
+      "pass_rate" : 50.0,
+      "failed_test_cases" : 2.0,
+      "passed_test_cases" : 2.0,
+      "total_test_cases" : 4.0,
+      "average_score" : 0.7458333333333333
+    }
+  },
   "report_1782823397539" : {
     "summary" : {
       "pass_rate" : 75.0,

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.awt.Color;
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 @RestController
@@ -33,16 +34,8 @@ public class PdfController {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             
-            // 使用 Arial Unicode MS 字体（系统自带）
-            BaseFont bfChinese;
-            try {
-                bfChinese = BaseFont.createFont(
-                    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-                    BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
-            } catch (Exception e) {
-                // 回退到 Helvetica（不支持中文但能显示英文）
-                bfChinese = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
-            }
+            // 中文字体查找：跨平台支持
+            BaseFont bfChinese = findChineseFont();
             
             Document document = new Document(PageSize.A4);
             PdfWriter.getInstance(document, baos);
@@ -268,7 +261,14 @@ public class PdfController {
             Object score = ev.get("overallScore");
             item.put("score", score instanceof Number ? score : 0);
             
-            String output = String.valueOf(ev.getOrDefault("output", ""));
+            // agentOutput.output 嵌套结构
+            String output = "";
+            Object agentOutputObj = ev.get("agentOutput");
+            if (agentOutputObj instanceof Map) {
+                Map<?, ?> agentOutput = (Map<?, ?>) agentOutputObj;
+                Object rawOut = agentOutput.get("output");
+                output = rawOut != null ? String.valueOf(rawOut) : "";
+            }
             item.put("output", output.length() > 200 ? output.substring(0, 200) + "..." : output);
             
             results.add(item);
@@ -277,5 +277,36 @@ public class PdfController {
         report.put("results", results);
         
         return report;
+    }
+
+    /**
+     * 跨平台中文字体查找：macOS → Linux(Noto/WQY) → Docker → 回退 Helvetica
+     */
+    private BaseFont findChineseFont() {
+        String[] fontPaths = {
+            "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+            "/System/Library/Fonts/AppleSDGothicNeo.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansSC-Regular.otf",
+            "/usr/share/fonts/opentype/noto/NotoSansSC-Regular.otf",
+            "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+            "/usr/share/fonts/wqy-zenhei/wqy-zenhei.ttc",
+            "/usr/share/fonts/wqy-microhei/wqy-microhei.ttc"
+        };
+        for (String path : fontPaths) {
+            if (Files.exists(Paths.get(path))) {
+                try {
+                    return BaseFont.createFont(path, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
+                } catch (Exception ignored) {}
+            }
+        }
+        // 全部失败，回退 Helvetica（仅英文）
+        try {
+            return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+        } catch (Exception e) {
+            throw new RuntimeException("无法创建基础字体", e);
+        }
     }
 }
