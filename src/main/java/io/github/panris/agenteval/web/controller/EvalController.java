@@ -63,9 +63,15 @@ public class EvalController {
             })
             .toList();
         
+        // Collect IDs being removed so we can clean up sharedReports too
+        var keptIds = sorted.stream().limit(maxReports).map(Map.Entry::getKey).collect(java.util.stream.Collectors.toSet());
+        
         // Clear and reload latest maxReports
         reportHistory.clear();
         sorted.stream().limit(maxReports).forEach(e -> reportHistory.put(e.getKey(), e.getValue()));
+        
+        // Also remove stale entries from sharedReports (those pointing to deleted reports)
+        sharedReports.entrySet().removeIf(entry -> !keptIds.contains(entry.getValue()));
         
         saveReportHistory();
         System.out.println("Cleanup complete. Kept " + reportHistory.size() + " reports");
