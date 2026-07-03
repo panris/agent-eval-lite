@@ -889,11 +889,13 @@
         let groups = [];
 
         // 切换标签页
-        function switchTab(tab) {
+        function switchTab(tab, evt) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.card').forEach(c => c.classList.remove('show'));
 
-            event.target.classList.add('active');
+            // 支持显式传入 event，或使用全局 event（onclick 调用时）
+            const target = evt?.target || (typeof event !== 'undefined' ? event.target : null);
+            if (target) target.classList.add('active');
             document.getElementById(`${tab}-card`).classList.add('show');
 
             if (tab === 'cases') loadTestCases();
@@ -1274,7 +1276,7 @@
                 }
                 
                 showEvalDetails();
-                switchTab('evaluate');
+                switchTab('evaluate', null);  // 无 event 对象，跳过高亮 tab  // 从此处调用时无 event，但已修复 switchTab 支持无 target 调用
                 
             } catch (error) {
                 console.error('Failed to load report details:', error);
