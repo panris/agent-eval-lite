@@ -5,6 +5,7 @@ import io.github.panris.agenteval.Evaluation;
 import io.github.panris.agenteval.EvaluationReport;
 import io.github.panris.agenteval.Evaluator;
 import io.github.panris.agenteval.TestCase;
+import io.github.panris.agenteval.config.AppConfig;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
@@ -31,17 +32,21 @@ public class EvalController {
     private final Map<String, String> sharedReports;  // shareId -> reportId
     private final TestCaseRepository testCaseRepository;
     private final AsyncEvalService asyncEvalService;
+    private final AppConfig appConfig;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public EvalController(TestCaseRepository testCaseRepository,
                            Map<String, Map<String, Object>> reportHistory,
                            Map<String, String> sharedReports,
-                           AsyncEvalService asyncEvalService) {
+                           AsyncEvalService asyncEvalService,
+                           AppConfig appConfig) {
         this.testCaseRepository = testCaseRepository;
         this.reportHistory = reportHistory;
         this.sharedReports = sharedReports;
         this.asyncEvalService = asyncEvalService;
+        this.appConfig = appConfig;
         loadReportHistory();
+        appConfig.loadSharedReports(sharedReports);
         // Clean up old reports if too many
         cleanupOldReports(100);  // Keep latest 100 reports
     }
@@ -573,6 +578,7 @@ public class EvalController {
         String shareId = java.util.UUID.randomUUID().toString().substring(0, 8);
         // 存储分享映射
         sharedReports.put(shareId, id);
+        appConfig.saveSharedReports(sharedReports);  // 持久化
         return Map.of("success", true, "shareId", shareId, "url", "/share/" + shareId);
     }
 

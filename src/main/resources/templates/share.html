@@ -160,7 +160,7 @@
                 </div>
                 <div class="eval-item-body">
                     <p><strong>用例ID:</strong> <span th:text="${ev.testCaseId ?: '-'}">-</span></p>
-                    <p><strong>Agent 输出:</strong> <span th:text="${ev.agentOutput?.output ?: '-'}">-</span></p>
+                    <p><strong>Agent 输出:</strong> <span th:text="${ev.agentOutputText ?: '-'}">-</span></p>
                     <p><strong>评分:</strong> <span th:text="${#numbers.formatDecimal((ev.overallScore ?: 0) * 100, 1, 0)}">0</span>%</p>
                 </div>
             </div>

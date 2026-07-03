@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: agent-eval-lite
+  thymeleaf:
+    cache: false
 
 logging:
   level:
