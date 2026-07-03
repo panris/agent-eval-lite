@@ -1221,12 +1221,12 @@
                 return;
             }
             
-            showConfirm('删除记录', \`确定要删除选中的 \${ids.length} 条记录吗？\`, async () => {
+            showConfirm('删除记录', `确定要删除选中的 ${ids.length} 条记录吗？`, async () => {
                 try {
                     for (const id of ids) {
-                        await fetch(\`/api/reports/\${id}\`, { method: 'DELETE' });
+                        await fetch(`/api/reports/${id}`, { method: 'DELETE' });
                     }
-                    showToast(\`已删除 \${ids.length} 条记录\`, 'success');
+                    showToast(`已删除 ${ids.length} 条记录`, 'success');
                     loadHistory();
                 } catch (error) {
                     console.error('Failed to delete reports:', error);
