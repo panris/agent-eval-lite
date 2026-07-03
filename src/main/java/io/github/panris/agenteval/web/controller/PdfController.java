@@ -2,6 +2,7 @@ package io.github.panris.agenteval.web.controller;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import io.github.panris.agenteval.repository.TestCaseRepository;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -15,6 +16,15 @@ import java.util.*;
 @RequestMapping("/api")
 public class PdfController {
 
+    private final TestCaseRepository testCaseRepository;
+    private final Map<String, Map<String, Object>> reportHistory;
+
+    public PdfController(TestCaseRepository testCaseRepository,
+                         Map<String, Map<String, Object>> reportHistory) {
+        this.testCaseRepository = testCaseRepository;
+        this.reportHistory = reportHistory;
+    }
+
     /**
      * 生成中文支持的 PDF
      */
@@ -26,8 +36,8 @@ public class PdfController {
             // 使用 Arial Unicode MS 字体（系统自带）
             BaseFont bfChinese;
             try {
-                // 尝试使用系统自带的中文字体
-                bfChinese = BaseFont.createFont("/System/Library/Fonts/Supplemental/Arial Unicode.ttf", 
+                bfChinese = BaseFont.createFont(
+                    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
                     BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
             } catch (Exception e) {
                 // 回退到 Helvetica（不支持中文但能显示英文）
@@ -38,7 +48,7 @@ public class PdfController {
             PdfWriter.getInstance(document, baos);
             document.open();
             
-            // 标题样式
+            // 字体样式
             Font titleFont = new Font(bfChinese, 18, Font.BOLD);
             Font headerFont = new Font(bfChinese, 12, Font.BOLD);
             Font normalFont = new Font(bfChinese, 10, Font.NORMAL);
@@ -50,84 +60,109 @@ public class PdfController {
             title.setSpacingAfter(20);
             document.add(title);
             
-            // 报告信息
+            // 报告基本信息
             document.add(new Paragraph("报告 ID: " + id, normalFont));
-            document.add(new Paragraph("生成时间: " + new java.util.Date(), normalFont));
+            document.add(new Paragraph("生成时间: " + new Date(), normalFont));
+            document.add(new Paragraph(" ", normalFont));
+            document.add(new Paragraph("─".repeat(50), smallFont));
             document.add(new Paragraph(" ", normalFont));
             
-            // 分隔线
-            document.add(new Paragraph("━".repeat(50), normalFont));
-            document.add(new Paragraph(" ", normalFont));
-            
-            // 获取报告数据
+            // 获取真实报告数据
             Map<String, Object> report = getReportData(id);
             
             if (report != null) {
-                // 基本信息表格
-                PdfPTable infoTable = new PdfPTable(2);
+                // 统计信息
+                int totalCases = (Integer) report.getOrDefault("totalCases", 0);
+                int passed = (Integer) report.getOrDefault("passed", 0);
+                double passRate = ((Number) report.getOrDefault("passRate", 0)).doubleValue();
+                double avgScore = ((Number) report.getOrDefault("avgScore", 0)).doubleValue();
+                
+                // 统计信息表格
+                PdfPTable infoTable = new PdfPTable(4);
                 infoTable.setWidthPercentage(100);
+                infoTable.setSpacingBefore(10f);
                 
-                Object totalCases = report.getOrDefault("totalCases", 0);
-                Object passed = report.getOrDefault("passed", 0);
-                Object passRate = report.getOrDefault("passRate", 0);
-                Object avgScore = report.getOrDefault("avgScore", 0);
-                
-                addTableRow(infoTable, "测试用例数", String.valueOf(totalCases), headerFont, normalFont);
-                addTableRow(infoTable, "通过数", String.valueOf(passed), headerFont, normalFont);
-                addTableRow(infoTable, "通过率", String.format("%.1f%%", ((Number) passRate).doubleValue()), headerFont, normalFont);
-                addTableRow(infoTable, "平均评分", String.format("%.2f", ((Number) avgScore).doubleValue()), headerFont, normalFont);
+                addTableCell(infoTable, "测试用例", String.valueOf(totalCases), headerFont, normalFont);
+                addTableCell(infoTable, "通过", String.valueOf(passed), headerFont, normalFont);
+                addTableCell(infoTable, "通过率", String.format("%.1f%%", passRate), headerFont, normalFont);
+                addTableCell(infoTable, "平均评分", String.format("%.2f", avgScore), headerFont, normalFont);
                 document.add(infoTable);
+                
+                // 执行时间
+                Object execTime = report.get("executionTimeMs");
+                if (execTime instanceof Number) {
+                    document.add(new Paragraph("执行耗时: " + execTime + " ms", normalFont));
+                }
+                
+                // 时间戳
+                Object ts = report.get("timestamp");
+                if (ts instanceof Date) {
+                    document.add(new Paragraph("评测时间: " + ts, normalFont));
+                }
+                
                 document.add(new Paragraph(" ", normalFont));
                 
-                // 评测结果表格
+                // 评测结果详情
                 document.add(new Paragraph("评测结果详情", headerFont));
                 document.add(new Paragraph(" ", normalFont));
                 
                 @SuppressWarnings("unchecked")
-                java.util.List<Map<String, Object>> results = (java.util.List<Map<String, Object>>) report.getOrDefault("results", new java.util.ArrayList<>());
+                java.util.List<Map<String, Object>> results = 
+                    (java.util.List<Map<String, Object>>) report.getOrDefault("results", java.util.List.of());
                 
                 if (!results.isEmpty()) {
-                    PdfPTable resultsTable = new PdfPTable(4);
+                    PdfPTable resultsTable = new PdfPTable(3);
                     resultsTable.setWidthPercentage(100);
+                    resultsTable.setSpacingBefore(5f);
                     
                     // 表头
                     Font tableHeaderFont = new Font(bfChinese, 10, Font.BOLD, Color.WHITE);
-                    PdfPCell cell1 = new PdfPCell(new Phrase("用例名称", tableHeaderFont));
-                    cell1.setBackgroundColor(new Color(102, 126, 234));
-                    PdfPCell cell2 = new PdfPCell(new Phrase("状态", tableHeaderFont));
-                    cell2.setBackgroundColor(new Color(102, 126, 234));
-                    PdfPCell cell3 = new PdfPCell(new Phrase("评分", tableHeaderFont));
-                    cell3.setBackgroundColor(new Color(102, 126, 234));
-                    PdfPCell cell4 = new PdfPCell(new Phrase("耗时", tableHeaderFont));
-                    cell4.setBackgroundColor(new Color(102, 126, 234));
-                    
-                    resultsTable.addCell(cell1);
-                    resultsTable.addCell(cell2);
-                    resultsTable.addCell(cell3);
-                    resultsTable.addCell(cell4);
+                    PdfPCell h1 = headerCell("用例名称", tableHeaderFont, new Color(102, 126, 234));
+                    PdfPCell h2 = headerCell("状态", tableHeaderFont, new Color(102, 126, 234));
+                    PdfPCell h3 = headerCell("评分", tableHeaderFont, new Color(102, 126, 234));
+                    resultsTable.addCell(h1);
+                    resultsTable.addCell(h2);
+                    resultsTable.addCell(h3);
                     
                     // 数据行
                     for (Map<String, Object> result : results) {
                         boolean isPassed = Boolean.TRUE.equals(result.get("passed"));
-                        Font resultFont = new Font(bfChinese, 9, Font.NORMAL);
+                        Font rowFont = new Font(bfChinese, 9, Font.NORMAL);
                         
-                        resultsTable.addCell(new Phrase((String) result.getOrDefault("name", ""), resultFont));
+                        resultsTable.addCell(new Phrase((String) result.getOrDefault("name", ""), rowFont));
                         
                         String statusText = isPassed ? "✓ 通过" : "✗ 失败";
-                        PdfPCell statusCell = new PdfPCell(new Phrase(statusText, resultFont));
+                        PdfPCell statusCell = new PdfPCell(new Phrase(statusText, rowFont));
                         statusCell.setBackgroundColor(isPassed ? new Color(200, 255, 200) : new Color(255, 200, 200));
                         resultsTable.addCell(statusCell);
                         
-                        Object scoreObj = result.getOrDefault("score", 0);
+                        Object scoreObj = result.get("score");
                         double score = scoreObj instanceof Number ? ((Number) scoreObj).doubleValue() : 0;
-                        resultsTable.addCell(new Phrase(String.format("%.2f", score), resultFont));
-                        
-                        Object durationObj = result.getOrDefault("duration", 0);
-                        double duration = durationObj instanceof Number ? ((Number) durationObj).doubleValue() : 0;
-                        resultsTable.addCell(new Phrase(String.format("%.0fms", duration), resultFont));
+                        resultsTable.addCell(new Phrase(String.format("%.2f", score), rowFont));
                     }
                     
                     document.add(resultsTable);
+                    
+                    // Agent 输出摘录
+                    document.add(new Paragraph(" ", normalFont));
+                    document.add(new Paragraph("Agent 输出摘录", headerFont));
+                    document.add(new Paragraph(" ", normalFont));
+                    
+                    for (int i = 0; i < results.size(); i++) {
+                        Map<String, Object> r = results.get(i);
+                        String name = (String) r.getOrDefault("name", "");
+                        String output = (String) r.getOrDefault("output", "");
+                        boolean passed2 = Boolean.TRUE.equals(r.get("passed"));
+                        String label = passed2 ? "✓ " : "✗ ";
+                        
+                        Paragraph p = new Paragraph(label + name, new Font(bfChinese, 9, Font.BOLD));
+                        p.setSpacingBefore(5);
+                        document.add(p);
+                        
+                        Paragraph outP = new Paragraph("  " + output, new Font(bfChinese, 8, Font.NORMAL));
+                        outP.setSpacingAfter(3);
+                        document.add(outP);
+                    }
                 }
             } else {
                 document.add(new Paragraph("未找到报告数据", normalFont));
@@ -135,8 +170,8 @@ public class PdfController {
             
             // 页脚
             document.add(new Paragraph(" ", normalFont));
-            document.add(new Paragraph("━".repeat(50), smallFont));
-            Paragraph footer = new Paragraph("由 Agent Eval Lite 生成 | " + new java.util.Date(), smallFont);
+            document.add(new Paragraph("─".repeat(50), smallFont));
+            Paragraph footer = new Paragraph("由 Agent Eval Lite 生成 | " + new Date(), smallFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
             
@@ -156,33 +191,89 @@ public class PdfController {
         }
     }
     
-    private void addTableRow(PdfPTable table, String label, String value, Font headerFont, Font normalFont) {
+    private PdfPCell headerCell(String text, Font font, Color bgColor) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBackgroundColor(bgColor);
+        cell.setPadding(8);
+        return cell;
+    }
+    
+    private void addTableCell(PdfPTable table, String label, String value, Font headerFont, Font normalFont) {
         PdfPCell labelCell = new PdfPCell(new Phrase(label, headerFont));
         labelCell.setBorderWidth(0);
-        labelCell.setPadding(5);
+        labelCell.setPadding(8);
+        labelCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         table.addCell(labelCell);
         
         PdfPCell valueCell = new PdfPCell(new Phrase(value, normalFont));
         valueCell.setBorderWidth(0);
-        valueCell.setPadding(5);
+        valueCell.setPadding(8);
+        valueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         table.addCell(valueCell);
     }
     
+    @SuppressWarnings("unchecked")
     private Map<String, Object> getReportData(String reportId) {
-        // 从 EvalController 获取报告数据
-        // 这里简化处理，实际应该通过服务层获取
-        Map<String, Object> report = new HashMap<>();
+        Map<String, Object> rawReport = reportHistory.get(reportId);
+        if (rawReport == null) return null;
+        
+        Map<String, Object> report = new LinkedHashMap<>();
         report.put("id", reportId);
-        report.put("totalCases", 4);
-        report.put("passed", 3);
-        report.put("passRate", 75.0);
-        report.put("avgScore", 85.5);
+        
+        // 摘要
+        Map<String, Object> summary = (Map<String, Object>) rawReport.getOrDefault("summary", Map.of());
+        double passRate = ((Number) summary.getOrDefault("pass_rate", 0)).doubleValue();
+        double avgScore = ((Number) summary.getOrDefault("average_score", 0)).doubleValue();
+        int totalCases = ((Number) summary.getOrDefault("total_test_cases", 0)).intValue();
+        int passedCases = ((Number) summary.getOrDefault("passed_test_cases", 0)).intValue();
+        
+        report.put("totalCases", totalCases);
+        report.put("passed", passedCases);
+        report.put("passRate", passRate);
+        report.put("avgScore", avgScore);
+        
+        // 时间戳
+        Object timestamp = rawReport.get("timestamp");
+        if (timestamp instanceof Number) {
+            report.put("timestamp", new Date(((Number) timestamp).longValue()));
+        }
+        
+        // 执行时间
+        Object execTime = rawReport.get("executionTimeMs");
+        if (execTime instanceof Number) {
+            report.put("executionTimeMs", ((Number) execTime).longValue());
+        }
+        
+        // 评测结果（带用例名称）
+        java.util.List<Map<String, Object>> evaluations = 
+            (java.util.List<Map<String, Object>>) rawReport.getOrDefault("evaluations", java.util.List.of());
         
         java.util.List<Map<String, Object>> results = new java.util.ArrayList<>();
-        results.add(Map.of("name", "测试用例A", "passed", true, "score", 95.0, "duration", 150L));
-        results.add(Map.of("name", "测试用例B", "passed", true, "score", 88.0, "duration", 120L));
-        results.add(Map.of("name", "测试用例C", "passed", true, "score", 82.0, "duration", 180L));
-        results.add(Map.of("name", "测试用例D", "passed", false, "score", 65.0, "duration", 200L));
+        int idx = 1;
+        for (Map<String, Object> ev : evaluations) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            String tcId = String.valueOf(ev.get("testCaseId"));
+            
+            // 查数据库获取用例名称
+            String caseName = testCaseRepository.findTestCaseById(tcId)
+                .map(tc -> tc.getInput().length() > 40
+                    ? tc.getInput().substring(0, 40) + "..."
+                    : tc.getInput())
+                .orElse("用例 #" + idx);
+            
+            item.put("name", caseName);
+            item.put("testCaseId", tcId);
+            item.put("passed", ev.get("passed"));
+            
+            Object score = ev.get("overallScore");
+            item.put("score", score instanceof Number ? score : 0);
+            
+            String output = String.valueOf(ev.getOrDefault("output", ""));
+            item.put("output", output.length() > 200 ? output.substring(0, 200) + "..." : output);
+            
+            results.add(item);
+            idx++;
+        }
         report.put("results", results);
         
         return report;
