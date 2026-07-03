@@ -664,27 +664,62 @@ public class EvalController {
         comparison.put("reports", reports);
         
         // 计算各指标统计
-        if ("score".equals(metric) || metric == null) {
-            List<Double> scores = new ArrayList<>();
-            for (Map<String, Object> r : reports) {
-                Object summaryObj = r.get("summary");
-                if (summaryObj instanceof Map) {
-                    Map<?, ?> summary = (Map<?, ?>) summaryObj;
-                    Object scoreObj = summary.get("averageScore");
-                    if (scoreObj == null) scoreObj = summary.get("average_score");
-                    if (scoreObj instanceof Number) {
-                        scores.add(((Number) scoreObj).doubleValue());
-                    }
-                }
+        List<Double> scores = new ArrayList<>();
+        List<Double> passRates = new ArrayList<>();
+        List<Long> execTimes = new ArrayList<>();
+        List<Integer> totalCases = new ArrayList<>();
+
+        for (Map<String, Object> r : reports) {
+            Object summaryObj = r.get("summary");
+            if (summaryObj instanceof Map) {
+                Map<?, ?> summary = (Map<?, ?>) summaryObj;
+
+                Object scoreObj = summary.get("averageScore");
+                if (scoreObj == null) scoreObj = summary.get("average_score");
+                if (scoreObj instanceof Number) scores.add(((Number) scoreObj).doubleValue());
+
+                Object prObj = summary.get("passRate");
+                if (prObj == null) prObj = summary.get("pass_rate");
+                if (prObj instanceof Number) passRates.add(((Number) prObj).doubleValue());
+
+                Object tcObj = summary.get("totalTestCases");
+                if (tcObj == null) tcObj = summary.get("total_test_cases");
+                if (tcObj instanceof Number) totalCases.add(((Number) tcObj).intValue());
             }
-            if (!scores.isEmpty()) {
-                scores.sort(Double::compareTo);
-                comparison.put("scoreStats", Map.of(
-                    "min", scores.get(0),
-                    "max", scores.get(scores.size() - 1),
-                    "avg", scores.stream().mapToDouble(Double::doubleValue).average().orElse(0)
-                ));
-            }
+
+            Object execObj = r.get("executionTimeMs");
+            if (execObj instanceof Number) execTimes.add(((Number) execObj).longValue());
+        }
+
+        if (!scores.isEmpty()) {
+            scores.sort(Double::compareTo);
+            comparison.put("scoreStats", Map.of(
+                "min", scores.get(0),
+                "max", scores.get(scores.size() - 1),
+                "avg", scores.stream().mapToDouble(Double::doubleValue).average().orElse(0)
+            ));
+        }
+
+        if (!passRates.isEmpty()) {
+            passRates.sort(Double::compareTo);
+            comparison.put("passRateStats", Map.of(
+                "min", passRates.get(0),
+                "max", passRates.get(passRates.size() - 1),
+                "avg", passRates.stream().mapToDouble(Double::doubleValue).average().orElse(0)
+            ));
+        }
+
+        if (!execTimes.isEmpty()) {
+            execTimes.sort(Long::compare);
+            comparison.put("execTimeStats", Map.of(
+                "min", execTimes.get(0),
+                "max", execTimes.get(execTimes.size() - 1),
+                "avg", execTimes.stream().mapToLong(Long::longValue).average().orElse(0)
+            ));
+        }
+
+        if (!totalCases.isEmpty()) {
+            comparison.put("totalCases", totalCases);
         }
         
         return Map.of("success", true, "comparison", comparison);

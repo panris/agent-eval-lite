@@ -1088,6 +1088,7 @@
 
                 const reports = data.comparison.reports;
                 const stats = data.comparison.scoreStats;
+                const reportIds = ids; // 保留原始 ID 顺序
 
                 // 构建对比结果弹窗
                 const overlay = document.createElement('div');
@@ -1102,24 +1103,23 @@
                     const ts = new Date(r.timestamp || Date.now()).toLocaleString('zh-CN');
                     const passRate = (summary.pass_rate || 0).toFixed(1);
                     const avgScore = (summary.average_score || 0).toFixed(2);
+                    const totalCases = (r.totalTestCases || summary.total_test_cases || 0);
+                    const execTime = (r.executionTimeMs || 0);
                     return `<tr>
                         <td>${i + 1}</td>
-                        <td><code>${r.reportId || '-'}</code></td>
+                        <td><code>${reportIds[i] || '-'}</code></td>
                         <td>${ts}</td>
-                        <td>${r.totalCases || summary.total || '-'}</td>
+                        <td>${totalCases}</td>
                         <td style="color: #4CAF50; font-weight: bold;">${passRate}%</td>
                         <td style="color: #2196F3; font-weight: bold;">${avgScore}</td>
-                        <td>${summary.execution_time || '-'}ms</td>
+                        <td>${execTime > 0 ? execTime + 'ms' : '-'}</td>
                     </tr>`;
                 }).join('');
 
-                const scoreBarHtml = stats ? `<div style="margin: 16px 0; padding: 16px; background: var(--bg-card,#f5f7fa); border-radius: 8px;">
-                    <h4 style="margin: 0 0 12px 0;">📊 评分统计</h4>
-                    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
-                        <div><strong>最低分</strong><br><span style="font-size: 20px; color: #f44336;">${stats.min.toFixed(2)}</span></div>
-                        <div><strong>平均分</strong><br><span style="font-size: 20px; color: #2196F3;">${stats.avg.toFixed(2)}</span></div>
-                        <div><strong>最高分</strong><br><span style="font-size: 20px; color: #4CAF50;">${stats.max.toFixed(2)}</span></div>
-                    </div>
+                const scoreBarHtml = stats ? `<div style="margin: 16px 0; padding: 16px; background: var(--bg-card,#f5f7fa); border-radius: 8px; display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">📊 平均评分</h4><div style="display: flex; gap: 16px;"><span>最低 <strong style="color:#f44336;">${stats.min.toFixed(2)}</strong></span><span>均分 <strong style="color:#2196F3;">${stats.avg.toFixed(2)}</strong></span><span>最高 <strong style="color:#4CAF50;">${stats.max.toFixed(2)}</strong></span></div></div>
+                    ${data.comparison.passRateStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">✅ 通过率</h4><div style="display: flex; gap: 16px;"><span>最低 <strong style="color:#f44336;">${data.comparison.passRateStats.min.toFixed(1)}%</strong></span><span>均分 <strong style="color:#2196F3;">${data.comparison.passRateStats.avg.toFixed(1)}%</strong></span><span>最高 <strong style="color:#4CAF50;">${data.comparison.passRateStats.max.toFixed(1)}%</strong></span></div></div>` : ''}
+                    ${data.comparison.execTimeStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">⏱ 耗时</h4><div style="display: flex; gap: 16px;"><span>最快 <strong style="color:#4CAF50;">${data.comparison.execTimeStats.min}ms</strong></span><span>均耗 <strong style="color:#2196F3;">${Math.round(data.comparison.execTimeStats.avg)}ms</strong></span><span>最慢 <strong style="color:#f44336;">${data.comparison.execTimeStats.max}ms</strong></span></div></div>` : ''}
                 </div>` : '';
 
                 overlay.innerHTML = `
