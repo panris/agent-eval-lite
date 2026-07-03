@@ -383,7 +383,7 @@ public class EvalController {
 
     @GetMapping("/api/reports")
     @ResponseBody
-    public List<Map<String, Object>> getReports() {
+    public List<Map<String, Object>> getReports(@RequestParam(defaultValue = "desc") String sort) {
         List<Map<String, Object>> reports = new ArrayList<>();
         reportHistory.forEach((id, report) -> {
             Map<String, Object> item = new LinkedHashMap<>();
@@ -398,6 +398,17 @@ public class EvalController {
             item.put("note", report.getOrDefault("note", ""));
             reports.add(item);
         });
+        
+        // Sort by timestamp: desc = newest first (default), asc = oldest first
+        boolean descending = "desc".equalsIgnoreCase(sort);
+        reports.sort((a, b) -> {
+            Object tsA = a.get("timestamp");
+            Object tsB = b.get("timestamp");
+            long tA = tsA instanceof Number ? ((Number) tsA).longValue() : 0L;
+            long tB = tsB instanceof Number ? ((Number) tsB).longValue() : 0L;
+            return descending ? Long.compare(tB, tA) : Long.compare(tA, tB);
+        });
+        
         return reports;
     }
 

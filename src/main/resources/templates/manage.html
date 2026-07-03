@@ -605,7 +605,9 @@
 
         <!-- 评测历史 -->
         <div id="history-card" class="card">
-            <h2 class="card-title">评测历史记录</h2>
+            <h2 class="card-title">评测历史记录
+                <button id="sort-btn" class="btn btn-sm" onclick="toggleSort()" style="margin-left: 10px; font-size: 12px;" title="切换排序">↕️ 最新优先</button>
+            </h2>
 
             <!-- 趋势图表 -->
             <div class="chart-container" style="margin-bottom: 20px;">
@@ -939,11 +941,13 @@
         let trendChart = null;
         
         // 加载评测历史
+        let _sortOrder = 'desc'; // desc = newest first, asc = oldest first
+        
         async function loadHistory() {
             try {
                 document.getElementById('history-loading').classList.add('show');
                 
-                const response = await fetch('/api/reports');
+                const response = await fetch(`/api/reports?sort=${_sortOrder}`);
                 window._allReports = await response.json();
                 
                 filterHistory();
@@ -955,6 +959,13 @@
             } finally {
                 document.getElementById('history-loading').classList.remove('show');
             }
+        }
+        
+        function toggleSort() {
+            _sortOrder = _sortOrder === 'desc' ? 'asc' : 'desc';
+            const btn = document.getElementById('sort-btn');
+            btn.textContent = _sortOrder === 'desc' ? '↕️ 最新优先' : '↕️ 最早优先';
+            loadHistory();
         }
         
         function clearDateFilter() {
