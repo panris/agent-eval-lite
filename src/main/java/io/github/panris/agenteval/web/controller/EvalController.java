@@ -481,7 +481,7 @@ public class EvalController {
                 "exportTime", Instant.now().toString()
             );
             
-            String jsonStr = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(json);
+            String jsonStr = objectMapper.writeValueAsString(json);
             byte[] bytes = jsonStr.getBytes(StandardCharsets.UTF_8);
             
             return ResponseEntity.ok()

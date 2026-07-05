@@ -9,12 +9,15 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Async evaluation task queue with real-time status tracking.
  */
 @Service
 public class AsyncEvalService {
+    private static final Logger log = LoggerFactory.getLogger(AsyncEvalService.class);
 
     private final Map<String, TaskStatus> tasks = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newFixedThreadPool(
@@ -22,12 +25,15 @@ public class AsyncEvalService {
     );
     private final Map<String, Map<String, Object>> reportHistory;
     private final Map<String, String> sharedReports;
+    private final ObjectMapper objectMapper;
 
     public AsyncEvalService(
             Map<String, Map<String, Object>> reportHistory,
-            Map<String, String> sharedReports) {
+            Map<String, String> sharedReports,
+            ObjectMapper objectMapper) {
         this.reportHistory = reportHistory;
         this.sharedReports = sharedReports;
+        this.objectMapper = objectMapper;
     }
 
     public static class TaskStatus {
@@ -90,7 +96,7 @@ public class AsyncEvalService {
                 status.status = "FAILED";
                 status.error = e.getMessage();
                 status.completedAt = System.currentTimeMillis();
-                System.err.println("Async task failed: " + taskId + " - " + e.getMessage());
+                log.error("Async task {} failed: {}", taskId, e.getMessage(), e);
             }
         });
 
@@ -125,10 +131,10 @@ public class AsyncEvalService {
             Path dataFile = Paths.get("data/reports.json");
             Files.createDirectories(dataFile.getParent());
             ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
+            String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
             Files.writeString(dataFile, json);
         } catch (Exception e) {
-            System.err.println("Failed to save reports: " + e.getMessage());
+            log.error("Failed to save reports: {}", e.getMessage(), e);
         }
     }
 
