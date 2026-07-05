@@ -554,6 +554,39 @@
     "executionTimeMs" : 11,
     "failedTestCases" : 0
   },
+  "report_1783267232796" : {
+    "executionTimeMs" : 6,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783267232742_1379",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: 今天天气",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.0
+    } ],
+    "timestamp" : 1783267232796,
+    "summary" : {
+      "failed_test_cases" : 1.0,
+      "pass_rate" : 0.0,
+      "average_score" : 0.0,
+      "total_test_cases" : 1.0,
+      "passed_test_cases" : 0.0
+    },
+    "totalTestCases" : 1,
+    "passedTestCases" : 0,
+    "failedTestCases" : 1
+  },
   "report_1783090255847" : {
     "executionTimeMs" : 2,
     "failedTestCases" : 0,

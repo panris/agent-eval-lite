@@ -38,6 +38,9 @@ public class EvalController {
     private final AppConfig appConfig;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
+    private static final List<String> VALID_METRICS =
+            List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
+
     public EvalController(TestCaseRepository testCaseRepository,
                            Map<String, Map<String, Object>> reportHistory,
                            Map<String, String> sharedReports,
@@ -149,10 +152,6 @@ public class EvalController {
             return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
         }
         
-        if (request.getMetrics() == null || request.getMetrics().isEmpty()) {
-            return Map.of("success", false, "error", "评测指标不能为空");
-        }
-        
         // Validate each test case
         for (int i = 0; i < request.getTestCases().size(); i++) {
             TestCaseDto dto = request.getTestCases().get(i);
@@ -174,11 +173,9 @@ public class EvalController {
         }
         
         // Validate metrics
-        List<String> validMetrics = List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
-        for (String metric : request.getMetrics()) {
-            if (!validMetrics.contains(metric)) {
-                return Map.of("success", false, "error", "不支持的评测指标: " + metric);
-            }
+        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
+        if (metricsError != null) {
+            return metricsError;
         }
         
         // Create test cases
@@ -207,6 +204,11 @@ public class EvalController {
         
         if (request.getCaseIds().size() > 100) {
             return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+        }
+        
+        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
+        if (metricsError != null) {
+            return metricsError;
         }
         
         // Get test cases by IDs
@@ -241,6 +243,10 @@ public class EvalController {
     ) {
         return testCaseRepository.findGroupById(groupId)
             .map(group -> {
+                Map<String, Object> metricsError = validateMetrics(request.getMetrics());
+                if (metricsError != null) {
+                    return metricsError;
+                }
                 // Get test cases from group
                 List<TestCase> testCases = group.getTestCaseIds().stream()
                     .map(caseId -> testCaseRepository.findTestCaseById(caseId))
@@ -278,14 +284,9 @@ public class EvalController {
         if (request.getTestCases().size() > 100) {
             return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
         }
-        if (request.getMetrics() == null || request.getMetrics().isEmpty()) {
-            return Map.of("success", false, "error", "评测指标不能为空");
-        }
-        List<String> validMetrics = List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
-        for (String m : request.getMetrics()) {
-            if (!validMetrics.contains(m)) {
-                return Map.of("success", false, "error", "不支持的评测指标: " + m);
-            }
+        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
+        if (metricsError != null) {
+            return metricsError;
         }
         List<TestCase> testCases = new ArrayList<>();
         for (TestCaseDto dto : request.getTestCases()) {
@@ -338,6 +339,23 @@ public class EvalController {
                 "completedAt", s.completedAt
             ))
             .toList();
+    }
+
+    /**
+     * Validate the requested metrics list. Returns an error response map if invalid,
+     * or null if validation passes. Guards against null metrics (NPE in Evaluator)
+     * and unknown metric names.
+     */
+    private Map<String, Object> validateMetrics(List<String> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            return Map.of("success", false, "error", "评测指标不能为空");
+        }
+        for (String metric : metrics) {
+            if (metric == null || !VALID_METRICS.contains(metric)) {
+                return Map.of("success", false, "error", "不支持的评测指标: " + metric);
+            }
+        }
+        return null;
     }
 
     private Map<String, Object> runEvaluation(
