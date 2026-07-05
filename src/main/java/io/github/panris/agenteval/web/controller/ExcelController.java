@@ -12,10 +12,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/testcases")
 public class ExcelController {
+    private static final Logger log = LoggerFactory.getLogger(ExcelController.class);
 
     private final TestCaseRepository testCaseRepository;
 
@@ -87,7 +90,7 @@ public class ExcelController {
                 .body(resource);
                 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to export Excel: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -139,6 +142,7 @@ public class ExcelController {
                     imported++;
                     
                 } catch (Exception e) {
+                    log.warn("Row {} import skipped: {}", i + 1, e.getMessage());
                     errors.add("行 " + (i + 1) + ": " + e.getMessage());
                 }
             }
@@ -153,7 +157,7 @@ public class ExcelController {
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to import Excel: {}", e.getMessage(), e);
             result.put("success", false);
             result.put("message", "导入失败: " + e.getMessage());
             return ResponseEntity.internalServerError().body(result);

@@ -12,10 +12,13 @@ import java.awt.Color;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api")
 public class PdfController {
+    private static final Logger log = LoggerFactory.getLogger(PdfController.class);
 
     private final TestCaseRepository testCaseRepository;
     private final Map<String, Map<String, Object>> reportHistory;
@@ -179,7 +182,7 @@ public class PdfController {
                 .body(resource);
                 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to generate PDF for report {}: {}", id, e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

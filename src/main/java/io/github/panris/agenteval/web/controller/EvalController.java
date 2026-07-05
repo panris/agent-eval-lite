@@ -15,6 +15,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -27,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
 public class EvalController {
+    private static final Logger log = LoggerFactory.getLogger(EvalController.class);
 
     private final Map<String, Map<String, Object>> reportHistory;
     private final Map<String, String> sharedReports;  // shareId -> reportId
@@ -57,7 +60,7 @@ public class EvalController {
     private void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
         
-        System.out.println("Cleaning up old reports. Current count: " + reportHistory.size());
+        log.info("Cleaning up old reports. Current count: {}", reportHistory.size());
         
         // Sort by timestamp and keep latest maxReports
         var sorted = reportHistory.entrySet().stream()
@@ -79,7 +82,7 @@ public class EvalController {
         sharedReports.entrySet().removeIf(entry -> !keptIds.contains(entry.getValue()));
         
         saveReportHistory();
-        System.out.println("Cleanup complete. Kept " + reportHistory.size() + " reports");
+        log.info("Cleanup complete. Kept {} reports", reportHistory.size());
     }
     
     private Long getTimestamp(Map<String, Object> report) {
@@ -97,9 +100,9 @@ public class EvalController {
                 Map<String, Map<String, Object>> loaded = objectMapper.readValue(content,
                     objectMapper.getTypeFactory().constructMapType(LinkedHashMap.class, String.class, Map.class));
                 reportHistory.putAll(loaded);
-                System.out.println("Loaded " + reportHistory.size() + " historical reports");
+                log.info("Loaded {} historical reports", reportHistory.size());
             } catch (Exception e) {
-                System.err.println("Failed to load report history: " + e.getMessage());
+                log.error("Failed to load report history: {}", e.getMessage(), e);
             }
         }
     }
@@ -111,7 +114,7 @@ public class EvalController {
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
             Files.writeString(dataFile, json);
         } catch (Exception e) {
-            System.err.println("Failed to save report history: " + e.getMessage());
+            log.error("Failed to save report history: {}", e.getMessage(), e);
         }
     }
 
@@ -486,6 +489,7 @@ public class EvalController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(bytes);
         } catch (Exception e) {
+            log.error("Failed to export report JSON: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }

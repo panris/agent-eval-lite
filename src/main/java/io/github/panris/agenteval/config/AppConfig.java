@@ -1,6 +1,8 @@
 package io.github.panris.agenteval.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class AppConfig {
-
+    private static final Logger log = LoggerFactory.getLogger(AppConfig.class);
     private static final Path SHARES_FILE = Paths.get("data/shares.json");
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -33,7 +35,7 @@ public class AppConfig {
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sharedReports);
             Files.writeString(SHARES_FILE, json);
         } catch (Exception e) {
-            System.err.println("Failed to save sharedReports: " + e.getMessage());
+            log.error("Failed to save sharedReports: {}", e.getMessage(), e);
         }
     }
 
@@ -44,9 +46,9 @@ public class AppConfig {
         try {
             Map<String, String> loaded = objectMapper.readValue(SHARES_FILE.toFile(), Map.class);
             sharedReports.putAll(loaded);
-            System.out.println("Loaded " + sharedReports.size() + " shared report links");
+            log.info("Loaded {} shared report links", sharedReports.size());
         } catch (Exception e) {
-            System.err.println("Failed to load sharedReports: " + e.getMessage());
+            log.error("Failed to load sharedReports: {}", e.getMessage(), e);
         }
     }
 }
