@@ -130,7 +130,6 @@ public class AsyncEvalService {
         try {
             Path dataFile = Paths.get("data/reports.json");
             Files.createDirectories(dataFile.getParent());
-            ObjectMapper mapper = new ObjectMapper();
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
             Files.writeString(dataFile, json);
         } catch (Exception e) {
