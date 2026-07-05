@@ -579,7 +579,12 @@
         </div>
     </div>
 
+    <script src="/js/utils.js"></script>
     <script>
+        function showToast(message, type = 'info', duration = 3000) {
+            Toast.show(message, type, duration);
+        }
+
         // Theme Toggle
         function toggleTheme() {
             const html = document.documentElement;
@@ -652,12 +657,12 @@
             });
 
             if (testCases.length === 0) {
-                alert('请至少添加一个测试用例');
+                showToast('请至少添加一个测试用例', 'error');
                 return;
             }
 
             if (metrics.length === 0) {
-                alert('请至少选择一个评测指标');
+                showToast('请至少选择一个评测指标', 'error');
                 return;
             }
 
@@ -684,11 +689,11 @@
                     showResult(result);
                     loadHistory();
                 } else {
-                    alert('评测失败: ' + (result.error || '未知错误'));
+                    showToast('评测失败: ' + (result.error || '未知错误'), 'error');
                 }
             } catch (error) {
                 document.getElementById('loading').classList.remove('show');
-                alert('请求失败: ' + error.message);
+                showToast('请求失败: ' + error.message, 'error');
             }
         }
 
@@ -722,7 +727,7 @@
                 const response = await fetch(`/api/reports/${reportId}`);
                 const data = await response.json();
                 if (!data.success) {
-                    alert('获取详情失败');
+                    showToast('获取详情失败', 'error');
                     return;
                 }
                 
@@ -778,7 +783,7 @@
                 modal.style.display = 'flex';
             } catch (error) {
                 console.error('获取详情失败:', error);
-                alert('获取详情失败');
+                showToast('获取详情失败', 'error');
             }
         }
         
