@@ -530,18 +530,18 @@ public class EvalController {
             for (Object item : list) {
                 if (item instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) item;
-                    csv.append(m.get("testCaseId") != null ? m.get("testCaseId") : "").append(",");
-                    csv.append(m.get("passed") != null ? m.get("passed") : "").append(",");
-                    csv.append(m.get("overallScore") != null ? m.get("overallScore") : "");
+                    csv.append(escapeCsv(m.get("testCaseId"))).append(",");
+                    csv.append(escapeCsv(m.get("passed"))).append(",");
+                    csv.append(escapeCsv(m.get("overallScore")));
                     
                     Object results = m.get("scorerResults");
                     if (results instanceof Map) {
                         for (Object sr : ((Map<String, Object>) results).values()) {
                             if (sr instanceof Map) {
                                 Map<String, Object> srMap = (Map<String, Object>) sr;
-                                csv.append(",").append(srMap.get("score") != null ? srMap.get("score") : "");
-                                csv.append(",").append(srMap.get("passed") != null ? srMap.get("passed") : "");
-                                csv.append(",\"").append(srMap.get("rationale") != null ? srMap.get("rationale").toString().replace("\"", "'") : "").append("\"");
+                                csv.append(",").append(escapeCsv(srMap.get("score")));
+                                csv.append(",").append(escapeCsv(srMap.get("passed")));
+                                csv.append(",").append(escapeCsv(srMap.get("rationale")));
                             }
                         }
                     }
@@ -551,6 +551,25 @@ public class EvalController {
         }
         
         return csv.toString();
+    }
+
+    /**
+     * Escape a value for safe CSV field inclusion.
+     * Prevents CSV formula injection (leading =, +, -, @) and handles commas/quotes/newlines.
+     */
+    private String escapeCsv(Object value) {
+        if (value == null) return "";
+        String s = value.toString();
+        if (s.isEmpty()) return "";
+        // Prefix formula-like starts to prevent CSV injection
+        if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")) {
+            s = "'" + s;
+        }
+        boolean needsQuotes = s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r");
+        if (needsQuotes) {
+            return "\"" + s.replace("\"", "\"\"") + "\"";
+        }
+        return s;
     }
 
     // 复制报告
