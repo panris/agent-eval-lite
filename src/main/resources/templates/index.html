@@ -782,8 +782,7 @@
                 
                 modal.style.display = 'flex';
             } catch (error) {
-                console.error('获取详情失败:', error);
-                showToast('获取详情失败', 'error');
+showToast('获取详情失败', 'error');
             }
         }
         
@@ -832,8 +831,8 @@
                     </table>
                 `;
             } catch (error) {
-                console.error('加载历史记录失败:', error);
-                historyList.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">加载历史记录失败</p>';
+historyList.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">加载历史记录失败</p>';
+                showToast('加载历史记录失败', 'error');
             }
         }
 

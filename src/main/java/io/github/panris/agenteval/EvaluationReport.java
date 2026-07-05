@@ -1,5 +1,8 @@
 package io.github.panris.agenteval;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 
@@ -7,6 +10,8 @@ import java.util.Map;
  * Evaluation report containing results for all test cases.
  */
 public class EvaluationReport {
+
+    private static final Logger log = LoggerFactory.getLogger(EvaluationReport.class);
 
     private final List<Evaluation> evaluations;
     private final Map<String, Double> summary;
@@ -68,19 +73,20 @@ public class EvaluationReport {
     }
 
     public void printSummary() {
-        System.out.println("\n=== Evaluation Report ===");
-        System.out.printf("Total Test Cases: %d%n", totalTestCases);
-        System.out.printf("Passed: %d | Failed: %d%n", passedTestCases, failedTestCases);
-        System.out.printf("Pass Rate: %.2f%%%n", summary.get("pass_rate"));
-        System.out.printf("Average Score: %.2f%n", summary.get("average_score"));
-        System.out.printf("Execution Time: %d ms%n", executionTimeMs);
-        System.out.println("========================\n");
+        log.info("=== Evaluation Report ===");
+        log.info("Total Test Cases: {}, Passed: {}, Failed: {}",
+            totalTestCases, passedTestCases, failedTestCases);
+        log.info("Pass Rate: {}, Average Score: {}, Execution Time: {}ms",
+            String.format("%.2f%%", summary.get("pass_rate")),
+            String.format("%.2f", summary.get("average_score")),
+            executionTimeMs);
 
         if (failedTestCases > 0) {
-            System.out.println("Failed Test Cases:");
-            evaluations.stream()
-                .filter(e -> !e.isPassed())
-                .forEach(e -> System.out.println("  - " + e.getTestCaseId()));
+            log.warn("Failed Test Cases: {}",
+                evaluations.stream()
+                    .filter(e -> !e.isPassed())
+                    .map(Evaluation::getTestCaseId)
+                    .toList());
         }
     }
 }
