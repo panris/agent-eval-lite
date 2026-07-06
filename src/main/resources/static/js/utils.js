@@ -100,6 +100,7 @@ const Confirm = {
             z-index: 9999;
         `;
         
+        const _title = (s) => s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
         overlay.innerHTML = `
             <div style="
                 background: var(--bg-card, white);
@@ -109,8 +110,8 @@ const Confirm = {
                 text-align: center;
                 box-shadow: 0 8px 32px rgba(0,0,0,0.2);
             ">
-                <h3 style="margin: 0 0 12px 0;">${title}</h3>
-                <p style="color: var(--text-secondary, #666); margin: 0 0 20px 0;">${message}</p>
+                <h3 style="margin: 0 0 12px 0;">${_title(title)}</h3>
+                <p style="color: var(--text-secondary, #666); margin: 0 0 20px 0;">${_title(message)}</p>
                 <div style="display: flex; gap: 12px; justify-content: center;">
                     <button class="btn" onclick="this.closest('[style*=\"position: fixed\"]').remove()">取消</button>
                     <button class="btn btn-primary" style="background: #f44336; color: white;">确定</button>
@@ -302,5 +303,20 @@ const Table = {
         table.appendChild(tbody);
         
         return table;
+    },
+
+    /**
+     * HTML 转义：防止 XSS 注入
+     * 用于 innerHTML 模板字符串中所有用户提供的文本字段
+     */
+    escapeHtml(str) {
+        if (str == null) return '';
+        const s = String(str);
+        return s
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 };

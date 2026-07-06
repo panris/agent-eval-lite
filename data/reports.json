@@ -936,6 +936,105 @@
     "passedTestCases" : 1,
     "failedTestCases" : 0
   },
+  "report_1783316866041" : {
+    "totalTestCases" : 3,
+    "passedTestCases" : 1,
+    "failedTestCases" : 2,
+    "executionTimeMs" : 1,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1782875802441_7071",
+      "agentOutput" : {
+        "output" : "5",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.5
+    }, {
+      "testCaseId" : "tc_1782875802441_7621",
+      "agentOutput" : {
+        "output" : "20",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 1.0
+    }, {
+      "testCaseId" : "tc_1782875802441_4670",
+      "agentOutput" : {
+        "output" : "300",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)",
+          "metadata" : { }
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)",
+          "metadata" : {
+            "acceptable_time_ms" : 1000,
+            "response_time_ms" : 0,
+            "max_time_ms" : 5000
+          }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.5
+    } ],
+    "timestamp" : 1782875802442,
+    "summary" : {
+      "total_test_cases" : 3.0,
+      "passed_test_cases" : 1.0,
+      "failed_test_cases" : 2.0,
+      "pass_rate" : 33.33333333333333,
+      "average_score" : 0.6666666666666666
+    }
+  },
   "report_1783093846942" : {
     "timestamp" : 1783093846942,
     "evaluations" : [ {
@@ -1540,6 +1639,39 @@
       "failed_test_cases" : 0.0,
       "pass_rate" : 100.0,
       "average_score" : 1.0
+    }
+  },
+  "report_1783350608591" : {
+    "timestamp" : 1783350608592,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783350608587_8775",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: 今天天气",
+        "metadata" : { },
+        "executionTimeMs" : 0,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : false,
+      "overallScore" : 0.0
+    } ],
+    "executionTimeMs" : 2,
+    "failedTestCases" : 1,
+    "passedTestCases" : 0,
+    "totalTestCases" : 1,
+    "summary" : {
+      "pass_rate" : 0.0,
+      "failed_test_cases" : 1.0,
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.0
     }
   },
   "report_1783091055316" : {

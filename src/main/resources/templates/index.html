@@ -612,11 +612,11 @@
                 <div class="test-case-grid">
                     <div>
                         <label style="font-size: 12px;">输入</label>
-                        <input type="text" class="form-control" name="input" value="${input}">
+                        <input type="text" class="form-control" name="input" value="${utils.escapeHtml(input)}">
                     </div>
                     <div>
                         <label style="font-size: 12px;">期望输出</label>
-                        <input type="text" class="form-control" name="expected" value="${expected}">
+                        <input type="text" class="form-control" name="expected" value="${utils.escapeHtml(expected)}">
                     </div>
                     <button class="btn btn-danger" onclick="removeTestCase(this)">删除</button>
                 </div>
@@ -754,7 +754,11 @@
                     </div>
                     <h4 style="margin-bottom: 10px;">📋 各用例评测结果</h4>
                     <div style="max-height: 400px; overflow-y: auto;">
-                        ${evaluations.map((ev, i) => `
+                        ${evaluations.map((ev, i) => {
+                            const _input = utils.escapeHtml(ev.testCase?.input || ev.testCaseId || '');
+                            const _expected = utils.escapeHtml(ev.testCase?.expected || '');
+                            const _output = utils.escapeHtml(ev.agentOutput || '');
+                            return `
                             <div style="background: var(--bg-checkbox-item); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <strong>#${i + 1} 测试用例</strong>
@@ -763,20 +767,23 @@
                                     </span>
                                 </div>
                                 <div style="font-size: 13px; color: var(--text-secondary);">
-                                    <p><strong>输入:</strong> ${ev.testCase?.input || ev.testCaseId || '-'}</p>
-                                    <p><strong>期望:</strong> ${ev.testCase?.expected || '-'}</p>
-                                    <p><strong>Agent 输出:</strong> ${ev.agentOutput || '-'}</p>
+                                    <p><strong>输入:</strong> ${_input || '-'}</p>
+                                    <p><strong>期望:</strong> ${_expected || '-'}</p>
+                                    <p><strong>Agent 输出:</strong> ${_output || '-'}</p>
                                     <p><strong>评分:</strong> ${((ev.overallScore || 0) * 100).toFixed(0)}%</p>
-                                    ${ev.scorerResults ? Object.entries(ev.scorerResults).map(([name, sr]) => `
+                                    ${ev.scorerResults ? Object.entries(ev.scorerResults).map(([name, sr]) => {
+                                        const _rationale = utils.escapeHtml(sr.rationale || '');
+                                        return `
                                         <div style="margin-left: 15px; margin-top: 5px; padding: 5px 10px; background: var(--bg-card); border-radius: 4px;">
-                                            <span>${name}: ${((sr.score || 0) * 100).toFixed(0)}%</span>
+                                            <span>${utils.escapeHtml(name)}: ${((sr.score || 0) * 100).toFixed(0)}%</span>
                                             <span style="margin-left: 10px; color: ${sr.passed ? '#28a745' : '#dc3545'};">${sr.passed ? '✓' : '✗'}</span>
-                                            ${sr.rationale ? `<p style="margin: 3px 0 0 0; font-size: 12px;">${sr.rationale}</p>` : ''}
+                                            ${_rationale ? `<p style="margin: 3px 0 0 0; font-size: 12px;">${_rationale}</p>` : ''}
                                         </div>
-                                    `).join('') : ''}
+                                    `}).join('') : ''}
                                 </div>
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 `;
                 

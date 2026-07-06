@@ -858,7 +858,7 @@
             toast.className = `toast ${type}`;
             toast.innerHTML = `
                 <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
-                <span>${message}</span>
+                <span>${utils.escapeHtml(message)}</span>
             `;
             
             container.appendChild(toast);
@@ -1014,10 +1014,15 @@
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
             } else {
-                tbody.innerHTML = filtered.map(report => `
+                tbody.innerHTML = filtered.map(report => {
+                    const _id = utils.escapeHtml(report.id);
+                    const _note = utils.escapeHtml(report.note || '');
+                    const _tags = (report.tags || []).map(t => utils.escapeHtml(t));
+                    const _displayNote = _note.length > 15 ? _note.substring(0, 15) + '...' : _note;
+                    return `
                     <tr>
-                        <td><input type="checkbox" class="history-checkbox" value="${report.id}"></td>
-                        <td><code>${report.id}</code></td>
+                        <td><input type="checkbox" class="history-checkbox" value="${_id}"></td>
+                        <td><code>${_id}</code></td>
                         <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
                         <td>
                             <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
@@ -1027,26 +1032,27 @@
                         <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                                ${(report.tags || []).map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
-                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${report.id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                                ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${_id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
                             </div>
                         </td>
                         <td>
-                            <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${report.note || ''}">
-                                ${report.note ? report.note.substring(0, 15) + (report.note.length > 15 ? '...' : '') : '<span style="color: var(--text-secondary);">无</span>'}
+                            <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${_note}">
+                                ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
                             </div>
                         </td>
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="openNoteModal('${report.id}', '${(report.note || '').replace(/'/g, "&#39;")}')">📝</button>
-                                <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${report.id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
-                                <button class="btn btn-sm" onclick="viewHistoryDetails('${report.id}')">详情</button>
-                                <button class="btn btn-sm" onclick="shareReport('${report.id}')" title="分享">🔗</button>
-                                <button class="btn btn-sm" onclick="copyReport('${report.id}')">📋</button>
+                                <button class="btn btn-sm" onclick="openNoteModal('${_id}', '${_note.replace(/'/g, "&#39;")}')">📝</button>
+                                <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${_id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
+                                <button class="btn btn-sm" onclick="viewHistoryDetails('${_id}')">详情</button>
+                                <button class="btn btn-sm" onclick="shareReport('${_id}')" title="分享">🔗</button>
+                                <button class="btn btn-sm" onclick="copyReport('${_id}')">📋</button>
                             </div>
                         </td>
                     </tr>
-                `).join('');
+                    `;
+                }).join('');
             }
         }
 
@@ -1311,35 +1317,47 @@
                 window._testCases = testCases;  // 保存用于导出
 
                 const tbody = document.getElementById('cases-tbody');
-                tbody.innerHTML = testCases.map(tc => `
+                tbody.innerHTML = testCases.map(tc => {
+                    const _id = utils.escapeHtml(tc.id);
+                    const _name = utils.escapeHtml(tc.name);
+                    const _input = utils.escapeHtml(tc.input);
+                    const _expected = utils.escapeHtml(tc.expected);
+                    const _tags = (tc.metadata?.tags || []).map(t => utils.escapeHtml(t));
+                    return `
                     <tr>
-                        <td class="checkbox-cell"><input type="checkbox" class="case-checkbox" value="${tc.id}"></td>
-                        <td>${tc.name}</td>
-                        <td>${tc.input}</td>
-                        <td>${tc.expected}</td>
+                        <td class="checkbox-cell"><input type="checkbox" class="case-checkbox" value="${_id}"></td>
+                        <td>${_name}</td>
+                        <td>${_input}</td>
+                        <td>${_expected}</td>
                         <td><span class="badge badge-info">${tc.groupId || '未分组'}</span></td>
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                                ${(tc.metadata?.tags || []).map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
-                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${tc.id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                                ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${_id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
                             </div>
                         </td>
                         <td class="actions">
-                            <button class="btn btn-danger btn-sm" onclick="deleteTestCase('${tc.id}')">删除</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTestCase('${_id}')">删除</button>
                         </td>
                     </tr>
-                `).join('');
+                    `;
+                }).join('');
 
                 // 更新评测表格
                 const evalTbody = document.getElementById('eval-tbody');
-                evalTbody.innerHTML = testCases.map(tc => `
+                evalTbody.innerHTML = testCases.map(tc => {
+                    const _name = utils.escapeHtml(tc.name);
+                    const _input = utils.escapeHtml(tc.input);
+                    const _expected = utils.escapeHtml(tc.expected);
+                    return `
                     <tr>
-                        <td class="checkbox-cell"><input type="checkbox" class="eval-checkbox" value="${tc.id}"></td>
-                        <td>${tc.name}</td>
-                        <td>${tc.input}</td>
-                        <td>${tc.expected}</td>
+                        <td class="checkbox-cell"><input type="checkbox" class="eval-checkbox" value="${utils.escapeHtml(tc.id)}"></td>
+                        <td>${_name}</td>
+                        <td>${_input}</td>
+                        <td>${_expected}</td>
                     </tr>
-                `).join('');
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('Failed to load test cases:', error);
                 showToast('加载测试用例失败', 'error');
@@ -1404,13 +1422,13 @@
                 } else {
                     tbody.innerHTML = groups.map(g => `
                         <tr>
-                            <td>${g.name}</td>
-                            <td>${g.description || '-'}</td>
+                            <td>${utils.escapeHtml(g.name)}</td>
+                            <td>${utils.escapeHtml(g.description) || '-'}</td>
                             <td>${g.testCaseIds ? g.testCaseIds.length : 0}</td>
                             <td class="actions">
-                                <button class="btn btn-primary btn-sm" onclick="viewGroupCases('${g.id}')">查看用例</button>
-                                <button class="btn btn-success btn-sm" onclick="showAddToGroupModal('${g.id}')">批量添加</button>
-                                <button class="btn btn-danger btn-sm" onclick="deleteGroup('${g.id}')">删除</button>
+                                <button class="btn btn-primary btn-sm" onclick="viewGroupCases('${utils.escapeHtml(g.id)}')">查看用例</button>
+                                <button class="btn btn-success btn-sm" onclick="showAddToGroupModal('${utils.escapeHtml(g.id)}')">批量添加</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteGroup('${utils.escapeHtml(g.id)}')">删除</button>
                             </td>
                         </tr>
                     `).join('');
@@ -1419,7 +1437,7 @@
                 // 更新分组选择器
                 const select = document.getElementById('eval-group');
                 select.innerHTML = '<option value="">选择分组...</option>' +
-                    groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+                    groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
             } catch (error) {
                 console.error('Failed to load groups:', error);
             } finally {
@@ -1467,10 +1485,10 @@
                 const tbody = document.getElementById('modal-cases-tbody');
                 tbody.innerHTML = allTestCases.map(tc => `
                     <tr>
-                        <td class="checkbox-cell"><input type="checkbox" value="${tc.id}"></td>
-                        <td>${tc.name}</td>
-                        <td>${tc.input}</td>
-                        <td>${tc.expected}</td>
+                        <td class="checkbox-cell"><input type="checkbox" value="${utils.escapeHtml(tc.id)}"></td>
+                        <td>${utils.escapeHtml(tc.name)}</td>
+                        <td>${utils.escapeHtml(tc.input)}</td>
+                        <td>${utils.escapeHtml(tc.expected)}</td>
                     </tr>
                 `).join('');
             } catch (error) {
@@ -1824,14 +1842,17 @@
             const evaluations = window.lastEvaluation.evaluations;
             tbody.innerHTML = evaluations.map(ev => {
                 const testCase = testCases.find(tc => tc.id === ev.testCaseId) || {};
+                const _name = utils.escapeHtml(testCase.name || ev.testCaseId);
+                const _input = utils.escapeHtml(testCase.input);
+                const _expected = utils.escapeHtml(testCase.expected);
                 const scorerNames = Object.keys(ev.scorerResults || {}).join(', ');
                 const scorerScores = Object.values(ev.scorerResults || {}).map(sr => sr.score.toFixed(2)).join(', ');
                 
                 return `
                     <tr>
-                        <td>${testCase.name || ev.testCaseId}</td>
-                        <td>${testCase.input || '-'}</td>
-                        <td>${testCase.expected || '-'}</td>
+                        <td>${_name}</td>
+                        <td>${_input || '-'}</td>
+                        <td>${_expected || '-'}</td>
                         <td>${scorerScores || '-'} (${scorerNames || '-'})</td>
                         <td>
                             <span class="badge ${ev.passed ? 'badge-success' : 'badge-danger'}">
@@ -2168,7 +2189,7 @@
             const container = document.getElementById('case-tags-list');
             container.innerHTML = currentCaseTags.map((tag, i) => `
                 <span class="badge" style="background: #667eea; padding: 5px 10px; margin: 3px; display: inline-flex; align-items: center; gap: 5px;">
-                    ${tag}
+                    ${utils.escapeHtml(tag)}
                     <span style="cursor: pointer; font-weight: bold;" onclick="removeCaseTag(${i})">×</span>
                 </span>
             `).join('') || '<span style="color: var(--text-secondary);">暂无标签</span>';
@@ -2227,7 +2248,7 @@
             const container = document.getElementById('tags-list');
             container.innerHTML = currentTags.map((tag, i) => `
                 <span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
-                    ${tag}
+                    ${utils.escapeHtml(tag)}
                     <span style="cursor: pointer; font-weight: bold;" onclick="removeTag(${i})">×</span>
                 </span>
             `).join('');
@@ -2355,7 +2376,7 @@
                 const select = document.getElementById('batch-edit-group');
                 select.innerHTML = '<option value="">移除分组</option>';
                 groups.forEach(g => {
-                    select.innerHTML += `<option value="${g.id}">${g.name}</option>`;
+                    select.innerHTML += `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`;
                 });
             } catch (e) {
                 console.error('Failed to load groups:', e);
