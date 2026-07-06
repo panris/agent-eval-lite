@@ -2,6 +2,8 @@ package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.model.TestCaseGroup;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.Map;
 @RequestMapping("/api/groups")
 public class GroupController {
 
+    private static final Logger log = LoggerFactory.getLogger(GroupController.class);
+
     private final TestCaseRepository repository;
 
     public GroupController(TestCaseRepository repository) {
@@ -25,17 +29,21 @@ public class GroupController {
      */
     @PostMapping
     public Map<String, Object> createGroup(@RequestBody GroupRequest request) {
+        if (request == null || request.getName() == null || request.getName().isBlank()) {
+            log.warn("createGroup: name is required");
+            return Map.of("success", false, "error", "分组名称不能为空");
+        }
+        if (request.getName().length() > 200) {
+            log.warn("createGroup: name too long, length={}", request.getName().length());
+            return Map.of("success", false, "error", "分组名称不能超过 200 字符");
+        }
         TestCaseGroup group = new TestCaseGroup(
-            request.getName(),
+            request.getName().trim(),
             request.getDescription()
         );
-
         TestCaseGroup saved = repository.saveGroup(group);
-
-        return Map.of(
-            "success", true,
-            "group", saved
-        );
+        log.info("Created group: id={}, name={}", saved.getId(), saved.getName());
+        return Map.of("success", true, "group", saved);
     }
 
     /**
@@ -90,20 +98,23 @@ public class GroupController {
         @PathVariable String id,
         @RequestBody GroupRequest request
     ) {
+        if (request == null || request.getName() == null || request.getName().isBlank()) {
+            log.warn("updateGroup: name is required, id={}", id);
+            return Map.of("success", false, "error", "分组名称不能为空");
+        }
+        if (request.getName().length() > 200) {
+            log.warn("updateGroup: name too long, id={}, length={}", id, request.getName().length());
+            return Map.of("success", false, "error", "分组名称不能超过 200 字符");
+        }
         return repository.findGroupById(id)
             .map(group -> {
-                group.setName(request.getName());
+                group.setName(request.getName().trim());
                 group.setDescription(request.getDescription());
                 TestCaseGroup saved = repository.saveGroup(group);
-                return Map.<String, Object>of(
-                    "success", true,
-                    "group", saved
-                );
+                log.info("Updated group: id={}, name={}", saved.getId(), saved.getName());
+                return Map.<String, Object>of("success", true, "group", saved);
             })
-            .orElse(Map.of(
-                "success", false,
-                "error", "Group not found"
-            ));
+            .orElse(Map.of("success", false, "error", "分组不存在"));
     }
 
     /**
@@ -113,15 +124,10 @@ public class GroupController {
     public Map<String, Object> deleteGroup(@PathVariable String id) {
         if (repository.findGroupById(id).isPresent()) {
             repository.deleteGroup(id);
-            return Map.of(
-                "success", true,
-                "message", "Group deleted"
-            );
+            log.info("Deleted group: id={}", id);
+            return Map.of("success", true, "message", "Group deleted");
         }
-        return Map.of(
-            "success", false,
-            "error", "Group not found"
-        );
+        return Map.of("success", false, "error", "Group not found");
     }
 
     /**

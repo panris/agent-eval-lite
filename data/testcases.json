@@ -4,7 +4,9 @@
   "input" : "今天天气",
   "expected" : "今天阳光明媚",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 1, 9, 56, 36, 751819000 ],
   "updatedAt" : [ 2026, 7, 1, 9, 56, 36, 751824000 ],
   "tags" : [ ]
@@ -14,7 +16,9 @@
   "input" : "你好",
   "expected" : "你好啊",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 1, 9, 56, 36, 746046000 ],
   "updatedAt" : [ 2026, 7, 1, 9, 56, 36, 746055000 ],
   "tags" : [ ]
@@ -24,7 +28,9 @@
   "input" : "2+2=?",
   "expected" : "4",
   "groupId" : "474ea4e4-4064-4abd-bf9a-8ee075de9e2f",
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411428000 ],
   "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 411488000 ],
   "tags" : [ ]
@@ -34,7 +40,9 @@
   "input" : "10/2=?",
   "expected" : "5",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 6, 29, 9, 7, 44, 944309000 ],
   "updatedAt" : [ 2026, 6, 29, 9, 7, 44, 944332000 ],
   "tags" : [ ]
@@ -44,7 +52,9 @@
   "input" : "10-5=?",
   "expected" : "5",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411475000 ],
   "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 418551000 ],
   "tags" : [ ]
@@ -54,7 +64,9 @@
   "input" : "3*3=?",
   "expected" : "9",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411461000 ],
   "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 418296000 ],
   "tags" : [ ]
