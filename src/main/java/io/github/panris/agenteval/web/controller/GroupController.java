@@ -86,7 +86,7 @@ public class GroupController {
             })
             .orElse(Map.of(
                 "success", false,
-                "error", "Group not found"
+                "error", "分组不存在"
             ));
     }
 
@@ -127,7 +127,7 @@ public class GroupController {
             log.info("Deleted group: id={}", id);
             return Map.of("success", true, "message", "Group deleted");
         }
-        return Map.of("success", false, "error", "Group not found");
+        return Map.of("success", false, "error", "分组不存在");
     }
 
     /**
@@ -142,7 +142,7 @@ public class GroupController {
         if (testCaseId == null) {
             return Map.of(
                 "success", false,
-                "error", "testCaseId is required"
+                "error", "testCaseId 不能为空"
             );
         }
 
@@ -150,7 +150,7 @@ public class GroupController {
         if (group == null) {
             return Map.of(
                 "success", false,
-                "error", "Group or test case not found"
+                "error", "分组或测试用例不存在"
             );
         }
 
@@ -172,7 +172,7 @@ public class GroupController {
         if (group == null) {
             return Map.of(
                 "success", false,
-                "error", "Group not found"
+                "error", "分组不存在"
             );
         }
 

@@ -32,15 +32,15 @@ public class TestCaseController {
     public Map<String, Object> createTestCase(@RequestBody TestCaseRequest request) {
         if (request.getInput() == null || request.getInput().isBlank()) {
             log.warn("createTestCase: input is required");
-            return Map.of("success", false, "error", "Input is required");
+            return Map.of("success", false, "error", "输入不能为空");
         }
         if (request.getExpected() == null || request.getExpected().isBlank()) {
             log.warn("createTestCase: expected is required");
-            return Map.of("success", false, "error", "Expected output is required");
+            return Map.of("success", false, "error", "期望输出不能为空");
         }
         if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
             log.warn("createTestCase: input or expected exceeds 10000 characters");
-            return Map.of("success", false, "error", "Input or expected output exceeds 10000 characters");
+            return Map.of("success", false, "error", "输入或期望输出不能超过 10000 字符");
         }
         TestCaseEntity testCase = new TestCaseEntity(
             request.getName(),
@@ -91,7 +91,7 @@ public class TestCaseController {
             ))
             .orElse(Map.of(
                 "success", false,
-                "error", "Test case not found"
+                "error", "测试用例不存在"
             ));
     }
 
@@ -105,15 +105,15 @@ public class TestCaseController {
     ) {
         if (request.getInput() == null || request.getInput().isBlank()) {
             log.warn("updateTestCase [{}]: input is required", id);
-            return Map.of("success", false, "error", "Input is required");
+            return Map.of("success", false, "error", "输入不能为空");
         }
         if (request.getExpected() == null || request.getExpected().isBlank()) {
             log.warn("updateTestCase [{}]: expected is required", id);
-            return Map.of("success", false, "error", "Expected output is required");
+            return Map.of("success", false, "error", "期望输出不能为空");
         }
         if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
             log.warn("updateTestCase [{}]: input or expected exceeds 10000 chars", id);
-            return Map.of("success", false, "error", "Input or expected output exceeds 10000 characters");
+            return Map.of("success", false, "error", "输入或期望输出不能超过 10000 字符");
         }
         return repository.findTestCaseById(id)
             .map(tc -> {
@@ -134,7 +134,7 @@ public class TestCaseController {
             })
             .orElse(Map.of(
                 "success", false,
-                "error", "Test case not found"
+                "error", "测试用例不存在"
             ));
     }
 
@@ -152,7 +152,7 @@ public class TestCaseController {
         }
         return Map.of(
             "success", false,
-            "error", "Test case not found"
+            "error", "测试用例不存在"
         );
     }
     
@@ -165,7 +165,7 @@ public class TestCaseController {
             @RequestBody Map<String, Object> body) {
         Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
         if (opt.isEmpty()) {
-            return Map.of("success", false, "error", "Test case not found");
+            return Map.of("success", false, "error", "测试用例不存在");
         }
         TestCaseEntity tc = opt.get();
         tc.getMetadata().put("tags", body.get("tags"));
