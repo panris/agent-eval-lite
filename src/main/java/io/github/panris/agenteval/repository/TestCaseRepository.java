@@ -69,10 +69,38 @@ public class TestCaseRepository {
         return new ArrayList<>(testCases.values());
     }
 
+    public List<TestCaseEntity> findAllTestCasesPage(int page, int size) {
+        List<TestCaseEntity> all = new ArrayList<>(testCases.values());
+        int from = (page - 1) * size;
+        if (from >= all.size()) return List.of();
+        int to = Math.min(from + size, all.size());
+        return all.subList(from, to);
+    }
+
+    public int countAllTestCases() {
+        return testCases.size();
+    }
+
     public List<TestCaseEntity> findTestCasesByGroupId(String groupId) {
         return testCases.values().stream()
             .filter(tc -> groupId.equals(tc.getGroupId()))
             .collect(Collectors.toList());
+    }
+
+    public List<TestCaseEntity> findTestCasesByGroupIdPage(String groupId, int page, int size) {
+        List<TestCaseEntity> all = testCases.values().stream()
+            .filter(tc -> groupId.equals(tc.getGroupId()))
+            .collect(Collectors.toList());
+        int from = (page - 1) * size;
+        if (from >= all.size()) return List.of();
+        int to = Math.min(from + size, all.size());
+        return all.subList(from, to);
+    }
+
+    public int countTestCasesByGroupId(String groupId) {
+        return (int) testCases.values().stream()
+            .filter(tc -> groupId.equals(tc.getGroupId()))
+            .count();
     }
 
     public void deleteTestCase(String id) {

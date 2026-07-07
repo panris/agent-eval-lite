@@ -489,7 +489,23 @@
                 </thead>
                 <tbody id="cases-tbody"></tbody>
             </table>
-            
+
+            <!-- 分页 -->
+            <div id="cases-pagination" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                <span id="cases-pagination-info" style="color: var(--text-secondary); font-size: 13px;"></span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <select id="cases-page-size" class="form-control" style="width: auto; padding: 4px 8px; font-size: 13px;" onchange="tcGoToPage(1)">
+                        <option value="10">10条/页</option>
+                        <option value="20" selected>20条/页</option>
+                        <option value="50">50条/页</option>
+                        <option value="100">100条/页</option>
+                    </select>
+                    <button class="btn btn-secondary btn-sm" id="tc-prev-btn" onclick="tcPrevPage()">‹ 上一页</button>
+                    <span id="tc-page-numbers"></span>
+                    <button class="btn btn-secondary btn-sm" id="tc-next-btn" onclick="tcNextPage()">下一页 ›</button>
+                </div>
+            </div>
+
             <div style="margin-top: 15px; padding: 15px; background: var(--bg-checkbox-item); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <span style="color: var(--text-secondary);">
                     已选择 <span id="selected-case-count">0</span> 个用例
@@ -921,21 +937,9 @@
 
         // 过滤测试用例
         const filterTestCases = debounce(function() {
-            const searchTerm = document.getElementById('case-search').value.toLowerCase();
-            const tbody = document.getElementById('cases-tbody');
-            const rows = tbody.getElementsByTagName('tr');
-            
-            for (let row of rows) {
-                const cells = row.getElementsByTagName('td');
-                if (cells.length === 0) continue;
-                
-                const name = cells[1]?.textContent.toLowerCase() || '';
-                const input = cells[2]?.textContent.toLowerCase() || '';
-                const expected = cells[3]?.textContent.toLowerCase() || '';
-                
-                const match = name.includes(searchTerm) || input.includes(searchTerm) || expected.includes(searchTerm);
-                row.style.display = match ? '' : 'none';
-            }
+            tcKeyword = document.getElementById('case-search').value.trim();
+            tcPage = 1;
+            loadTestCases();
         }, 300);
 
         let trendChart = null;
@@ -1307,13 +1311,79 @@
             window.open(url, '_blank');
         }
 
-        // 加载测试用例
+        // ============ 分页状态 ============
+        let tcPage = 1;
+        let tcPageSize = 20;
+        let tcTotal = 0;
+        let tcTotalPages = 0;
+        let tcKeyword = '';
+        let tcGroupId = '';
+
+        function renderTcPagination() {
+            const info = document.getElementById('cases-pagination-info');
+            const prevBtn = document.getElementById('tc-prev-btn');
+            const nextBtn = document.getElementById('tc-next-btn');
+            const pageNumbers = document.getElementById('tc-page-numbers');
+
+            info.textContent = tcTotal === 0
+                ? '暂无数据'
+                : `共 ${tcTotal} 条，第 ${tcPage}/${tcTotalPages} 页`;
+
+            prevBtn.disabled = tcPage <= 1;
+            nextBtn.disabled = tcPage >= tcTotalPages;
+
+            // 页码按钮（最多显示7个，两端省略）
+            const maxVisible = 7;
+            let pages = [];
+            if (tcTotalPages <= maxVisible) {
+                for (let i = 1; i <= tcTotalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                const start = Math.max(2, tcPage - 2);
+                const end = Math.min(tcTotalPages - 1, tcPage + 2);
+                if (start > 2) pages.push('…');
+                for (let i = start; i <= end; i++) pages.push(i);
+                if (end < tcTotalPages - 1) pages.push('…');
+                pages.push(tcTotalPages);
+            }
+
+            pageNumbers.innerHTML = pages.map(p => {
+                if (p === '…') {
+                    return `<span style="padding: 4px 8px; color: var(--text-secondary);">…</span>`;
+                }
+                const active = p === tcPage ? 'background: var(--accent); color: #fff; border-color: var(--accent);' : '';
+                return `<button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 13px; ${active}" onclick="tcGoToPage(${p})">${p}</button>`;
+            }).join('');
+        }
+
+        function tcPrevPage() {
+            if (tcPage > 1) { tcPage--; loadTestCases(); }
+        }
+
+        function tcNextPage() {
+            if (tcPage < tcTotalPages) { tcPage++; loadTestCases(); }
+        }
+
+        function tcGoToPage(p) {
+            tcPageSize = parseInt(document.getElementById('cases-page-size').value, 10);
+            tcPage = p;
+            loadTestCases();
+        }
+
+        // ============ 加载测试用例 ============
         async function loadTestCases() {
             document.getElementById('cases-loading').classList.add('show');
             try {
-                const response = await fetch('/api/testcases');
+                const params = new URLSearchParams({ page: tcPage, size: tcPageSize });
+                if (tcKeyword) params.set('keyword', tcKeyword);
+                if (tcGroupId) params.set('groupId', tcGroupId);
+                const response = await fetch('/api/testcases?' + params.toString());
                 const data = await response.json();
-                testCases = data.testCases || [];
+                const list = data.testCases || [];
+                tcTotal = data.total || 0;
+                tcTotalPages = data.totalPages || 1;
+                if (tcPage > tcTotalPages) tcPage = tcTotalPages || 1;
+                testCases = list;
                 window._testCases = testCases;  // 保存用于导出
 
                 const tbody = document.getElementById('cases-tbody');
@@ -1358,6 +1428,8 @@
                     </tr>
                     `;
                 }).join('');
+
+                renderTcPagination();
             } catch (error) {
                 console.error('Failed to load test cases:', error);
                 showToast('加载测试用例失败', 'error');

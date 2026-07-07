@@ -320,3 +320,7 @@ const Table = {
             .replace(/'/g, '&#39;');
     }
 };
+
+// utils namespace — 暴露 Table 的 escapeHtml 供模板字符串使用
+const utils = { escapeHtml: Table.escapeHtml };
+

@@ -59,23 +59,76 @@ public class TestCaseController {
     }
 
     /**
-     * List all test cases.
+     * List test cases with pagination.
      */
     @GetMapping
     public Map<String, Object> listTestCases(
-        @RequestParam(required = false) String groupId
+        @RequestParam(required = false) String groupId,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @RequestParam(required = false) String keyword
     ) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 20;
+        if (size > 100) size = 100;
+
         List<TestCaseEntity> testCases;
+        int total;
+
         if (groupId != null && !groupId.isEmpty()) {
-            testCases = repository.findTestCasesByGroupId(groupId);
+            List<TestCaseEntity> filtered = repository.findTestCasesByGroupId(groupId);
+            total = filtered.size();
+            if (keyword != null && !keyword.isBlank()) {
+                String kw = keyword.toLowerCase();
+                filtered = filtered.stream()
+                    .filter(tc ->
+                        (tc.getName() != null && tc.getName().toLowerCase().contains(kw)) ||
+                        (tc.getInput() != null && tc.getInput().toLowerCase().contains(kw)) ||
+                        (tc.getExpected() != null && tc.getExpected().toLowerCase().contains(kw)) ||
+                        (tc.getMetadata() != null && tc.getMetadata().toString().toLowerCase().contains(kw))
+                    )
+                    .toList();
+            }
+            total = filtered.size();
+            int from = (page - 1) * size;
+            if (from >= filtered.size()) {
+                testCases = List.of();
+            } else {
+                testCases = filtered.subList(from, Math.min(from + size, filtered.size()));
+            }
         } else {
-            testCases = repository.findAllTestCases();
+            if (keyword != null && !keyword.isBlank()) {
+                String kw = keyword.toLowerCase();
+                testCases = repository.findAllTestCases().stream()
+                    .filter(tc ->
+                        (tc.getName() != null && tc.getName().toLowerCase().contains(kw)) ||
+                        (tc.getInput() != null && tc.getInput().toLowerCase().contains(kw)) ||
+                        (tc.getExpected() != null && tc.getExpected().toLowerCase().contains(kw)) ||
+                        (tc.getMetadata() != null && tc.getMetadata().toString().toLowerCase().contains(kw))
+                    )
+                    .toList();
+                total = testCases.size();
+                int from = (page - 1) * size;
+                if (from >= testCases.size()) {
+                    testCases = List.of();
+                } else {
+                    testCases = testCases.subList(from, Math.min(from + size, testCases.size()));
+                }
+            } else {
+                testCases = repository.findAllTestCasesPage(page, size);
+                total = repository.countAllTestCases();
+            }
         }
+
+        int totalPages = (int) Math.ceil((double) total / size);
 
         return Map.of(
             "success", true,
             "testCases", testCases,
-            "total", testCases.size()
+            "total", total,
+            "page", page,
+            "size", size,
+            "totalPages", totalPages
         );
     }
 
