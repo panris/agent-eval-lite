@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class AppConfig {
@@ -18,17 +17,10 @@ public class AppConfig {
     private static final Path SHARES_FILE = Paths.get("data/shares.json");
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Bean
-    public Map<String, Map<String, Object>> reportHistory() {
-        return new ConcurrentHashMap<>();
-    }
-
-    @Bean
-    public Map<String, String> sharedReports() {
-        return new ConcurrentHashMap<>();
-    }
-
     /** 持久化 sharedReports 到 data/shares.json */
+    // Note: reportHistory and sharedReports are now owned by ReportService.
+    // This class only handles shared report persistence helpers.
+    // (SharedReports persistence is handled by ReportService.saveSharedReports().)
     public void saveSharedReports(Map<String, String> sharedReports) {
         try {
             Files.createDirectories(SHARES_FILE.getParent());

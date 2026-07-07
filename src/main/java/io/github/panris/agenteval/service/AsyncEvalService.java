@@ -1,6 +1,7 @@
 package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.*;
+import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.scorer.builtin.*;
 import org.springframework.stereotype.Service;
 
@@ -23,16 +24,11 @@ public class AsyncEvalService {
     private final ExecutorService executor = Executors.newFixedThreadPool(
         Runtime.getRuntime().availableProcessors()
     );
-    private final Map<String, Map<String, Object>> reportHistory;
-    private final Map<String, String> sharedReports;
+    private final ReportService reportService;
     private final ObjectMapper objectMapper;
 
-    public AsyncEvalService(
-            Map<String, Map<String, Object>> reportHistory,
-            Map<String, String> sharedReports,
-            ObjectMapper objectMapper) {
-        this.reportHistory = reportHistory;
-        this.sharedReports = sharedReports;
+    public AsyncEvalService(ReportService reportService, ObjectMapper objectMapper) {
+        this.reportService = reportService;
         this.objectMapper = objectMapper;
     }
 
@@ -85,8 +81,7 @@ public class AsyncEvalService {
                 reportData.put("timestamp", System.currentTimeMillis());
                 reportData.put("asyncTaskId", taskId);
 
-                reportHistory.put(reportId, reportData);
-                saveReportsJson();
+                reportService.saveReport(reportId, reportData);
 
                 status.reportId = reportId;
                 status.status = "COMPLETED";
@@ -126,26 +121,11 @@ public class AsyncEvalService {
         return result;
     }
 
-    private void saveReportsJson() {
-        try {
-            Path dataFile = Paths.get("data/reports.json");
-            Files.createDirectories(dataFile.getParent());
-            String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
-            Files.writeString(dataFile, json);
-        } catch (Exception e) {
-            log.error("Failed to save reports: {}", e.getMessage(), e);
-        }
-    }
-
     public TaskStatus getStatus(String taskId) {
         return tasks.get(taskId);
     }
 
     public List<TaskStatus> getAllStatuses() {
         return new ArrayList<>(tasks.values());
-    }
-
-    public void shutdown() {
-        executor.shutdown();
     }
 }

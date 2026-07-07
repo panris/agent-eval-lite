@@ -1,5 +1,6 @@
 package io.github.panris.agenteval.web.controller;
 
+import io.github.panris.agenteval.service.ReportService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,23 +13,20 @@ import java.util.stream.Collectors;
 @Controller
 public class ShareController {
 
-    private final Map<String, Map<String, Object>> reportHistory;
-    private final Map<String, String> sharedReports;
+    private final ReportService reportService;
 
-    public ShareController(Map<String, Map<String, Object>> reportHistory,
-                           Map<String, String> sharedReports) {
-        this.reportHistory = reportHistory;
-        this.sharedReports = sharedReports;
+    public ShareController(ReportService reportService) {
+        this.reportService = reportService;
     }
 
     @GetMapping("/share/{shareId}")
     public String showSharedReport(@PathVariable String shareId, Model model) {
-        String reportId = sharedReports.get(shareId);
+        String reportId = reportService.resolveShareId(shareId);
         if (reportId == null) {
             return "redirect:/";
         }
         
-        Map<String, Object> report = reportHistory.get(reportId);
+        Map<String, Object> report = reportService.getReport(reportId);
         if (report == null) {
             return "redirect:/";
         }

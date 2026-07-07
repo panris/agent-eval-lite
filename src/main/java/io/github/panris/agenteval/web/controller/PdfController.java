@@ -3,6 +3,7 @@ package io.github.panris.agenteval.web.controller;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.service.ReportService;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -21,12 +22,12 @@ public class PdfController {
     private static final Logger log = LoggerFactory.getLogger(PdfController.class);
 
     private final TestCaseRepository testCaseRepository;
-    private final Map<String, Map<String, Object>> reportHistory;
+    private final ReportService reportService;
 
     public PdfController(TestCaseRepository testCaseRepository,
-                         Map<String, Map<String, Object>> reportHistory) {
+                         ReportService reportService) {
         this.testCaseRepository = testCaseRepository;
-        this.reportHistory = reportHistory;
+        this.reportService = reportService;
     }
 
     /**
@@ -210,7 +211,7 @@ public class PdfController {
     
     @SuppressWarnings("unchecked")
     private Map<String, Object> getReportData(String reportId) {
-        Map<String, Object> rawReport = reportHistory.get(reportId);
+        Map<String, Object> rawReport = reportService.getReport(reportId);
         if (rawReport == null) return null;
         
         Map<String, Object> report = new LinkedHashMap<>();

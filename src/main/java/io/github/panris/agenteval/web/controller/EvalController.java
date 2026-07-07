@@ -5,10 +5,10 @@ import io.github.panris.agenteval.Evaluation;
 import io.github.panris.agenteval.EvaluationReport;
 import io.github.panris.agenteval.Evaluator;
 import io.github.panris.agenteval.TestCase;
-import io.github.panris.agenteval.config.AppConfig;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
+import io.github.panris.agenteval.service.ReportService;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,95 +31,27 @@ import java.util.concurrent.ConcurrentHashMap;
 public class EvalController {
     private static final Logger log = LoggerFactory.getLogger(EvalController.class);
 
-    private final Map<String, Map<String, Object>> reportHistory;
-    private final Map<String, String> sharedReports;  // shareId -> reportId
+    private final ReportService reportService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     private final TestCaseRepository testCaseRepository;
     private final AsyncEvalService asyncEvalService;
-    private final AppConfig appConfig;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-
     private static final List<String> VALID_METRICS =
             List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
 
     public EvalController(TestCaseRepository testCaseRepository,
-                           Map<String, Map<String, Object>> reportHistory,
-                           Map<String, String> sharedReports,
                            AsyncEvalService asyncEvalService,
-                           AppConfig appConfig) {
+                           ReportService reportService) {
         this.testCaseRepository = testCaseRepository;
-        this.reportHistory = reportHistory;
-        this.sharedReports = sharedReports;
         this.asyncEvalService = asyncEvalService;
-        this.appConfig = appConfig;
-        loadReportHistory();
-        appConfig.loadSharedReports(sharedReports);
-        // Clean up old reports if too many
-        cleanupOldReports(100);  // Keep latest 100 reports
+        this.reportService = reportService;
     }
 
     /**
-     * Clean up old reports if count exceeds limit.
-     */
-    private void cleanupOldReports(int maxReports) {
-        if (reportHistory.size() <= maxReports) return;
-        
-        log.info("Cleaning up old reports. Current count: {}", reportHistory.size());
-        
-        // Sort by timestamp and keep latest maxReports
-        var sorted = reportHistory.entrySet().stream()
-            .sorted((a, b) -> {
-                Long tsA = getTimestamp(a.getValue());
-                Long tsB = getTimestamp(b.getValue());
-                return tsB.compareTo(tsA);  // Descending
-            })
-            .toList();
-        
-        // Collect IDs being removed so we can clean up sharedReports too
-        var keptIds = sorted.stream().limit(maxReports).map(Map.Entry::getKey).collect(java.util.stream.Collectors.toSet());
-        
-        // Clear and reload latest maxReports
-        reportHistory.clear();
-        sorted.stream().limit(maxReports).forEach(e -> reportHistory.put(e.getKey(), e.getValue()));
-        
-        // Also remove stale entries from sharedReports (those pointing to deleted reports)
-        sharedReports.entrySet().removeIf(entry -> !keptIds.contains(entry.getValue()));
-        
-        saveReportHistory();
-        log.info("Cleanup complete. Kept {} reports", reportHistory.size());
-    }
-    
-    private Long getTimestamp(Map<String, Object> report) {
         Object timestamp = report.get("timestamp");
         if (timestamp instanceof Number) return ((Number) timestamp).longValue();
         return 0L;
     }
 
-    @PostConstruct
-    public void loadReportHistory() {
-        Path dataFile = Paths.get("data/reports.json");
-        if (Files.exists(dataFile)) {
-            try {
-                String content = Files.readString(dataFile);
-                Map<String, Map<String, Object>> loaded = objectMapper.readValue(content,
-                    objectMapper.getTypeFactory().constructMapType(LinkedHashMap.class, String.class, Map.class));
-                reportHistory.putAll(loaded);
-                log.info("Loaded {} historical reports", reportHistory.size());
-            } catch (Exception e) {
-                log.error("Failed to load report history: {}", e.getMessage(), e);
-            }
-        }
-    }
-
-    private void saveReportHistory() {
-        try {
-            Path dataFile = Paths.get("data/reports.json");
-            Files.createDirectories(dataFile.getParent());
-            String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
-            Files.writeString(dataFile, json);
-        } catch (Exception e) {
-            log.error("Failed to save report history: {}", e.getMessage(), e);
-        }
-    }
 
     @GetMapping("/")
     public String index(Model model) {
@@ -387,8 +319,8 @@ public class EvalController {
             "executionTimeMs", report.getExecutionTimeMs(),
             "timestamp", System.currentTimeMillis()
         );
-        reportHistory.put(reportId, reportData);
-        saveReportHistory();
+        reportService.saveReport(reportId, reportData);
+
 
         // Return result
         return Map.of(
@@ -405,38 +337,13 @@ public class EvalController {
     @GetMapping("/api/reports")
     @ResponseBody
     public List<Map<String, Object>> getReports(@RequestParam(defaultValue = "desc") String sort) {
-        List<Map<String, Object>> reports = new ArrayList<>();
-        reportHistory.forEach((id, report) -> {
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id", id);
-            item.put("summary", report.get("summary"));
-            item.put("totalTestCases", report.get("totalTestCases"));
-            item.put("passedTestCases", report.get("passedTestCases"));
-            item.put("executionTimeMs", report.get("executionTimeMs"));
-            item.put("timestamp", report.get("timestamp"));
-            item.put("favorite", report.getOrDefault("favorite", false));
-            item.put("tags", report.getOrDefault("tags", List.of()));
-            item.put("note", report.getOrDefault("note", ""));
-            reports.add(item);
-        });
-        
-        // Sort by timestamp: desc = newest first (default), asc = oldest first
-        boolean descending = "desc".equalsIgnoreCase(sort);
-        reports.sort((a, b) -> {
-            Object tsA = a.get("timestamp");
-            Object tsB = b.get("timestamp");
-            long tA = tsA instanceof Number ? ((Number) tsA).longValue() : 0L;
-            long tB = tsB instanceof Number ? ((Number) tsB).longValue() : 0L;
-            return descending ? Long.compare(tB, tA) : Long.compare(tA, tB);
-        });
-        
-        return reports;
+        return reportService.getAllReports(sort);
     }
 
     @GetMapping("/api/reports/{id}")
     @ResponseBody
     public Map<String, Object> getReport(@PathVariable String id) {
-        Map<String, Object> report = reportHistory.get(id);
+        Map<String, Object> report = reportService.getReport(id);
         if (report == null) {
             return Map.of("success", false, "error", "Report not found");
         }
@@ -455,20 +362,14 @@ public class EvalController {
     @DeleteMapping("/api/reports/{id}")
     @ResponseBody
     public Map<String, Object> deleteReport(@PathVariable String id) {
-        if (reportHistory.remove(id) != null) {
-            saveReportHistory();
-            return Map.of("success", true, "message", "Report deleted");
-        }
-        return Map.of("success", false, "error", "Report not found");
+        return reportService.deleteReport(id);
     }
 
     @RequestMapping(value = "/api/reports", method = RequestMethod.DELETE)
     @ResponseBody
     public Map<String, Object> clearAllReports(@RequestBody(required = false) Map<String, String> body) {
         if (body != null && "clearAll".equals(body.get("action"))) {
-            reportHistory.clear();
-            saveReportHistory();
-            return Map.of("success", true, "message", "All reports cleared");
+            return reportService.clearAllReports();
         }
         return Map.of("success", false, "error", "Invalid action");
     }
@@ -478,7 +379,7 @@ public class EvalController {
             @PathVariable String id,
             @RequestParam(defaultValue = "json") String format) {
         
-        Map<String, Object> report = reportHistory.get(id);
+        Map<String, Object> report = reportService.getReport(id);
         if (report == null) {
             return ResponseEntity.notFound().build();
         }
@@ -594,57 +495,28 @@ public class EvalController {
     @PostMapping("/api/reports/{id}/copy")
     @ResponseBody
     public Map<String, Object> copyReport(@PathVariable String id) {
-        Map<String, Object> original = reportHistory.get(id);
-        if (original == null) {
-            return Map.of("success", false, "error", "Report not found");
-        }
-        String newId = "report_" + System.currentTimeMillis();
-        reportHistory.put(newId, new LinkedHashMap<>(original));
-        saveReportHistory();
-        return Map.of("success", true, "newId", newId, "message", "Report copied");
+        return reportService.copyReport(id);
     }
 
     // 收藏/取消收藏
     @PostMapping("/api/reports/{id}/favorite")
     @ResponseBody
     public Map<String, Object> toggleFavorite(@PathVariable String id) {
-        Map<String, Object> report = reportHistory.get(id);
-        if (report == null) {
-            return Map.of("success", false, "error", "Report not found");
-        }
-        boolean current = (boolean) report.getOrDefault("favorite", false);
-        report.put("favorite", !current);
-        saveReportHistory();
-        return Map.of("success", true, "favorite", !current);
+        return reportService.toggleFavorite(id);
     }
 
     // 生成报告分享链接
     @PostMapping("/api/reports/{id}/share")
     @ResponseBody
     public Map<String, Object> shareReport(@PathVariable String id) {
-        Map<String, Object> report = reportHistory.get(id);
-        if (report == null) {
-            return Map.of("success", false, "error", "Report not found");
-        }
-        // 生成简短的分享 ID (8位)
-        String shareId = java.util.UUID.randomUUID().toString().substring(0, 8);
-        // 存储分享映射
-        sharedReports.put(shareId, id);
-        appConfig.saveSharedReports(sharedReports);  // 持久化
-        return Map.of("success", true, "shareId", shareId, "url", "/share/" + shareId);
+        return reportService.createShareLink(id);
     }
 
     // 获取分享列表
     @GetMapping("/api/reports/favorites")
     @ResponseBody
     public Map<String, Object> getFavorites() {
-        Map<String, Map<String, Object>> favorites = new LinkedHashMap<>();
-        reportHistory.forEach((reportId, report) -> {
-            if ((boolean) report.getOrDefault("favorite", false)) {
-                favorites.put(reportId, report);
-            }
-        });
-        return Map.of("success", true, "favorites", favorites);
+        return reportService.getFavorites();
     }
 
     // 更新报告标签
@@ -653,16 +525,13 @@ public class EvalController {
     public Map<String, Object> updateTags(
             @PathVariable String id,
             @RequestBody Map<String, Object> body) {
-        Map<String, Object> report = reportHistory.get(id);
-        if (report == null) {
-            return Map.of("success", false, "error", "Report not found");
-        }
         Object tags = body.get("tags");
-        if (tags instanceof List) {
-            report.put("tags", tags);
+        if (!(tags instanceof List)) {
+            return Map.of("success", false, "error", "tags must be a list");
         }
-        saveReportHistory();
-        return Map.of("success", true, "tags", report.get("tags"));
+        @SuppressWarnings("unchecked")
+        List<String> tagList = (List<String>) tags;
+        return reportService.updateTags(id, tagList);
     }
 
     // 更新报告备注
@@ -671,13 +540,7 @@ public class EvalController {
     public Map<String, Object> updateNote(
             @PathVariable String id,
             @RequestBody Map<String, Object> body) {
-        Map<String, Object> report = reportHistory.get(id);
-        if (report == null) {
-            return Map.of("success", false, "error", "Report not found");
-        }
-        report.put("note", body.getOrDefault("note", ""));
-        saveReportHistory();
-        return Map.of("success", true, "note", report.get("note"));
+        return reportService.updateNote(id, (String) body.getOrDefault("note", ""));
     }
 
     // 对比报告
@@ -686,84 +549,9 @@ public class EvalController {
     public Map<String, Object> compareReports(
             @RequestParam String ids,
             @RequestParam(required = false) String metric) {
-        String[] reportIds = ids.split(",");
-        List<Map<String, Object>> reports = new ArrayList<>();
-        for (String reportId : reportIds) {
-            Map<String, Object> report = reportHistory.get(reportId.trim());
-            if (report != null) {
-                reports.add(report);
-            }
-        }
-        
-        if (reports.isEmpty()) {
-            return Map.of("success", false, "error", "No valid reports found");
-        }
-        
-        // 计算对比数据
-        Map<String, Object> comparison = new LinkedHashMap<>();
-        comparison.put("count", reports.size());
-        comparison.put("reports", reports);
-        
-        // 计算各指标统计
-        List<Double> scores = new ArrayList<>();
-        List<Double> passRates = new ArrayList<>();
-        List<Long> execTimes = new ArrayList<>();
-        List<Integer> totalCases = new ArrayList<>();
-
-        for (Map<String, Object> r : reports) {
-            Object summaryObj = r.get("summary");
-            if (summaryObj instanceof Map) {
-                Map<?, ?> summary = (Map<?, ?>) summaryObj;
-
-                Object scoreObj = summary.get("averageScore");
-                if (scoreObj == null) scoreObj = summary.get("average_score");
-                if (scoreObj instanceof Number) scores.add(((Number) scoreObj).doubleValue());
-
-                Object prObj = summary.get("passRate");
-                if (prObj == null) prObj = summary.get("pass_rate");
-                if (prObj instanceof Number) passRates.add(((Number) prObj).doubleValue());
-
-                Object tcObj = summary.get("totalTestCases");
-                if (tcObj == null) tcObj = summary.get("total_test_cases");
-                if (tcObj instanceof Number) totalCases.add(((Number) tcObj).intValue());
-            }
-
-            Object execObj = r.get("executionTimeMs");
-            if (execObj instanceof Number) execTimes.add(((Number) execObj).longValue());
-        }
-
-        if (!scores.isEmpty()) {
-            scores.sort(Double::compareTo);
-            comparison.put("scoreStats", Map.of(
-                "min", scores.get(0),
-                "max", scores.get(scores.size() - 1),
-                "avg", scores.stream().mapToDouble(Double::doubleValue).average().orElse(0)
-            ));
-        }
-
-        if (!passRates.isEmpty()) {
-            passRates.sort(Double::compareTo);
-            comparison.put("passRateStats", Map.of(
-                "min", passRates.get(0),
-                "max", passRates.get(passRates.size() - 1),
-                "avg", passRates.stream().mapToDouble(Double::doubleValue).average().orElse(0)
-            ));
-        }
-
-        if (!execTimes.isEmpty()) {
-            execTimes.sort(Long::compare);
-            comparison.put("execTimeStats", Map.of(
-                "min", execTimes.get(0),
-                "max", execTimes.get(execTimes.size() - 1),
-                "avg", execTimes.stream().mapToLong(Long::longValue).average().orElse(0)
-            ));
-        }
-
-        if (!totalCases.isEmpty()) {
-            comparison.put("totalCases", totalCases);
-        }
-        
-        return Map.of("success", true, "comparison", comparison);
+        List<String> idList = java.util.Arrays.asList(ids.split(",")).stream()
+            .map(String::trim).collect(java.util.stream.Collectors.toList());
+        return reportService.compareReports(idList);
     }
 
     private Agent createAgent(String type, Map<String, Object> config) {
