@@ -241,7 +241,8 @@ public class EvalController {
             "totalCases", status.totalCases,
             "completedCases", status.completedCases,
             "createdAt", status.createdAt,
-            "completedAt", status.completedAt
+            "completedAt", status.completedAt,
+            "timeoutSeconds", status.timeoutSeconds
         );
     }
 

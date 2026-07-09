@@ -2812,5 +2812,92 @@
       "pass_rate" : 0.0,
       "failed_test_cases" : 2.0
     }
+  },
+  "report_1783611056382" : {
+    "summary" : {
+      "average_score" : 1.0,
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783611056377_5757",
+      "testCaseInput" : "hello",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "hello",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 3,
+    "timestamp" : 1783611056382,
+    "asyncTaskId" : "task_1783611056377"
+  },
+  "report_1783611078733" : {
+    "summary" : {
+      "average_score" : 1.0,
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783611078732_1190",
+      "testCaseInput" : "hello",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "hello",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 0,
+    "timestamp" : 1783611078733,
+    "asyncTaskId" : "task_1783611078732"
+  },
+  "report_1783611111013" : {
+    "summary" : {
+      "passed_test_cases" : 1.0,
+      "failed_test_cases" : 0.0,
+      "pass_rate" : 100.0,
+      "average_score" : 1.0,
+      "total_test_cases" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783611111009_3725",
+      "testCaseInput" : "test",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "test",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 2,
+    "timestamp" : 1783611111013,
+    "asyncTaskId" : "task_1783611111009"
   }
 }
