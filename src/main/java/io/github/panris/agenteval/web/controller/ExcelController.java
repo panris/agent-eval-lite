@@ -183,7 +183,20 @@ public class ExcelController {
             case STRING -> cell.getStringCellValue();
             case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-            case FORMULA -> cell.getCellFormula();
+            case FORMULA -> {
+                // 优先取公式缓存值；无法读取时退回公式文本并做注入防护（前置单引号），
+                // 避免把可执行公式表达式当作普通数据写入用例。
+                try {
+                    yield switch (cell.getCachedFormulaResultType()) {
+                        case STRING -> sanitizeExcelCell(cell.getStringCellValue());
+                        case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
+                        case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+                        default -> sanitizeExcelCell(cell.getCellFormula());
+                    };
+                } catch (Exception e) {
+                    yield sanitizeExcelCell(cell.getCellFormula());
+                }
+            }
             default -> null;
         };
     }

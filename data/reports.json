@@ -2751,5 +2751,66 @@
     "executionTimeMs" : 1,
     "timestamp" : 1783607752319,
     "asyncTaskId" : "task_1783607752317"
+  },
+  "report_1783608260986" : {
+    "timestamp" : 1783608260986,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783608260982_9049",
+      "testCaseInput" : "今天天气如何",
+      "overallScore" : 0.0,
+      "passed" : false,
+      "output" : "I'm a demo agent. You asked: 今天天气如何",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)"
+        },
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 0.00%"
+        },
+        "rouge" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "ROUGE-L: 0.00%"
+        }
+      }
+    }, {
+      "testCaseId" : "tc_1783608260983_9883",
+      "testCaseInput" : "=CMD()",
+      "overallScore" : 0.0,
+      "passed" : false,
+      "output" : "I'm a demo agent. You asked: =CMD()",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00 (threshold: 0.70)"
+        },
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 0.00%"
+        },
+        "rouge" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "ROUGE-L: 0.00%"
+        }
+      }
+    } ],
+    "executionTimeMs" : 2,
+    "failedTestCases" : 2,
+    "passedTestCases" : 0,
+    "totalTestCases" : 2,
+    "summary" : {
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 2.0,
+      "average_score" : 0.0,
+      "pass_rate" : 0.0,
+      "failed_test_cases" : 2.0
+    }
   }
 }

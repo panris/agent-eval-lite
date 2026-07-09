@@ -108,18 +108,21 @@ public class PdfController {
                     (java.util.List<Map<String, Object>>) report.getOrDefault("results", java.util.List.of());
                 
                 if (!results.isEmpty()) {
-                    PdfPTable resultsTable = new PdfPTable(3);
+                    PdfPTable resultsTable = new PdfPTable(4);
                     resultsTable.setWidthPercentage(100);
                     resultsTable.setSpacingBefore(5f);
+                    resultsTable.setWidths(new float[]{2.5f, 1f, 1f, 3f});
                     
                     // 表头
                     Font tableHeaderFont = new Font(bfChinese, 10, Font.BOLD, Color.WHITE);
                     PdfPCell h1 = headerCell("用例名称", tableHeaderFont, new Color(102, 126, 234));
                     PdfPCell h2 = headerCell("状态", tableHeaderFont, new Color(102, 126, 234));
                     PdfPCell h3 = headerCell("评分", tableHeaderFont, new Color(102, 126, 234));
+                    PdfPCell h4 = headerCell("逐评分器", tableHeaderFont, new Color(102, 126, 234));
                     resultsTable.addCell(h1);
                     resultsTable.addCell(h2);
                     resultsTable.addCell(h3);
+                    resultsTable.addCell(h4);
                     
                     // 数据行
                     for (Map<String, Object> result : results) {
@@ -136,6 +139,24 @@ public class PdfController {
                         Object scoreObj = result.get("score");
                         double score = scoreObj instanceof Number ? ((Number) scoreObj).doubleValue() : 0;
                         resultsTable.addCell(new Phrase(String.format("%.2f", score), rowFont));
+                        
+                        // 逐评分器明细
+                        StringBuilder sb = new StringBuilder();
+                        Object srObj = result.get("scorerResults");
+                        if (srObj instanceof Map) {
+                            for (Map.Entry<String, Object> se : ((Map<String, Object>) srObj).entrySet()) {
+                                if (se.getValue() instanceof Map) {
+                                    Map<String, Object> sr = (Map<String, Object>) se.getValue();
+                                    double s = sr.get("score") instanceof Number
+                                        ? ((Number) sr.get("score")).doubleValue() : 0;
+                                    boolean sp = Boolean.TRUE.equals(sr.get("passed"));
+                                    if (sb.length() > 0) sb.append("\n");
+                                    sb.append(se.getKey()).append(":").append(String.format("%.2f", s))
+                                        .append(sp ? " ✓" : " ✗");
+                                }
+                            }
+                        }
+                        resultsTable.addCell(new Phrase(sb.length() > 0 ? sb.toString() : "-", smallFont));
                     }
                     
                     document.add(resultsTable);
@@ -286,6 +307,7 @@ public class PdfController {
                 }
             }
             item.put("output", output.length() > 200 ? output.substring(0, 200) + "..." : output);
+            item.put("scorerResults", ev.get("scorerResults"));
             
             results.add(item);
             idx++;

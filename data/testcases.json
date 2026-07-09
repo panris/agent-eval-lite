@@ -1,12 +1,260 @@
 [ {
-  "id" : "7c2e35be-7a72-48e4-8feb-229cc4bd8acb",
+  "id" : "a5e1049e-c61c-4cf0-8f3c-e655bd8f3c56",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 354954000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 354974000 ],
+  "tags" : [ ]
+}, {
+  "id" : "c97c495b-1166-4f68-95da-95098f4d3034",
+  "name" : "t1",
+  "input" : "你好",
+  "expected" : "hi",
+  "groupId" : "g1",
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 44, 42, 891975000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 44, 42, 892108000 ],
+  "tags" : [ ]
+}, {
+  "id" : "8efcec84-2465-4471-b622-55b0c425e6f9",
+  "name" : "t2",
+  "input" : "=SUM(1)",
+  "expected" : "y",
+  "groupId" : "g1",
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 44, 42, 920114000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 44, 42, 920125000 ],
+  "tags" : [ ]
+}, {
+  "id" : "8dad6c93-6083-422c-8d1f-b9829948b96c",
   "name" : "测试1",
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
   "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 350878000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 350890000 ],
+  "tags" : [ ]
+}, {
+  "id" : "836bc060-5e05-49c7-ac14-cccf837ae72f",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 7, 23, 2, 12, 980975000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 2, 12, 981002000 ],
+  "tags" : [ ]
+}, {
+  "id" : "8498e560-ba0f-4d2e-952f-d50636822ed4",
+  "name" : "测试用例A",
+  "input" : "你好",
+  "expected" : "你好啊",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 365907000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 365914000 ],
+  "tags" : [ ]
+}, {
+  "id" : "f5a1131b-904e-48ae-8a31-acdc727fbafb",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 7, 23, 4, 50, 788558000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 4, 50, 788576000 ],
+  "tags" : [ ]
+}, {
+  "id" : "32b902d7-e671-4bd4-b65e-6ed79e93350f",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 7, 23, 4, 49, 971645000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 4, 49, 971665000 ],
+  "tags" : [ ]
+}, {
+  "id" : "725d25f3-055e-4ad0-b09c-cb9cf300b2fe",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 361215000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 361220000 ],
+  "tags" : [ ]
+}, {
+  "id" : "9a0d897b-fd06-4401-be42-3df3cad803f1",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 7, 23, 2, 14, 619115000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 2, 14, 619135000 ],
+  "tags" : [ ]
+}, {
+  "id" : "995acfff-2472-488f-be9e-74da789c9b32",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 369342000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 369373000 ],
+  "tags" : [ ]
+}, {
+  "id" : "f6dd7700-28a3-4ed6-bdbc-cb73d5151ef2",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 357838000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 357844000 ],
+  "tags" : [ ]
+}, {
+  "id" : "0bda96b1-ce36-4eca-b2fc-afb91bef789e",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 7, 23, 4, 50, 572042000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 4, 50, 572064000 ],
+  "tags" : [ ]
+}, {
+  "id" : "99022fe6-aecf-441c-978e-a9e6e34d5f84",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 366678000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 366688000 ],
+  "tags" : [ ]
+}, {
+  "id" : "73c8865a-b870-42b0-84f3-438101ef422e",
+  "name" : "测试用例B",
+  "input" : "今天天气",
+  "expected" : "今天阳光明媚",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 1, 9, 56, 36, 751819000 ],
+  "updatedAt" : [ 2026, 7, 1, 9, 56, 36, 751824000 ],
+  "tags" : [ ]
+}, {
+  "id" : "37c9c531-59dc-4da7-8c25-6a6ca0c9a0c2",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 7, 7, 23, 2, 13, 736657000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 2, 13, 736677000 ],
+  "tags" : [ ]
+}, {
+  "id" : "8d8823f1-abea-4951-97fe-3fe084a5299b",
+  "name" : "乘法测试",
+  "input" : "3*3=?",
+  "expected" : "9",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 369942000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 369948000 ],
+  "tags" : [ ]
+}, {
+  "id" : "322ea933-b175-4e42-82a2-26db83340926",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 342993000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 343005000 ],
+  "tags" : [ ]
+}, {
+  "id" : "d8a62f9f-40ed-445f-98b3-24e2c99c26f8",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 356083000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 356090000 ],
+  "tags" : [ ]
+}, {
+  "id" : "b05b9585-4ecd-4010-9f40-4badca1ba328",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 356861000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 356871000 ],
+  "tags" : [ ]
+}, {
+  "id" : "01477311-80a4-4c09-b892-074d71e01cf1",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 368691000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 368708000 ],
+  "tags" : [ ]
+}, {
+  "id" : "84df1e28-6ea4-4269-8a25-1c601072415b",
+  "name" : "乘法测试",
+  "input" : "3*3=?",
+  "expected" : "9",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
+  "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411461000 ],
+  "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 418296000 ],
+  "tags" : [ ]
+}, {
+  "id" : "7c2e35be-7a72-48e4-8feb-229cc4bd8acb",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 12, 998000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 12, 1091000 ],
+  "tags" : [ ]
+}, {
+  "id" : "743c4e9f-84c3-445e-941e-bf53534db0b6",
+  "name" : "减法测试",
+  "input" : "10-5=?",
+  "expected" : "5",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 358919000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 358934000 ],
   "tags" : [ ]
 }, {
   "id" : "9a7fe373-a6f0-460b-a3d9-03e57ae2c731",
@@ -14,7 +262,9 @@
   "input" : "hello",
   "expected" : "world",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 3, 24, 278119000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 3, 24, 278209000 ],
   "tags" : [ ]
@@ -24,7 +274,9 @@
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 5, 26, 539277000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 5, 26, 539298000 ],
   "tags" : [ ]
@@ -46,19 +298,21 @@
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 15, 518736000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 15, 521630000 ],
   "tags" : [ ]
 }, {
-  "id" : "836bc060-5e05-49c7-ac14-cccf837ae72f",
+  "id" : "9091b826-8346-4758-8581-f693009c2e15",
   "name" : "测试1",
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
   "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 2, 12, 980975000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 2, 12, 981002000 ],
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 352577000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 352590000 ],
   "tags" : [ ]
 }, {
   "id" : "b7352a2d-9ea2-40dc-8c37-8ab3c619f68f",
@@ -66,9 +320,21 @@
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 13, 555014000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 13, 555034000 ],
+  "tags" : [ ]
+}, {
+  "id" : "00d9ef1e-3149-4eb3-8225-0e9e15341009",
+  "name" : "test-curl",
+  "input" : "hello",
+  "expected" : "world",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 345798000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 345806000 ],
   "tags" : [ ]
 }, {
   "id" : "36ab2ff8-2350-41c0-8eff-fdf6688097ff",
@@ -76,19 +342,21 @@
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 4, 49, 713577000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 4, 49, 713610000 ],
   "tags" : [ ]
 }, {
-  "id" : "f5a1131b-904e-48ae-8a31-acdc727fbafb",
-  "name" : "test",
-  "input" : "你好",
-  "expected" : "你好",
+  "id" : "60c53809-7dc4-4f65-819b-d955d5bad3b2",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
   "groupId" : null,
   "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 4, 50, 788558000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 4, 50, 788576000 ],
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 350310000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 350314000 ],
   "tags" : [ ]
 }, {
   "id" : "ff1f722f-b726-40f6-94a1-2075979069fe",
@@ -96,19 +364,21 @@
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 5, 4, 532033000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 5, 4, 532065000 ],
   "tags" : [ ]
 }, {
-  "id" : "32b902d7-e671-4bd4-b65e-6ed79e93350f",
+  "id" : "fa07092c-ace5-440e-8dad-4d2cf3587c49",
   "name" : "test",
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
   "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 4, 49, 971645000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 4, 49, 971665000 ],
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 365404000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 365408000 ],
   "tags" : [ ]
 }, {
   "id" : "2cb2047e-6333-4bd3-b668-31152605f285",
@@ -116,9 +386,21 @@
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 13, 346866000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 13, 346899000 ],
+  "tags" : [ ]
+}, {
+  "id" : "de903af3-c960-440e-b0d2-aef01dff0402",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 360312000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 360320000 ],
   "tags" : [ ]
 }, {
   "id" : "a29625dc-853f-4894-8f97-fb76961ed151",
@@ -138,19 +420,11 @@
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 15, 312758000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 15, 312784000 ],
-  "tags" : [ ]
-}, {
-  "id" : "9a0d897b-fd06-4401-be42-3df3cad803f1",
-  "name" : "测试1",
-  "input" : "上海商人",
-  "expected" : "上海商人",
-  "groupId" : null,
-  "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 2, 14, 619115000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 2, 14, 619135000 ],
   "tags" : [ ]
 }, {
   "id" : "ad90449f-a3c2-46f2-83a3-3be3748c30cc",
@@ -158,9 +432,21 @@
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 14, 419292000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 14, 419314000 ],
+  "tags" : [ ]
+}, {
+  "id" : "293a3fcf-3a91-46ef-93fc-3dba2440b2d5",
+  "name" : "验证测试-230639",
+  "input" : "ping",
+  "expected" : "pong",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 363342000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 363348000 ],
   "tags" : [ ]
 }, {
   "id" : "e9a1bad3-b9c0-45f4-9fc0-701b5dad26d6",
@@ -168,31 +454,61 @@
   "input" : "ping",
   "expected" : "pong",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 6, 39, 67867000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 6, 39, 67976000 ],
   "tags" : [ ]
 }, {
-  "id" : "0bda96b1-ce36-4eca-b2fc-afb91bef789e",
+  "id" : "6c3127fc-5ca9-435d-8e15-628dbbb9cd21",
+  "name" : "加法测试",
+  "input" : "2+2=?",
+  "expected" : "4",
+  "groupId" : "474ea4e4-4064-4abd-bf9a-8ee075de9e2f",
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 348836000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 348841000 ],
+  "tags" : [ ]
+}, {
+  "id" : "2252bdb9-ff7d-41c8-ab31-5833daaf0fbb",
+  "name" : "t1",
+  "input" : "你好",
+  "expected" : "hi",
+  "groupId" : "g1",
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 348243000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 348247000 ],
+  "tags" : [ ]
+}, {
+  "id" : "d0999835-e930-4113-8666-3d23e283f737",
   "name" : "test",
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
   "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 4, 50, 572042000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 4, 50, 572064000 ],
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 354156000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 354160000 ],
   "tags" : [ ]
 }, {
-  "id" : "73c8865a-b870-42b0-84f3-438101ef422e",
-  "name" : "测试用例B",
-  "input" : "今天天气",
-  "expected" : "今天阳光明媚",
+  "id" : "1a1a3ae7-aa75-479c-a283-3e8ff942ff67",
+  "name" : "t2",
+  "input" : "'=SUM(1)",
+  "expected" : "y",
+  "groupId" : "g1",
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 349485000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 349489000 ],
+  "tags" : [ ]
+}, {
+  "id" : "fc515587-1e78-4281-b184-9fe6b2e6cbb0",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
   "groupId" : null,
-  "metadata" : {
-    "tags" : [ ]
-  },
-  "createdAt" : [ 2026, 7, 1, 9, 56, 36, 751819000 ],
-  "updatedAt" : [ 2026, 7, 1, 9, 56, 36, 751824000 ],
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 364005000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 364011000 ],
   "tags" : [ ]
 }, {
   "id" : "f36acf8e-1ed7-476a-a5d4-92dbc5f552ff",
@@ -200,9 +516,31 @@
   "input" : "上海商人",
   "expected" : "上海商人",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 2, 13, 985602000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 2, 13, 985624000 ],
+  "tags" : [ ]
+}, {
+  "id" : "640f1420-0e32-4bd6-b78e-679cbbab9d42",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 346772000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 346778000 ],
+  "tags" : [ ]
+}, {
+  "id" : "372eb08e-1f78-4273-b001-f0926899135d",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 364964000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 364971000 ],
   "tags" : [ ]
 }, {
   "id" : "305ef3cc-6d46-4f31-9efb-2b9ebfef4eba",
@@ -210,9 +548,21 @@
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 4, 55, 14244000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 4, 55, 14259000 ],
+  "tags" : [ ]
+}, {
+  "id" : "31ca9e77-1ef3-43e6-98f3-45df90c2cd81",
+  "name" : "测试1",
+  "input" : "上海商人",
+  "expected" : "上海商人",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 362026000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 362041000 ],
   "tags" : [ ]
 }, {
   "id" : "c8faebf8-e80f-4afb-884b-aa307fbb9052",
@@ -227,16 +577,6 @@
   "updatedAt" : [ 2026, 7, 1, 9, 56, 36, 746055000 ],
   "tags" : [ ]
 }, {
-  "id" : "37c9c531-59dc-4da7-8c25-6a6ca0c9a0c2",
-  "name" : "测试1",
-  "input" : "上海商人",
-  "expected" : "上海商人",
-  "groupId" : null,
-  "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 2, 13, 736657000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 2, 13, 736677000 ],
-  "tags" : [ ]
-}, {
   "id" : "e76cecf3-64df-4925-b304-0aef4c6b462c",
   "name" : "除法测试",
   "input" : "10/2=?",
@@ -249,35 +589,47 @@
   "updatedAt" : [ 2026, 6, 29, 9, 7, 44, 944332000 ],
   "tags" : [ ]
 }, {
-  "id" : "a512a6fe-7ff3-4cb7-a96f-473c59e02266",
-  "name" : "test",
-  "input" : "你好",
-  "expected" : "你好",
-  "groupId" : null,
-  "metadata" : { },
-  "createdAt" : [ 2026, 7, 7, 23, 4, 48, 595043000 ],
-  "updatedAt" : [ 2026, 7, 7, 23, 4, 48, 595094000 ],
-  "tags" : [ ]
-}, {
   "id" : "697c73d1-c6b5-4514-a706-e407589edb84",
   "name" : "test",
   "input" : "你好",
   "expected" : "你好",
   "groupId" : null,
-  "metadata" : { },
+  "metadata" : {
+    "tags" : [ ]
+  },
   "createdAt" : [ 2026, 7, 7, 23, 5, 27, 397191000 ],
   "updatedAt" : [ 2026, 7, 7, 23, 5, 27, 397214000 ],
   "tags" : [ ]
 }, {
-  "id" : "84df1e28-6ea4-4269-8a25-1c601072415b",
-  "name" : "乘法测试",
-  "input" : "3*3=?",
-  "expected" : "9",
+  "id" : "a512a6fe-7ff3-4cb7-a96f-473c59e02266",
+  "name" : "test",
+  "input" : "你好",
+  "expected" : "你好",
   "groupId" : null,
   "metadata" : {
     "tags" : [ ]
   },
-  "createdAt" : [ 2026, 6, 29, 9, 5, 2, 411461000 ],
-  "updatedAt" : [ 2026, 6, 29, 9, 5, 2, 418296000 ],
+  "createdAt" : [ 2026, 7, 7, 23, 4, 48, 595043000 ],
+  "updatedAt" : [ 2026, 7, 7, 23, 4, 48, 595094000 ],
+  "tags" : [ ]
+}, {
+  "id" : "4e96ce44-6a0a-4f95-bcf8-a1c5cf84136d",
+  "name" : "测试用例B",
+  "input" : "今天天气",
+  "expected" : "今天阳光明媚",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 364366000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 364370000 ],
+  "tags" : [ ]
+}, {
+  "id" : "3a0d8604-d941-46bb-a2f2-3b31ef7afe60",
+  "name" : "除法测试",
+  "input" : "10/2=?",
+  "expected" : "5",
+  "groupId" : null,
+  "metadata" : { },
+  "createdAt" : [ 2026, 7, 9, 22, 45, 17, 367457000 ],
+  "updatedAt" : [ 2026, 7, 9, 22, 45, 17, 367466000 ],
   "tags" : [ ]
 } ]

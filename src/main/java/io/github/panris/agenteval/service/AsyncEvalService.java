@@ -2,7 +2,7 @@ package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.*;
 import io.github.panris.agenteval.service.ReportService;
-import io.github.panris.agenteval.scorer.builtin.*;
+import io.github.panris.agenteval.scorer.ScorerResult;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -127,6 +127,20 @@ public class AsyncEvalService {
             m.put("passed", ev.isPassed());
             AgentOutput ao = ev.getAgentOutput();
             m.put("output", ao != null && ao.getOutput() != null ? ao.getOutput() : "");
+
+            Map<String, Object> srMap = new LinkedHashMap<>();
+            Map<String, ScorerResult> src = ev.getScorerResults();
+            if (src != null) {
+                for (Map.Entry<String, ScorerResult> se : src.entrySet()) {
+                    Map<String, Object> sr = new LinkedHashMap<>();
+                    sr.put("score", se.getValue().getScore());
+                    sr.put("passed", se.getValue().isPassed());
+                    sr.put("rationale", se.getValue().getRationale());
+                    srMap.put(se.getKey(), sr);
+                }
+            }
+            m.put("scorerResults", srMap);
+
             result.add(m);
         }
         return result;

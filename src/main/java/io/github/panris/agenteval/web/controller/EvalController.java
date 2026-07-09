@@ -149,7 +149,7 @@ public class EvalController {
         if (testCases.isEmpty()) {
             return Map.of(
                 "success", false,
-                "error", "No valid test cases found"
+                "error", "未找到有效的测试用例"
             );
         }
 
@@ -185,7 +185,7 @@ public class EvalController {
                 if (testCases.isEmpty()) {
                     return Map.<String, Object>of(
                         "success", false,
-                        "error", "Group has no test cases"
+                        "error", "该分组没有测试用例"
                     );
                 }
 
@@ -193,7 +193,7 @@ public class EvalController {
             })
             .orElse(Map.of(
                 "success", false,
-                "error", "Group not found"
+                "error", "分组不存在"
             ));
     }
 
@@ -230,7 +230,7 @@ public class EvalController {
     public Map<String, Object> getTaskStatus(@PathVariable String taskId) {
         AsyncEvalService.TaskStatus status = asyncEvalService.getStatus(taskId);
         if (status == null) {
-            return Map.of("success", false, "error", "Task not found");
+            return Map.of("success", false, "error", "任务不存在");
         }
         return Map.of(
             "success", true,
@@ -338,7 +338,7 @@ public class EvalController {
     public Map<String, Object> getReport(@PathVariable String id) {
         Map<String, Object> report = reportService.getReport(id);
         if (report == null) {
-            return Map.of("success", false, "error", "Report not found");
+            return Map.of("success", false, "error", "报告不存在");
         }
         return Map.of(
             "success", true,
@@ -364,7 +364,7 @@ public class EvalController {
         if (body != null && "clearAll".equals(body.get("action"))) {
             return reportService.clearAllReports();
         }
-        return Map.of("success", false, "error", "Invalid action");
+        return Map.of("success", false, "error", "无效的操作");
     }
 
     @GetMapping("/api/reports/{id}/export")
@@ -419,7 +419,7 @@ public class EvalController {
     @SuppressWarnings("unchecked")
     private String generateCsvFromMap(Map<String, Object> report) {
         StringBuilder csv = new StringBuilder();
-        csv.append("Test Case ID,Passed,Overall Score");
+        csv.append("Test Case ID,Test Case Input,Passed,Overall Score");
         
         Object evaluationsObj = report.get("evaluations");
         if (evaluationsObj instanceof List<?> list && !list.isEmpty()) {
@@ -442,7 +442,8 @@ public class EvalController {
             for (Object item : list) {
                 if (item instanceof Map) {
                     Map<String, Object> m = (Map<String, Object>) item;
-                    csv.append(escapeCsv(m.get("testCaseId"))).append(",");
+                    csv.append(escapeCsv(m.get("testCaseId"))).append(",")
+                        .append(escapeCsv(m.get("testCaseInput"))).append(",");
                     csv.append(escapeCsv(m.get("passed"))).append(",");
                     csv.append(escapeCsv(m.get("overallScore")));
                     
@@ -520,7 +521,7 @@ public class EvalController {
             @RequestBody Map<String, Object> body) {
         Object tags = body.get("tags");
         if (!(tags instanceof List)) {
-            return Map.of("success", false, "error", "tags must be a list");
+            return Map.of("success", false, "error", "tags 必须是一个列表");
         }
         @SuppressWarnings("unchecked")
         List<String> tagList = (List<String>) tags;
