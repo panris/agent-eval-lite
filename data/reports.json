@@ -2899,5 +2899,49 @@
     "executionTimeMs" : 2,
     "timestamp" : 1783611111013,
     "asyncTaskId" : "task_1783611111009"
+  },
+  "report_1783611497511" : {
+    "summary" : {
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 1.0,
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783611497506_970",
+      "testCaseInput" : "hello world",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "hello world",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Similarity: 1.00 (threshold: 0.70)"
+        },
+        "bleu" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "BLEU: 100.00%"
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected"
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 1,
+    "timestamp" : 1783611497511,
+    "asyncTaskId" : "task_1783611497506"
   }
 }

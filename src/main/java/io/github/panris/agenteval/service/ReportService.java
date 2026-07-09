@@ -93,7 +93,12 @@ public class ReportService {
     }
 
     public List<Map<String, Object>> getAllReports(String sort, Long since, Long until) {
-        List<Map<String, Object>> list = new ArrayList<>(reportHistory.values());
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Object>> e : reportHistory.entrySet()) {
+            Map<String, Object> report = new LinkedHashMap<>(e.getValue());
+            report.put("id", e.getKey()); // 让前端能拿到 reportId
+            list.add(report);
+        }
 
         // 按日期范围过滤
         if (since != null || until != null) {
@@ -269,6 +274,56 @@ public class ReportService {
 
         if (!totalCases.isEmpty()) {
             comparison.put("totalCases", totalCases);
+        }
+
+        // 逐评分器明细：从 evaluations[].scorerResults 聚合各报告的评分器平均分
+        Map<String, Map<String, List<Double>>> scorerScoresPerReport = new LinkedHashMap<>();
+        for (int i = 0; i < reportIds.size(); i++) {
+            String reportId = reportIds.get(i);
+            Map<String, Object> r = reports.get(i); // 与 reportIds 一一对应
+            Object evalsObj = r.get("evaluations");
+            if (!(evalsObj instanceof List)) continue;
+            for (Object evObj : (List<?>) evalsObj) {
+                if (!(evObj instanceof Map)) continue;
+                Map<?, ?> ev = (Map<?, ?>) evObj;
+                Object srObj = ev.get("scorerResults");
+                if (!(srObj instanceof Map)) continue;
+                for (Map.Entry<?, ?> se : ((Map<?, ?>) srObj).entrySet()) {
+                    String scorerName = String.valueOf(se.getKey());
+                    if (!(se.getValue() instanceof Map)) continue;
+                    Map<?, ?> sr = (Map<?, ?>) se.getValue();
+                    Object scoreObj = sr.get("score");
+                    if (!(scoreObj instanceof Number)) continue;
+                    scorerScoresPerReport
+                        .computeIfAbsent(scorerName, k -> new LinkedHashMap<>())
+                        .computeIfAbsent(reportId, k -> new ArrayList<>())
+                        .add(((Number) scoreObj).doubleValue());
+                }
+            }
+        }
+
+        // 转换为 { scorerName: { scores: { reportId: avgScore }, stats: {min/max/avg} } }
+        if (!scorerScoresPerReport.isEmpty()) {
+            Map<String, Map<String, Object>> scorerStats = new LinkedHashMap<>();
+            for (Map.Entry<String, Map<String, List<Double>>> se : scorerScoresPerReport.entrySet()) {
+                String scorer = se.getKey();
+                Map<String, List<Double>> perReport = se.getValue();
+                Map<String, Double> scoreMap = new LinkedHashMap<>();
+                List<Double> all = new ArrayList<>();
+                for (Map.Entry<String, List<Double>> pe : perReport.entrySet()) {
+                    double avg = pe.getValue().stream().mapToDouble(Double::doubleValue).average().orElse(0);
+                    scoreMap.put(pe.getKey(), Math.round(avg * 100.0) / 100.0);
+                    all.addAll(pe.getValue());
+                }
+                all.sort(Double::compareTo);
+                Map<String, Object> stats = Map.of(
+                    "min", all.isEmpty() ? 0 : all.get(0),
+                    "max", all.isEmpty() ? 0 : all.get(all.size() - 1),
+                    "avg", all.isEmpty() ? 0 : Math.round(all.stream().mapToDouble(Double::doubleValue).average().orElse(0) * 100.0) / 100.0
+                );
+                scorerStats.put(scorer, Map.of("scores", scoreMap, "stats", stats));
+            }
+            comparison.put("scorerStats", scorerStats);
         }
 
         return Map.of("success", true, "comparison", comparison);

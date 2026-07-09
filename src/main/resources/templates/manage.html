@@ -1139,6 +1139,51 @@
                     ${data.comparison.execTimeStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">⏱ 耗时</h4><div style="display: flex; gap: 16px;"><span>最快 <strong style="color:#4CAF50;">${data.comparison.execTimeStats.min}ms</strong></span><span>均耗 <strong style="color:#2196F3;">${Math.round(data.comparison.execTimeStats.avg)}ms</strong></span><span>最慢 <strong style="color:#f44336;">${data.comparison.execTimeStats.max}ms</strong></span></div></div>` : ''}
                 </div>` : '';
 
+                // 逐评分器明细
+                const scorerStats = data.comparison.scorerStats;
+                const reportIdList = reportIds; // 与 reports 数组一一对应
+                let scorerBarHtml = '';
+                if (scorerStats && Object.keys(scorerStats).length > 0) {
+                    const scorerNames = Object.keys(scorerStats);
+                    scorerBarHtml = `<div style="margin: 16px 0; padding: 16px; background: var(--bg-card,#f5f7fa); border-radius: 8px;">
+                        <h4 style="margin: 0 0 12px 0;">📋 逐评分器明细</h4>
+                        <div style="overflow-x: auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                                <thead>
+                                    <tr style="background:#e8f0fe;">
+                                        <th style="padding:6px 10px;text-align:left;">评分器</th>
+                                        ${reportIdList.map((rid,i) => `<th style="padding:6px 10px;text-align:center;">报告 ${i+1}</th>`).join('')}
+                                        <th style="padding:6px 10px;text-align:center;">最低</th>
+                                        <th style="padding:6px 10px;text-align:center;">均分</th>
+                                        <th style="padding:6px 10px;text-align:center;">最高</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${scorerNames.map(scorer => {
+                                        const info = scorerStats[scorer];
+                                        const sc = info.scores || {};
+                                        const st = info.stats || {};
+                                        // 计算各报告的平均分（保留2位）
+                                        const vals = Object.values(sc);
+                                        const minColor = vals.length ? (vals.reduce((a,b)=>a<b?a:b, vals[0]) === vals[0] ? '#f44336' : '#4CAF50') : '#999';
+                                        const maxColor = vals.length ? (vals.reduce((a,b)=>a>b?a:b, vals[0]) === vals[0] ? '#4CAF50' : '#f44336') : '#999';
+                                        return `<tr>
+                                            <td style="padding:6px 10px;font-weight:600;">${scorer}</td>
+                                            ${reportIdList.map((rid,i) => {
+                                                const v = sc[rid];
+                                                return `<td style="padding:6px 10px;text-align:center;color:#2196F3;font-weight:bold;">${v !== undefined ? v.toFixed(2) : '-'}</td>`;
+                                            }).join('')}
+                                            <td style="padding:6px 10px;text-align:center;color:${minColor};font-weight:bold;">${st.min !== undefined ? st.min.toFixed(2) : '-'}</td>
+                                            <td style="padding:6px 10px;text-align:center;color:#2196F3;font-weight:bold;">${st.avg !== undefined ? st.avg.toFixed(2) : '-'}</td>
+                                            <td style="padding:6px 10px;text-align:center;color:${maxColor};font-weight:bold;">${st.max !== undefined ? st.max.toFixed(2) : '-'}</td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                }
+
                 overlay.innerHTML = `
                     <div style="
                         background: var(--bg-main, white);
@@ -1162,6 +1207,8 @@
                         </p>
 
                         ${scoreBarHtml}
+
+                        ${scorerBarHtml}
 
                         <div style="overflow-x: auto;">
                             <table style="width: 100%; border-collapse: collapse;">
