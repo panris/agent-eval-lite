@@ -305,7 +305,7 @@ public class EvalController {
         String reportId = "report_" + System.currentTimeMillis();
         Map<String, Object> reportData = Map.of(
             "summary", report.getSummary(),
-            "evaluations", report.getEvaluations(),
+            "evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases),
             "totalTestCases", report.getTotalTestCases(),
             "passedTestCases", report.getPassedTestCases(),
             "failedTestCases", report.getFailedTestCases(),

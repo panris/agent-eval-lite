@@ -250,13 +250,21 @@ public class PdfController {
         for (Map<String, Object> ev : evaluations) {
             Map<String, Object> item = new LinkedHashMap<>();
             String tcId = String.valueOf(ev.get("testCaseId"));
-            
-            // 查数据库获取用例名称
-            String caseName = testCaseRepository.findTestCaseById(tcId)
-                .map(tc -> tc.getInput().length() > 40
-                    ? tc.getInput().substring(0, 40) + "..."
-                    : tc.getInput())
-                .orElse("用例 #" + idx);
+
+            // 优先使用评测时携带的用例输入文本作为可读名称，避免依赖易失配的 ID 映射
+            Object rawInput = ev.get("testCaseInput");
+            String caseName;
+            if (rawInput != null && !rawInput.toString().isEmpty()) {
+                String inp = rawInput.toString();
+                caseName = inp.length() > 40 ? inp.substring(0, 40) + "..." : inp;
+            } else {
+                caseName = testCaseRepository.findTestCaseById(tcId)
+                    .map(tc -> {
+                        String in = tc.getInput();
+                        return (in != null && in.length() > 40) ? in.substring(0, 40) + "..." : in;
+                    })
+                    .orElse("用例 #" + idx);
+            }
             
             item.put("name", caseName);
             item.put("testCaseId", tcId);
@@ -265,13 +273,17 @@ public class PdfController {
             Object score = ev.get("overallScore");
             item.put("score", score instanceof Number ? score : 0);
             
-            // agentOutput.output 嵌套结构
+            // 优先读取顶层 output（新序列化格式），兼容旧的嵌套 agentOutput 结构
             String output = "";
-            Object agentOutputObj = ev.get("agentOutput");
-            if (agentOutputObj instanceof Map) {
-                Map<?, ?> agentOutput = (Map<?, ?>) agentOutputObj;
-                Object rawOut = agentOutput.get("output");
-                output = rawOut != null ? String.valueOf(rawOut) : "";
+            Object outObj = ev.get("output");
+            if (outObj != null) {
+                output = String.valueOf(outObj);
+            } else {
+                Object agentOutputObj = ev.get("agentOutput");
+                if (agentOutputObj instanceof Map) {
+                    Object rawOut = ((Map<?, ?>) agentOutputObj).get("output");
+                    output = rawOut != null ? String.valueOf(rawOut) : "";
+                }
             }
             item.put("output", output.length() > 200 ? output.substring(0, 200) + "..." : output);
             

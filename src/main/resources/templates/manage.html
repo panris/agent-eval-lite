@@ -958,7 +958,7 @@
                 renderTrendChart();
                 
             } catch (error) {
-                console.error('Failed to load history:', error);
+                logError('Failed to load history:', error);
                 showToast('加载评测历史失败', 'error');
             } finally {
                 document.getElementById('history-loading').classList.remove('show');
@@ -1186,7 +1186,7 @@
                 document.body.appendChild(overlay);
                 showToast('对比完成', 'success');
             } catch (error) {
-                console.error('Compare failed:', error);
+                logError('Compare failed:', error);
                 showToast('对比失败', 'error');
             }
         }
@@ -1252,7 +1252,7 @@
                     showToast(`已删除 ${ids.length} 条记录`, 'success');
                     loadHistory();
                 } catch (error) {
-                    console.error('Failed to delete reports:', error);
+                    logError('Failed to delete reports:', error);
                     showToast('删除失败', 'error');
                 }
             });
@@ -1270,7 +1270,7 @@
                     showToast('已清空全部报告', 'success');
                     loadHistory();
                 } catch (error) {
-                    console.error('Failed to clear reports:', error);
+                    logError('Failed to clear reports:', error);
                     showToast('清空失败', 'error');
                 }
             });
@@ -1300,7 +1300,7 @@
                 switchTab('evaluate', null);  // 无 event 对象，跳过高亮 tab  // 从此处调用时无 event，但已修复 switchTab 支持无 target 调用
                 
             } catch (error) {
-                console.error('Failed to load report details:', error);
+                logError('Failed to load report details:', error);
                 showToast('加载报告详情失败', 'error');
             }
         }
@@ -1431,7 +1431,7 @@
 
                 renderTcPagination();
             } catch (error) {
-                console.error('Failed to load test cases:', error);
+                logError('Failed to load test cases:', error);
                 showToast('加载测试用例失败', 'error');
             } finally {
                 document.getElementById('cases-loading').classList.remove('show');
@@ -1461,7 +1461,7 @@
                 document.getElementById('case-input').value = '';
                 document.getElementById('case-expected').value = '';
             } catch (error) {
-                console.error('Failed to create test case:', error);
+                logError('Failed to create test case:', error);
                 showToast('添加失败', 'error');
             }
         }
@@ -1474,7 +1474,7 @@
                     showToast('测试用例已删除', 'success');
                     loadTestCases();
                 } catch (error) {
-                    console.error('Failed to delete test case:', error);
+                    logError('Failed to delete test case:', error);
                     showToast('删除失败', 'error');
                 }
             });
@@ -1511,7 +1511,7 @@
                 select.innerHTML = '<option value="">选择分组...</option>' +
                     groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
             } catch (error) {
-                console.error('Failed to load groups:', error);
+                logError('Failed to load groups:', error);
             } finally {
                 document.getElementById('groups-loading').classList.remove('show');
             }
@@ -1536,7 +1536,7 @@
                 showConfirm(`分组: ${group.name}`, `用例列表:\n${testCaseList || '无'}`, () => {});
                 
             } catch (error) {
-                console.error('Failed to load group cases:', error);
+                logError('Failed to load group cases:', error);
                 showToast('加载分组用例失败', 'error');
             }
         }
@@ -1564,7 +1564,7 @@
                     </tr>
                 `).join('');
             } catch (error) {
-                console.error('Failed to load test cases for modal:', error);
+                logError('Failed to load test cases for modal:', error);
             }
         }
 
@@ -1590,7 +1590,7 @@
                 closeAddToGroupModal();
                 loadGroups();
             } catch (error) {
-                console.error('Failed to add test cases to group:', error);
+                logError('Failed to add test cases to group:', error);
                 showToast('添加用例到分组失败', 'error');
             }
         }
@@ -1629,7 +1629,7 @@
                 document.getElementById('group-name').value = '';
                 document.getElementById('group-desc').value = '';
             } catch (error) {
-                console.error('Failed to create group:', error);
+                logError('Failed to create group:', error);
                 showToast('创建失败', 'error');
             }
         }
@@ -1642,7 +1642,7 @@
                     showToast('分组已删除', 'success');
                     loadGroups();
                 } catch (error) {
-                    console.error('Failed to delete group:', error);
+                    logError('Failed to delete group:', error);
                     showToast('删除失败', 'error');
                 }
             });
@@ -1684,7 +1684,7 @@
                     window.lastReportId = data.reportId;
                 }
             } catch (error) {
-                console.error('Evaluation failed:', error);
+                logError('Evaluation failed:', error);
                 showToast('评测失败', 'error');
             } finally {
                 document.getElementById('eval-loading').classList.remove('show');
@@ -1973,7 +1973,7 @@
                 showToast('PDF 报告已下载', 'success');
                 
             } catch (error) {
-                console.error('PDF export failed:', error);
+                logError('PDF export failed:', error);
                 showToast('PDF 导出失败', 'error');
             }
         }
@@ -2011,7 +2011,7 @@
                     window.lastReportId = data.reportId;
                 }
             } catch (error) {
-                console.error('Evaluation failed:', error);
+                logError('Evaluation failed:', error);
                 showToast('评测失败', 'error');
             } finally {
                 document.getElementById('eval-loading').classList.remove('show');
@@ -2106,7 +2106,7 @@
                 URL.revokeObjectURL(url);
                 showToast('Excel 导出成功', 'success');
             } catch (error) {
-                console.error('Excel export failed:', error);
+                logError('Excel export failed:', error);
                 showToast('Excel 导出失败', 'error');
             }
         }
@@ -2152,7 +2152,7 @@
                     showToast(result.message || '导入失败', 'error');
                 }
             } catch (error) {
-                console.error('Excel import failed:', error);
+                logError('Excel import failed:', error);
                 showToast('Excel 导入失败', 'error');
             }
         }
@@ -2451,7 +2451,7 @@
                     select.innerHTML += `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`;
                 });
             } catch (e) {
-                console.error('Failed to load groups:', e);
+                logError('Failed to load groups:', e);
             }
         }
         
@@ -2562,7 +2562,7 @@
                     });
                     successCount++;
                 } catch (e) {
-                    console.error(`Failed to update case ${id}:`, e);
+                    logError(`Failed to update case ${id}:`, e);
                 }
             }
             
@@ -2588,7 +2588,7 @@
                         await fetch(`/api/testcases/${id}`, { method: 'DELETE' });
                         successCount++;
                     } catch (e) {
-                        console.error(`Failed to delete case ${id}:`, e);
+                        logError(`Failed to delete case ${id}:`, e);
                     }
                 }
                 showToast(`成功删除 ${successCount} 个用例`, 'success');

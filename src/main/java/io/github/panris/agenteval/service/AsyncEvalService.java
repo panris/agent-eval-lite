@@ -3,6 +3,7 @@ package io.github.panris.agenteval.service;
 import io.github.panris.agenteval.*;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.scorer.builtin.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.*;
@@ -21,15 +22,17 @@ public class AsyncEvalService {
     private static final Logger log = LoggerFactory.getLogger(AsyncEvalService.class);
 
     private final Map<String, TaskStatus> tasks = new ConcurrentHashMap<>();
-    private final ExecutorService executor = Executors.newFixedThreadPool(
-        Runtime.getRuntime().availableProcessors()
-    );
+    private final Deque<String> taskOrder = new ConcurrentLinkedDeque<>();
+    private final Executor executor;
     private final ReportService reportService;
     private final ObjectMapper objectMapper;
+    private static final int MAX_TASKS = 1000;
 
-    public AsyncEvalService(ReportService reportService, ObjectMapper objectMapper) {
+    public AsyncEvalService(ReportService reportService, ObjectMapper objectMapper,
+                            @Qualifier("evalTaskExecutor") Executor evalTaskExecutor) {
         this.reportService = reportService;
         this.objectMapper = objectMapper;
+        this.executor = evalTaskExecutor;
     }
 
     public static class TaskStatus {
@@ -56,8 +59,10 @@ public class AsyncEvalService {
         TaskStatus status = new TaskStatus(taskId);
         status.totalCases = testCases.size();
         tasks.put(taskId, status);
+        taskOrder.addLast(taskId);
+        evictOldTasks();
 
-        executor.submit(() -> {
+        executor.execute(() -> {
             status.status = "RUNNING";
             try {
                 Agent agent = buildAgent(agentType);
@@ -73,7 +78,7 @@ public class AsyncEvalService {
                 String reportId = "report_" + System.currentTimeMillis();
                 Map<String, Object> reportData = new LinkedHashMap<>();
                 reportData.put("summary", report.getSummary());
-                reportData.put("evaluations", serializeEvaluations(report.getEvaluations()));
+                reportData.put("evaluations", serializeEvaluations(report.getEvaluations(), testCases));
                 reportData.put("totalTestCases", report.getTotalTestCases());
                 reportData.put("passedTestCases", report.getPassedTestCases());
                 reportData.put("failedTestCases", report.getFailedTestCases());
@@ -107,11 +112,17 @@ public class AsyncEvalService {
         };
     }
 
-    private List<Map<String, Object>> serializeEvaluations(List<Evaluation> evals) {
+    public List<Map<String, Object>> serializeEvaluations(List<Evaluation> evals, List<TestCase> testCases) {
+        Map<String, TestCase> tcMap = new LinkedHashMap<>();
+        for (TestCase tc : testCases) {
+            tcMap.put(tc.getId(), tc);
+        }
         List<Map<String, Object>> result = new ArrayList<>();
         for (Evaluation ev : evals) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("testCaseId", ev.getTestCaseId());
+            TestCase tc = tcMap.get(ev.getTestCaseId());
+            m.put("testCaseInput", tc != null && tc.getInput() != null ? tc.getInput() : "");
             m.put("overallScore", ev.getOverallScore());
             m.put("passed", ev.isPassed());
             AgentOutput ao = ev.getAgentOutput();
@@ -119,6 +130,15 @@ public class AsyncEvalService {
             result.add(m);
         }
         return result;
+    }
+
+    /** 超出上限时按提交顺序淘汰最旧的任务，避免 tasks 无限增长造成内存泄漏 */
+    private void evictOldTasks() {
+        while (tasks.size() > MAX_TASKS) {
+            String oldest = taskOrder.pollFirst();
+            if (oldest == null) break;
+            tasks.remove(oldest);
+        }
     }
 
     public TaskStatus getStatus(String taskId) {

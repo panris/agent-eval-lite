@@ -63,12 +63,12 @@ public class ExcelController {
             int rowNum = 1;
             for (TestCaseEntity tc : cases) {
                 Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(tc.getId() != null ? tc.getId() : "");
-                row.createCell(1).setCellValue(tc.getName() != null ? tc.getName() : "");
-                row.createCell(2).setCellValue(tc.getInput() != null ? tc.getInput() : "");
-                row.createCell(3).setCellValue(tc.getExpected() != null ? tc.getExpected() : "");
-                row.createCell(4).setCellValue(tc.getGroupId() != null ? tc.getGroupId() : "");
-                row.createCell(5).setCellValue(tc.getCreatedAt() != null ? tc.getCreatedAt().toString() : "");
+                row.createCell(0).setCellValue(sanitizeExcelCell(tc.getId()));
+                row.createCell(1).setCellValue(sanitizeExcelCell(tc.getName()));
+                row.createCell(2).setCellValue(sanitizeExcelCell(tc.getInput()));
+                row.createCell(3).setCellValue(sanitizeExcelCell(tc.getExpected()));
+                row.createCell(4).setCellValue(sanitizeExcelCell(tc.getGroupId()));
+                row.createCell(5).setCellValue(sanitizeExcelCell(tc.getCreatedAt() != null ? tc.getCreatedAt().toString() : ""));
             }
             
             // Auto size columns
@@ -164,6 +164,19 @@ public class ExcelController {
         }
     }
     
+    /**
+     * 防止 Excel 公式注入：对以 = + - @ 开头的单元格值前置单引号，
+     * 使 Excel 将其视为文本而非公式。POI 的 String 单元格本身按类型存储为文本、
+     * 不具备公式执行风险，此处为纵深防御，与 CSV 导出策略保持一致。
+     */
+    private String sanitizeExcelCell(String value) {
+        if (value == null) return "";
+        if (value.startsWith("=") || value.startsWith("+") || value.startsWith("-") || value.startsWith("@")) {
+            return "'" + value;
+        }
+        return value;
+    }
+
     private String getCellValue(Cell cell) {
         if (cell == null) return null;
         return switch (cell.getCellType()) {

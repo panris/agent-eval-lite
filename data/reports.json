@@ -2647,5 +2647,109 @@
     "timestamp" : 1783000187602,
     "asyncTaskId" : "task_1783000187596",
     "favorite" : false
+  },
+  "report_1783607579034" : {
+    "timestamp" : 1783607579034,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783607579030_5407",
+      "agentOutput" : {
+        "output" : "I'm a demo agent. You asked: 北京到上海的火车票多少钱",
+        "metadata" : { },
+        "executionTimeMs" : 1,
+        "error" : null
+      },
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)",
+          "metadata" : { }
+        }
+      },
+      "passed" : true,
+      "overallScore" : 0.9
+    } ],
+    "executionTimeMs" : 3,
+    "failedTestCases" : 0,
+    "passedTestCases" : 1,
+    "totalTestCases" : 1,
+    "summary" : {
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.9
+    }
+  },
+  "report_1783607579751" : {
+    "summary" : {
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783607579750_6398",
+      "testCaseInput" : "hello",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "HELLO"
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 0,
+    "timestamp" : 1783607579752,
+    "asyncTaskId" : "task_1783607579750"
+  },
+  "report_1783607736883" : {
+    "timestamp" : 1783607736883,
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783607736879_2610",
+      "testCaseInput" : "北京的天气怎么样",
+      "overallScore" : 0.0,
+      "passed" : false,
+      "output" : "I'm a demo agent. You asked: 北京的天气怎么样"
+    }, {
+      "testCaseId" : "tc_1783607736880_6251",
+      "testCaseInput" : "=SUM(A1:A2)",
+      "overallScore" : 0.0,
+      "passed" : false,
+      "output" : "I'm a demo agent. You asked: =SUM(A1:A2)"
+    } ],
+    "executionTimeMs" : 3,
+    "failedTestCases" : 2,
+    "passedTestCases" : 0,
+    "totalTestCases" : 2,
+    "summary" : {
+      "pass_rate" : 0.0,
+      "failed_test_cases" : 2.0,
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 2.0,
+      "average_score" : 0.0
+    }
+  },
+  "report_1783607752319" : {
+    "summary" : {
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0,
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783607752317_8266",
+      "testCaseInput" : "abc",
+      "overallScore" : 1.0,
+      "passed" : true,
+      "output" : "cba"
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 1,
+    "timestamp" : 1783607752319,
+    "asyncTaskId" : "task_1783607752317"
   }
 }

@@ -2,6 +2,14 @@
  * Agent Eval Lite - 通用工具函数
  */
 
+// ============ 统一日志入口 ============
+// 所有前端错误日志经此汇聚，便于统一前缀与按需关闭（生产可置 window.__EVAL_SUPPRESS_LOGS = true）。
+window.__EVAL_SUPPRESS_LOGS = window.__EVAL_SUPPRESS_LOGS || false;
+function logError(...args) {
+    if (window.__EVAL_SUPPRESS_LOGS) return;
+    console.error('[AgentEval]', ...args);
+}
+
 // ============ Toast 通知系统 ============
 const Toast = {
     container: null,
