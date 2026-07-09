@@ -92,8 +92,19 @@ public class ReportService {
         return reportHistory.get(reportId);
     }
 
-    public List<Map<String, Object>> getAllReports(String sort) {
+    public List<Map<String, Object>> getAllReports(String sort, Long since, Long until) {
         List<Map<String, Object>> list = new ArrayList<>(reportHistory.values());
+
+        // 按日期范围过滤
+        if (since != null || until != null) {
+            long sinceMs = since != null ? since : Long.MIN_VALUE;
+            long untilMs = until != null ? until : Long.MAX_VALUE;
+            list.removeIf(r -> {
+                long ts = getTimestamp(r);
+                return ts < sinceMs || ts > untilMs;
+            });
+        }
+
         if ("asc".equalsIgnoreCase(sort)) {
             list.sort(Comparator.comparing(r -> getTimestamp(r), Comparator.nullsLast(Comparator.naturalOrder())));
         } else {
@@ -276,7 +287,7 @@ public class ReportService {
      */
     public void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
-        List<String> keys = getAllReports("desc").stream()
+        List<String> keys = getAllReports("desc", null, null).stream()
             .map(r -> reportHistory.entrySet().stream()
                 .filter(e -> e.getValue() == r).findFirst().orElseThrow().getKey())
             .collect(Collectors.toList());

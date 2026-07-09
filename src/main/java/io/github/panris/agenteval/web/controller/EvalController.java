@@ -329,8 +329,11 @@ public class EvalController {
 
     @GetMapping("/api/reports")
     @ResponseBody
-    public List<Map<String, Object>> getReports(@RequestParam(defaultValue = "desc") String sort) {
-        return reportService.getAllReports(sort);
+    public List<Map<String, Object>> getReports(
+            @RequestParam(defaultValue = "desc") String sort,
+            @RequestParam(required = false) Long since,
+            @RequestParam(required = false) Long until) {
+        return reportService.getAllReports(sort, since, until);
     }
 
     @GetMapping("/api/reports/{id}")

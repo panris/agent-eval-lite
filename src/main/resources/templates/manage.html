@@ -951,7 +951,17 @@
             try {
                 document.getElementById('history-loading').classList.add('show');
                 
-                const response = await fetch(`/api/reports?sort=${_sortOrder}`);
+                const params = new URLSearchParams({ sort: _sortOrder });
+            const dateStart = document.getElementById('history-date-start')?.value || '';
+            const dateEnd = document.getElementById('history-date-end')?.value || '';
+            if (dateStart) params.set('since', new Date(dateStart).getTime());
+            if (dateEnd) {
+                const until = new Date(dateEnd);
+                until.setHours(23, 59, 59, 999);
+                params.set('until', until.getTime());
+            }
+
+            const response = await fetch(`/api/reports?${params}`);
                 window._allReports = await response.json();
                 
                 filterHistory();
@@ -983,6 +993,13 @@
             const filterValue = document.getElementById('history-filter')?.value || '';
             const dateStart = document.getElementById('history-date-start')?.value || '';
             const dateEnd = document.getElementById('history-date-end')?.value || '';
+
+            // 日期范围变化时重新请求后端过滤
+            if (dateStart || dateEnd) {
+                loadHistory();
+                return;
+            }
+
             const reports = window._allReports || [];
             
             // 应用过滤
@@ -1000,16 +1017,6 @@
                 if (filterValue === 'favorites' && !report.favorite) return false;
                 if (filterValue === 'passed' && (report.summary?.pass_rate || 0) < 70) return false;
                 if (filterValue === 'failed' && (report.summary?.pass_rate || 0) >= 70) return false;
-                // 日期范围过滤
-                if (dateStart || dateEnd) {
-                    const reportDate = new Date(report.timestamp);
-                    if (dateStart && reportDate < new Date(dateStart)) return false;
-                    if (dateEnd) {
-                        const endDate = new Date(dateEnd);
-                        endDate.setHours(23, 59, 59, 999);
-                        if (reportDate > endDate) return false;
-                    }
-                }
                 return true;
             });
             
