@@ -72,15 +72,20 @@ public class AsyncEvalService {
      * 提交评测任务（使用默认超时 5 分钟）。
      */
     public String submitTask(List<TestCase> testCases, List<String> metrics, String agentType) {
-        return submitTask(testCases, metrics, agentType, DEFAULT_TIMEOUT_SECONDS);
+        return submitTask(testCases, metrics, agentType, DEFAULT_TIMEOUT_SECONDS, null);
+    }
+
+    public String submitTask(List<TestCase> testCases, List<String> metrics, String agentType, int timeoutSeconds) {
+        return submitTask(testCases, metrics, agentType, timeoutSeconds, null);
     }
 
     /**
-     * 提交评测任务并指定超时秒数。
+     * 提交评测任务并指定超时秒数和分组名称。
      * @param timeoutSeconds 任务级超时；每个用例评测在 Evaluator 内部另有 30 秒 per-case 超时兜底。
+     * @param group 报告所属分组名称（可为 null），用于报告历史按分组过滤。
      */
     public String submitTask(List<TestCase> testCases, List<String> metrics,
-                             String agentType, int timeoutSeconds) {
+                             String agentType, int timeoutSeconds, String group) {
         String taskId = "task_" + System.currentTimeMillis();
         TaskStatus status = new TaskStatus(taskId);
         status.totalCases = testCases.size();
@@ -113,6 +118,9 @@ public class AsyncEvalService {
                 reportData.put("executionTimeMs", report.getExecutionTimeMs());
                 reportData.put("timestamp", System.currentTimeMillis());
                 reportData.put("asyncTaskId", taskId);
+                if (group != null && !group.trim().isEmpty()) {
+                    reportData.put("group", group.trim());
+                }
 
                 reportService.saveReport(reportId, reportData);
 

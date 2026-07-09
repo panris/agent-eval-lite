@@ -109,7 +109,7 @@ public class EvalController {
             testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
         }
 
-        return runEvaluation(testCases, request.getMetrics(), agentType);
+        return runEvaluation(testCases, request.getMetrics(), agentType, null);
     }
 
     /**
@@ -154,7 +154,7 @@ public class EvalController {
         }
 
         // Run evaluation
-        return runEvaluation(testCases, request.getMetrics(), request.getAgentType());
+        return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), null);
     }
 
     /**
@@ -189,7 +189,7 @@ public class EvalController {
                     );
                 }
 
-                return runEvaluation(testCases, request.getMetrics(), request.getAgentType());
+                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), group.getName());
             })
             .orElse(Map.of(
                 "success", false,
@@ -218,7 +218,8 @@ public class EvalController {
             testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
         }
         String agentType = request.getAgentType() != null ? request.getAgentType() : "demo";
-        String taskId = asyncEvalService.submitTask(testCases, request.getMetrics(), agentType);
+        String taskId = asyncEvalService.submitTask(testCases, request.getMetrics(), agentType,
+                300, request.getGroup());
         return Map.of("success", true, "taskId", taskId, "status", "PENDING");
     }
 
@@ -287,7 +288,8 @@ public class EvalController {
     private Map<String, Object> runEvaluation(
         List<TestCase> testCases,
         List<String> metrics,
-        String agentType
+        String agentType,
+        String group
     ) {
         // Create agent
         Agent agent = createAgent(agentType, Map.of());
@@ -304,15 +306,17 @@ public class EvalController {
 
         // Save to history (convert to serializable map)
         String reportId = "report_" + System.currentTimeMillis();
-        Map<String, Object> reportData = Map.of(
-            "summary", report.getSummary(),
-            "evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases),
-            "totalTestCases", report.getTotalTestCases(),
-            "passedTestCases", report.getPassedTestCases(),
-            "failedTestCases", report.getFailedTestCases(),
-            "executionTimeMs", report.getExecutionTimeMs(),
-            "timestamp", System.currentTimeMillis()
-        );
+        Map<String, Object> reportData = new LinkedHashMap<>();
+        reportData.put("summary", report.getSummary());
+        reportData.put("evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases));
+        reportData.put("totalTestCases", report.getTotalTestCases());
+        reportData.put("passedTestCases", report.getPassedTestCases());
+        reportData.put("failedTestCases", report.getFailedTestCases());
+        reportData.put("executionTimeMs", report.getExecutionTimeMs());
+        reportData.put("timestamp", System.currentTimeMillis());
+        if (group != null && !group.trim().isEmpty()) {
+            reportData.put("group", group.trim());
+        }
         reportService.saveReport(reportId, reportData);
 
 
@@ -333,8 +337,9 @@ public class EvalController {
     public List<Map<String, Object>> getReports(
             @RequestParam(defaultValue = "desc") String sort,
             @RequestParam(required = false) Long since,
-            @RequestParam(required = false) Long until) {
-        return reportService.getAllReports(sort, since, until);
+            @RequestParam(required = false) Long until,
+            @RequestParam(required = false) String group) {
+        return reportService.getAllReports(sort, since, until, group);
     }
 
     @GetMapping("/api/reports/{id}")

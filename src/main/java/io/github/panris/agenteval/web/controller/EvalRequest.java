@@ -8,6 +8,8 @@ public class EvalRequest {
     private Map<String, Object> agentConfig;
     private List<String> metrics;
     private List<TestCaseDto> testCases;
+    /** 报告所属分组名称，用于报告历史过滤 */
+    private String group;
 
     // Getters and Setters
     public String getAgentType() {
@@ -40,6 +42,14 @@ public class EvalRequest {
 
     public void setTestCases(List<TestCaseDto> testCases) {
         this.testCases = testCases;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public void setGroup(String group) {
+        this.group = group;
     }
 }
 

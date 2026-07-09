@@ -650,6 +650,8 @@
                         <span>至</span>
                         <input type="date" id="history-date-end" class="form-control" style="width: 140px;" onchange="filterHistory()">
                     </div>
+                    <input type="text" id="history-group" class="form-control" placeholder="🏷️ 分组名称" 
+                        style="width: 130px;" oninput="filterHistory()">
                     <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除日期</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -672,6 +674,7 @@
                         <th>时间</th>
                         <th>通过率</th>
                         <th>平均分</th>
+                        <th>分组</th>
                         <th>标签</th>
                         <th>备注</th>
                         <th>操作</th>
@@ -954,12 +957,14 @@
                 const params = new URLSearchParams({ sort: _sortOrder });
             const dateStart = document.getElementById('history-date-start')?.value || '';
             const dateEnd = document.getElementById('history-date-end')?.value || '';
+            const group = document.getElementById('history-group')?.value?.trim() || '';
             if (dateStart) params.set('since', new Date(dateStart).getTime());
             if (dateEnd) {
                 const until = new Date(dateEnd);
                 until.setHours(23, 59, 59, 999);
                 params.set('until', until.getTime());
             }
+            if (group) params.set('group', group);
 
             const response = await fetch(`/api/reports?${params}`);
                 window._allReports = await response.json();
@@ -993,9 +998,10 @@
             const filterValue = document.getElementById('history-filter')?.value || '';
             const dateStart = document.getElementById('history-date-start')?.value || '';
             const dateEnd = document.getElementById('history-date-end')?.value || '';
+            const group = document.getElementById('history-group')?.value || '';
 
-            // 日期范围变化时重新请求后端过滤
-            if (dateStart || dateEnd) {
+            // 日期范围或分组变化时重新请求后端过滤
+            if (dateStart || dateEnd || group) {
                 loadHistory();
                 return;
             }
@@ -1023,13 +1029,14 @@
             // 渲染
             const tbody = document.getElementById('history-tbody');
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map(report => {
                     const _id = utils.escapeHtml(report.id);
                     const _note = utils.escapeHtml(report.note || '');
                     const _tags = (report.tags || []).map(t => utils.escapeHtml(t));
                     const _displayNote = _note.length > 15 ? _note.substring(0, 15) + '...' : _note;
+                    const _group = utils.escapeHtml(report.group || '');
                     return `
                     <tr>
                         <td><input type="checkbox" class="history-checkbox" value="${_id}"></td>
@@ -1041,6 +1048,8 @@
                             </span>
                         </td>
                         <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
+                        <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
+                        <td>${report.group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${utils.escapeHtml(report.group)}</span>` : '-'}</td>
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
                                 ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}

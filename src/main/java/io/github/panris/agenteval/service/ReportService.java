@@ -92,12 +92,18 @@ public class ReportService {
         return reportHistory.get(reportId);
     }
 
-    public List<Map<String, Object>> getAllReports(String sort, Long since, Long until) {
+    public List<Map<String, Object>> getAllReports(String sort, Long since, Long until, String group) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> e : reportHistory.entrySet()) {
             Map<String, Object> report = new LinkedHashMap<>(e.getValue());
             report.put("id", e.getKey()); // 让前端能拿到 reportId
             list.add(report);
+        }
+
+        // 按分组过滤
+        if (group != null && !group.trim().isEmpty()) {
+            String g = group.trim();
+            list.removeIf(r -> !g.equalsIgnoreCase(String.valueOf(r.getOrDefault("group", ""))));
         }
 
         // 按日期范围过滤
@@ -342,7 +348,7 @@ public class ReportService {
      */
     public void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
-        List<String> keys = getAllReports("desc", null, null).stream()
+        List<String> keys = getAllReports("desc", null, null, null).stream()
             .map(r -> reportHistory.entrySet().stream()
                 .filter(e -> e.getValue() == r).findFirst().orElseThrow().getKey())
             .collect(Collectors.toList());
