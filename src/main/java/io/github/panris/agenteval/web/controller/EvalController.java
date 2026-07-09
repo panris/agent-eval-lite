@@ -46,13 +46,6 @@ public class EvalController {
         this.reportService = reportService;
     }
 
-    /**
-        Object timestamp = report.get("timestamp");
-        if (timestamp instanceof Number) return ((Number) timestamp).longValue();
-        return 0L;
-    }
-
-
     @GetMapping("/")
     public String index(Model model) {
         model.addAttribute("testCases", List.of(
@@ -637,3 +630,4 @@ class EvaluateByGroupRequest {
         this.agentType = agentType;
     }
 }
+// TEST_MARKER_1234567890XYZ
