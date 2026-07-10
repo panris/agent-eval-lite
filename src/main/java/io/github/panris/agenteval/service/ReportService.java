@@ -92,11 +92,11 @@ public class ReportService {
         return reportHistory.get(reportId);
     }
 
-    public List<Map<String, Object>> getAllReports(String sort, Long since, Long until, String group) {
+    public Map<String, Object> getAllReports(String sort, Long since, Long until, String group, String sortBy) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> e : reportHistory.entrySet()) {
             Map<String, Object> report = new LinkedHashMap<>(e.getValue());
-            report.put("id", e.getKey()); // 让前端能拿到 reportId
+            report.put("id", e.getKey());
             list.add(report);
         }
 
@@ -116,12 +116,33 @@ public class ReportService {
             });
         }
 
-        if ("asc".equalsIgnoreCase(sort)) {
-            list.sort(Comparator.comparing(r -> getTimestamp(r), Comparator.nullsLast(Comparator.naturalOrder())));
-        } else {
-            list.sort(Comparator.comparing(r -> getTimestamp(r), Comparator.nullsLast(Comparator.reverseOrder())));
-        }
-        return list;
+        boolean asc = "asc".equalsIgnoreCase(sort);
+        list.sort((a, b) -> {
+            if ("score".equalsIgnoreCase(sortBy)) {
+                Double sa = extractScore(a.get("summary")), sb = extractScore(b.get("summary"));
+                if (sa != null && sb != null) {
+                    int cmp = Double.compare(sa, sb);
+                    if (cmp != 0) return asc ? cmp : -cmp;
+                }
+            }
+            long tsA = getTimestamp(a), tsB = getTimestamp(b);
+            return asc ? Long.compare(tsA, tsB) : Long.compare(tsB, tsA);
+        });
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("reports", list);
+        result.put("total", reportHistory.size());
+        result.put("filtered", list.size());
+        return result;
+    }
+
+    private Double extractScore(Object summaryObj) {
+        if (!(summaryObj instanceof Map)) return null;
+        Map<?, ?> s = (Map<?, ?>) summaryObj;
+        Object score = s.get("averageScore");
+        if (score == null) score = s.get("average_score");
+        if (score instanceof Number) return ((Number) score).doubleValue();
+        return null;
     }
 
     public Map<String, Object> deleteReport(String reportId) {
@@ -348,16 +369,14 @@ public class ReportService {
      */
     public void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
-        List<String> keys = getAllReports("desc", null, null, null).stream()
-            .map(r -> reportHistory.entrySet().stream()
-                .filter(e -> e.getValue() == r).findFirst().orElseThrow().getKey())
-            .collect(Collectors.toList());
-
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, "time").get("reports");
         int toRemove = reportHistory.size() - maxReports;
         for (int i = 0; i < toRemove; i++) {
-            reportHistory.remove(keys.get(i));
+            String id = sorted.get(i).get("id").toString();
+            reportHistory.remove(id);
         }
         saveReportHistory();
-        log.info("Cleaned up {} old reports, kept {}", toRemove, maxReports);
+        log.info("自动清理 {} 条旧报告，保留最近 {} 条", toRemove, maxReports);
     }
 }

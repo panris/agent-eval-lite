@@ -666,6 +666,8 @@
                 <p>加载中...</p>
             </div>
 
+            <div id="history-stats" style="margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;"></div>
+
             <table class="table" id="history-table">
                 <thead>
                     <tr>
@@ -948,13 +950,14 @@
         let trendChart = null;
         
         // 加载评测历史
-        let _sortOrder = 'desc'; // desc = newest first, asc = oldest first
+        let _sortBy = 'time';   // 'time' | 'score'
+        let _sortDir = 'desc';  // 'desc' | 'asc'
         
         async function loadHistory() {
             try {
                 document.getElementById('history-loading').classList.add('show');
                 
-                const params = new URLSearchParams({ sort: _sortOrder });
+                const params = new URLSearchParams({ sort: _sortDir, sortBy: _sortBy });
             const dateStart = document.getElementById('history-date-start')?.value || '';
             const dateEnd = document.getElementById('history-date-end')?.value || '';
             const group = document.getElementById('history-group')?.value?.trim() || '';
@@ -967,7 +970,11 @@
             if (group) params.set('group', group);
 
             const response = await fetch(`/api/reports?${params}`);
-                window._allReports = await response.json();
+                const data = await response.json();
+                window._allReports = data.reports || [];
+                window._reportTotal = data.total || 0;
+                window._reportFiltered = data.filtered || 0;
+                updateHistoryStats();
                 
                 filterHistory();
                 renderTrendChart();
@@ -981,10 +988,28 @@
         }
         
         function toggleSort() {
-            _sortOrder = _sortOrder === 'desc' ? 'asc' : 'desc';
+            // 循环: time_desc → time_asc → score_desc → score_asc → time_desc
+            if (_sortBy === 'time' && _sortDir === 'desc') { _sortBy = 'time'; _sortDir = 'asc'; }
+            else if (_sortBy === 'time' && _sortDir === 'asc') { _sortBy = 'score'; _sortDir = 'desc'; }
+            else if (_sortBy === 'score' && _sortDir === 'desc') { _sortBy = 'score'; _sortDir = 'asc'; }
+            else { _sortBy = 'time'; _sortDir = 'desc'; }
             const btn = document.getElementById('sort-btn');
-            btn.textContent = _sortOrder === 'desc' ? '↕️ 最新优先' : '↕️ 最早优先';
+            const labels = {
+                'time_desc': '↕️ 最新优先',
+                'time_asc':  '↕️ 最早优先',
+                'score_desc':'↕️ 最高分',
+                'score_asc': '↕️ 最低分'
+            };
+            btn.textContent = labels[_sortBy + '_' + _sortDir] || '↕️ 最新优先';
             loadHistory();
+        }
+        
+        function updateHistoryStats() {
+            const total = window._reportTotal || 0;
+            const filtered = window._reportFiltered || 0;
+            const el = document.getElementById('history-stats');
+            if (!el) return;
+            el.textContent = total === 0 ? '' : `共 ${total} 条报告${filtered < total ? `（已过滤至 ${filtered} 条）` : ''}  ·  按${_sortBy === 'score' ? '分数' : '时间'}${_sortDir === 'desc' ? '倒序' : '正序'}`;
         }
         
         function clearDateFilter() {
@@ -1007,6 +1032,8 @@
             }
 
             const reports = window._allReports || [];
+            const total = window._reportTotal || 0;
+            updateHistoryStats();
             
             // 应用过滤
             let filtered = reports.filter(report => {
@@ -1029,7 +1056,7 @@
             // 渲染
             const tbody = document.getElementById('history-tbody');
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : (`无匹配结果（${filtered.length} / ${total > 0 ? total : reports.length} 条）`)}</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map(report => {
                     const _id = utils.escapeHtml(report.id);
@@ -1049,7 +1076,6 @@
                         </td>
                         <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
                         <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
-                        <td>${report.group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${utils.escapeHtml(report.group)}</span>` : '-'}</td>
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
                                 ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
