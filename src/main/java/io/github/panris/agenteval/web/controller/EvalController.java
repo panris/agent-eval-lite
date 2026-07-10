@@ -142,7 +142,7 @@ public class EvalController {
             .filter(opt -> opt.isPresent())
             .map(opt -> {
                 TestCaseEntity entity = opt.get();
-                return new TestCase(entity.getInput(), entity.getExpected());
+                return new TestCase(entity.getId(), entity.getInput(), entity.getExpected(), null, null);
             })
             .toList();
 
@@ -178,7 +178,7 @@ public class EvalController {
                     .filter(opt -> opt.isPresent())
                     .map(opt -> {
                         TestCaseEntity entity = opt.get();
-                        return new TestCase(entity.getInput(), entity.getExpected());
+                        return new TestCase(entity.getId(), entity.getInput(), entity.getExpected(), null, null);
                     })
                     .toList();
 

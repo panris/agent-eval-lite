@@ -2,6 +2,7 @@ package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.*;
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.scorer.ScorerResult;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,12 +31,14 @@ public class AsyncEvalService {
     private final Deque<String> taskOrder = new ConcurrentLinkedDeque<>();
     private final Executor executor;
     private final ReportService reportService;
+    private final TestCaseRepository testCaseRepository;
     private final ObjectMapper objectMapper;
     private static final int MAX_TASKS = 1000;
 
-    public AsyncEvalService(ReportService reportService, ObjectMapper objectMapper,
+    public AsyncEvalService(ReportService reportService, TestCaseRepository testCaseRepository, ObjectMapper objectMapper,
                             @Qualifier("evalTaskExecutor") Executor evalTaskExecutor) {
         this.reportService = reportService;
+        this.testCaseRepository = testCaseRepository;
         this.objectMapper = objectMapper;
         this.executor = evalTaskExecutor;
     }
@@ -195,6 +198,15 @@ public class AsyncEvalService {
             m.put("passed", ev.isPassed());
             AgentOutput ao = ev.getAgentOutput();
             m.put("output", ao != null && ao.getOutput() != null ? ao.getOutput() : "");
+
+            // Look up readable test case name from repository (for PDF/UI display)
+            String testCaseName = testCaseRepository
+                    .findTestCaseById(ev.getTestCaseId())
+                    .flatMap(e -> Optional.ofNullable(e.getName()))
+                    .orElse(null);
+            if (testCaseName != null && !testCaseName.isBlank()) {
+                m.put("testCaseName", testCaseName);
+            }
 
             Map<String, Object> srMap = new LinkedHashMap<>();
             Map<String, ScorerResult> src = ev.getScorerResults();

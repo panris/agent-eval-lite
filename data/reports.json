@@ -2973,5 +2973,119 @@
     "timestamp" : 1783689987564,
     "asyncTaskId" : "task_1783689987556",
     "group" : "test-group-001"
+  },
+  "report_1783690519866" : {
+    "summary" : {
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.0,
+      "pass_rate" : 0.0,
+      "failed_test_cases" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783690519861_5102",
+      "testCaseInput" : "what is 2+2",
+      "overallScore" : 0.0,
+      "passed" : false,
+      "output" : "4",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Missing expected or actual output"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 0,
+    "failedTestCases" : 1,
+    "executionTimeMs" : 2,
+    "timestamp" : 1783690519866
+  },
+  "report_1783690542164" : {
+    "summary" : {
+      "passed_test_cases" : 1.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.9,
+      "pass_rate" : 100.0,
+      "failed_test_cases" : 0.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783690542163_6731",
+      "testCaseInput" : "上海商人",
+      "overallScore" : 0.9,
+      "passed" : true,
+      "output" : "I'm a demo agent. You asked: 上海商人",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 1,
+    "timestamp" : 1783690542164
+  },
+  "report_1783690651110" : {
+    "summary" : {
+      "pass_rate" : 100.0,
+      "average_score" : 0.9,
+      "total_test_cases" : 1.0,
+      "passed_test_cases" : 1.0,
+      "failed_test_cases" : 0.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "8dad6c93-6083-422c-8d1f-b9829948b96c",
+      "testCaseInput" : "上海商人",
+      "overallScore" : 0.9,
+      "passed" : true,
+      "output" : "I'm a demo agent. You asked: 上海商人",
+      "testCaseName" : "测试1",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 2,
+    "timestamp" : 1783690651110
+  },
+  "report_1783690726011" : {
+    "summary" : {
+      "failed_test_cases" : 0.0,
+      "pass_rate" : 100.0,
+      "average_score" : 0.9,
+      "total_test_cases" : 1.0,
+      "passed_test_cases" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "8dad6c93-6083-422c-8d1f-b9829948b96c",
+      "testCaseInput" : "上海商人",
+      "overallScore" : 0.9,
+      "passed" : true,
+      "output" : "I'm a demo agent. You asked: 上海商人",
+      "testCaseName" : "测试1",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 1,
+    "failedTestCases" : 0,
+    "executionTimeMs" : 2,
+    "timestamp" : 1783690726011
   }
 }

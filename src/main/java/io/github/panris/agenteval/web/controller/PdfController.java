@@ -272,19 +272,24 @@ public class PdfController {
             Map<String, Object> item = new LinkedHashMap<>();
             String tcId = String.valueOf(ev.get("testCaseId"));
 
-            // 优先使用评测时携带的用例输入文本作为可读名称，避免依赖易失配的 ID 映射
-            Object rawInput = ev.get("testCaseInput");
+            // 优先级: testCaseName（实体名称） > testCaseInput（输入文本） > 仓库查找 > fallback
+            Object rawName = ev.get("testCaseName");
             String caseName;
-            if (rawInput != null && !rawInput.toString().isEmpty()) {
-                String inp = rawInput.toString();
-                caseName = inp.length() > 40 ? inp.substring(0, 40) + "..." : inp;
+            if (rawName != null && !rawName.toString().isBlank()) {
+                caseName = rawName.toString();
             } else {
-                caseName = testCaseRepository.findTestCaseById(tcId)
-                    .map(tc -> {
-                        String in = tc.getInput();
-                        return (in != null && in.length() > 40) ? in.substring(0, 40) + "..." : in;
-                    })
-                    .orElse("用例 #" + idx);
+                Object rawInput = ev.get("testCaseInput");
+                if (rawInput != null && !rawInput.toString().isEmpty()) {
+                    String inp = rawInput.toString();
+                    caseName = inp.length() > 40 ? inp.substring(0, 40) + "..." : inp;
+                } else {
+                    caseName = testCaseRepository.findTestCaseById(tcId)
+                        .map(tc -> {
+                            String in = tc.getInput();
+                            return (in != null && in.length() > 40) ? in.substring(0, 40) + "..." : in;
+                        })
+                        .orElse("用例 #" + idx);
+                }
             }
             
             item.put("name", caseName);
