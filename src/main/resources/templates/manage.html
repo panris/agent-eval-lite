@@ -650,8 +650,9 @@
                         <span>至</span>
                         <input type="date" id="history-date-end" class="form-control" style="width: 140px;" onchange="filterHistory()">
                     </div>
-                    <input type="text" id="history-group" class="form-control" placeholder="🏷️ 分组名称" 
-                        style="width: 130px;" oninput="filterHistory()">
+                    <select id="history-group" class="form-control" style="width: 130px;" onchange="loadHistory()">
+                        <option value="">全部分组</option>
+                    </select>
                     <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除日期</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -666,7 +667,18 @@
                 <p>加载中...</p>
             </div>
 
-            <div id="history-stats" style="margin-bottom: 8px; color: var(--text-secondary); font-size: 13px;"></div>
+            <div id="history-stats" style="margin-bottom: 8px; color: var(--text-secondary); font-size: 13px; display:inline;"></div>
+            <div id="history-pagination" style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; margin-bottom: 8px;">
+                <select id="page-size" class="form-control" style="width: 80px;" onchange="_reportPage=1;loadHistory()">
+                    <option value="10">10/页</option>
+                    <option value="20" selected>20/页</option>
+                    <option value="50">50/页</option>
+                    <option value="100">100/页</option>
+                </select>
+                <button class="btn btn-sm" id="page-prev" onclick="goToPage(_reportPage-1)" disabled>◀ 上一页</button>
+                <span id="page-info" style="font-size:13px;color:var(--text-secondary);min-width:80px;text-align:center;">第 1 / 1 页</span>
+                <button class="btn btn-sm" id="page-next" onclick="goToPage(_reportPage+1)" disabled>下一页 ▶</button>
+            </div>
 
             <table class="table" id="history-table">
                 <thead>
@@ -952,12 +964,20 @@
         // 加载评测历史
         let _sortBy = 'time';   // 'time' | 'score'
         let _sortDir = 'desc';  // 'desc' | 'asc'
+        let _reportPage = 1;
+        let _reportSize = 20;
+        let _reportTotalPages = 1;
         
         async function loadHistory() {
             try {
                 document.getElementById('history-loading').classList.add('show');
                 
-                const params = new URLSearchParams({ sort: _sortDir, sortBy: _sortBy });
+                // 确保分组下拉框已初始化
+                await ensureGroups();
+                
+                _reportSize = parseInt(document.getElementById('page-size')?.value || '20');
+                
+                const params = new URLSearchParams({ sort: _sortDir, sortBy: _sortBy, page: _reportPage, size: _reportSize });
             const dateStart = document.getElementById('history-date-start')?.value || '';
             const dateEnd = document.getElementById('history-date-end')?.value || '';
             const group = document.getElementById('history-group')?.value?.trim() || '';
@@ -969,15 +989,23 @@
             }
             if (group) params.set('group', group);
 
-            const response = await fetch(`/api/reports?${params}`);
-                const data = await response.json();
+            // 并行获取：分页数据 + 全量数据（趋势图用）
+            const [pagedRes, allRes] = await Promise.all([
+                fetch(`/api/reports?${params}`),
+                fetch(`/api/reports?sort=${_sortDir}&sortBy=${_sortBy}` + (dateStart ? `&since=${new Date(dateStart).getTime()}` : '') + (dateEnd ? `&until=${new Date(dateEnd).setHours(23,59,59,999)}` : '') + (group ? `&group=${encodeURIComponent(group)}` : ''))
+            ]);
+            const [data, allData] = await Promise.all([pagedRes.json(), allRes.json()]);
+                
                 window._allReports = data.reports || [];
                 window._reportTotal = data.total || 0;
                 window._reportFiltered = data.filtered || 0;
+                _reportTotalPages = data.totalPages || 1;
+                if (_reportPage > _reportTotalPages) { _reportPage = _reportTotalPages; }
                 updateHistoryStats();
+                updatePaginationUI();
                 
                 filterHistory();
-                renderTrendChart();
+                renderTrendChart(allData.reports || []);
                 
             } catch (error) {
                 logError('Failed to load history:', error);
@@ -1011,11 +1039,28 @@
             if (!el) return;
             el.textContent = total === 0 ? '' : `共 ${total} 条报告${filtered < total ? `（已过滤至 ${filtered} 条）` : ''}  ·  按${_sortBy === 'score' ? '分数' : '时间'}${_sortDir === 'desc' ? '倒序' : '正序'}`;
         }
+
+        function updatePaginationUI() {
+            const totalPages = _reportTotalPages || 1;
+            const page = _reportPage || 1;
+            document.getElementById('page-info').textContent = `第 ${page} / ${totalPages} 页`;
+            document.getElementById('page-prev').disabled = page <= 1;
+            document.getElementById('page-next').disabled = page >= totalPages;
+        }
+
+        function goToPage(n) {
+            if (n < 1) n = 1;
+            if (n > _reportTotalPages) n = _reportTotalPages;
+            if (n === _reportPage) return;
+            _reportPage = n;
+            loadHistory();
+        }
         
         function clearDateFilter() {
             document.getElementById('history-date-start').value = '';
             document.getElementById('history-date-end').value = '';
-            filterHistory();
+            _reportPage = 1;
+            loadHistory();
         }
         
         function filterHistory() {
@@ -1025,8 +1070,9 @@
             const dateEnd = document.getElementById('history-date-end')?.value || '';
             const group = document.getElementById('history-group')?.value || '';
 
-            // 日期范围或分组变化时重新请求后端过滤
+            // 日期范围或分组变化时重新请求后端过滤（重置到第1页）
             if (dateStart || dateEnd || group) {
+                _reportPage = 1;
                 loadHistory();
                 return;
             }
@@ -1569,6 +1615,30 @@
             });
         }
 
+        // 确保分组列表已加载（history 下拉框需要）
+        async function ensureGroups() {
+            if (groups.length > 0) return;
+            try {
+                const response = await fetch('/api/groups');
+                const data = await response.json();
+                groups = data.groups || [];
+                // 更新评测分组选择器
+                const evalSelect = document.getElementById('eval-group');
+                if (evalSelect) {
+                    evalSelect.innerHTML = '<option value="">选择分组...</option>' +
+                        groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
+                }
+                // 更新历史记录分组下拉框
+                const histSelect = document.getElementById('history-group');
+                if (histSelect) {
+                    histSelect.innerHTML = '<option value="">全部分组</option>' +
+                        groups.map(g => `<option value="${utils.escapeHtml(g.name)}">${utils.escapeHtml(g.name)}</option>`).join('');
+                }
+            } catch (e) {
+                logError('Failed to load groups for filter:', e);
+            }
+        }
+
         // 加载分组
         async function loadGroups() {
             document.getElementById('groups-loading').classList.add('show');
@@ -1595,10 +1665,18 @@
                     `).join('');
                 }
 
-                // 更新分组选择器
-                const select = document.getElementById('eval-group');
-                select.innerHTML = '<option value="">选择分组...</option>' +
-                    groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
+                // 更新评测分组选择器
+                const evalSelect = document.getElementById('eval-group');
+                if (evalSelect) {
+                    evalSelect.innerHTML = '<option value="">选择分组...</option>' +
+                        groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
+                }
+                // 同时更新历史记录分组下拉框
+                const histSelect = document.getElementById('history-group');
+                if (histSelect) {
+                    histSelect.innerHTML = '<option value="">全部分组</option>' +
+                        groups.map(g => `<option value="${utils.escapeHtml(g.name)}">${utils.escapeHtml(g.name)}</option>`).join('');
+                }
             } catch (error) {
                 logError('Failed to load groups:', error);
             } finally {
@@ -1879,8 +1957,8 @@
         });
         
         // 渲染趋势图表
-        function renderTrendChart() {
-            const reports = window._allReports || [];
+        function renderTrendChart(reportsOverride) {
+            const reports = reportsOverride || window._allReports || [];
             if (reports.length < 2) {
                 // 数据不足时显示提示
                 const ctx = document.getElementById('trend-chart');

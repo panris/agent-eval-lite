@@ -92,7 +92,8 @@ public class ReportService {
         return reportHistory.get(reportId);
     }
 
-    public Map<String, Object> getAllReports(String sort, Long since, Long until, String group, String sortBy) {
+    public Map<String, Object> getAllReports(String sort, Long since, Long until, String group, String sortBy,
+                                               int page, int size) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> e : reportHistory.entrySet()) {
             Map<String, Object> report = new LinkedHashMap<>(e.getValue());
@@ -129,10 +130,23 @@ public class ReportService {
             return asc ? Long.compare(tsA, tsB) : Long.compare(tsB, tsA);
         });
 
+        // 分页
+        int total = reportHistory.size();
+        int filtered = list.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) filtered / size));
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+        int from = (page - 1) * size;
+        int to = Math.min(from + size, filtered);
+        List<Map<String, Object>> paged = from < filtered ? list.subList(from, to) : List.of();
+
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("reports", list);
-        result.put("total", reportHistory.size());
-        result.put("filtered", list.size());
+        result.put("reports", paged);
+        result.put("total", total);
+        result.put("filtered", filtered);
+        result.put("page", page);
+        result.put("size", size);
+        result.put("totalPages", totalPages);
         return result;
     }
 
@@ -370,7 +384,7 @@ public class ReportService {
     public void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, "time").get("reports");
+        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, "time", 1, 10000).get("reports");
         int toRemove = reportHistory.size() - maxReports;
         for (int i = 0; i < toRemove; i++) {
             String id = sorted.get(i).get("id").toString();

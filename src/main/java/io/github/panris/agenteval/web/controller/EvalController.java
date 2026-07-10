@@ -339,8 +339,12 @@ public class EvalController {
             @RequestParam(required = false) Long since,
             @RequestParam(required = false) Long until,
             @RequestParam(required = false) String group,
-            @RequestParam(defaultValue = "time") String sortBy) {
-        return reportService.getAllReports(sort, since, until, group, sortBy);
+            @RequestParam(defaultValue = "time") String sortBy,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        if (size < 1) size = 20;
+        if (size > 100) size = 100;
+        return reportService.getAllReports(sort, since, until, group, sortBy, page, size);
     }
 
     @GetMapping("/api/reports/{id}")
