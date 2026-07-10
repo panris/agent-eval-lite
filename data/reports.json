@@ -2943,5 +2943,35 @@
     "executionTimeMs" : 1,
     "timestamp" : 1783611497511,
     "asyncTaskId" : "task_1783611497506"
+  },
+  "report_1783689987564" : {
+    "summary" : {
+      "pass_rate" : 0.0,
+      "average_score" : 0.0,
+      "total_test_cases" : 1.0,
+      "passed_test_cases" : 0.0,
+      "failed_test_cases" : 1.0
+    },
+    "evaluations" : [ {
+      "testCaseId" : "tc_1783689987545_909",
+      "testCaseInput" : "hello",
+      "overallScore" : 0.0,
+      "passed" : false,
+      "output" : "Demo response for: hello",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Missing expected or actual output"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 0,
+    "failedTestCases" : 1,
+    "executionTimeMs" : 4,
+    "timestamp" : 1783689987564,
+    "asyncTaskId" : "task_1783689987556",
+    "group" : "test-group-001"
   }
 }
