@@ -570,9 +570,9 @@
                 </select>
                 <button class="btn btn-primary" onclick="runGroupEvaluation()">按分组评测</button>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
-                <select class="form-control" id="eval-project" style="width: auto;" list="project-list"><option value="">项目（任意）</option></select>
-                <select class="form-control" id="eval-module" style="width: auto;" list="module-list"><option value="">模块（任意）</option></select>
-                <select class="form-control" id="eval-function" style="width: auto;" list="function-list"><option value="">功能（任意）</option></select>
+                <select class="form-control" id="eval-project" style="width: auto;"><option value="">项目（任意）</option></select>
+                <select class="form-control" id="eval-module" style="width: auto;"><option value="">模块（任意）</option></select>
+                <select class="form-control" id="eval-function" style="width: auto;"><option value="">功能（任意）</option></select>
                 <button class="btn btn-warning" onclick="runDimensionEvaluation()">按三维评测</button>
             </div>
 
@@ -659,7 +659,7 @@
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..." 
                         style="width: 200px;" oninput="filterHistory()">
-                    <select id="history-filter" class="form-control" style="width: 120px;" onchange="filterHistory()">
+                    <select id="history-filter" class="form-control" style="width: 120px;" onchange="_reportPage=1;filterHistory()">
                         <option value="">全部报告</option>
                         <option value="favorites">⭐ 收藏</option>
                         <option value="passed">✅ 已通过</option>
