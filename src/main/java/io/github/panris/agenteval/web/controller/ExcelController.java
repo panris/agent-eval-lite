@@ -98,6 +98,10 @@ public class ExcelController {
     /**
      * 导入测试用例从 Excel
      */
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private static final int MAX_ROWS = 1000;
+    private static final int MAX_FIELD_LENGTH = 10000;
+
     @PostMapping("/import/excel")
     public ResponseEntity<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
         Map<String, Object> result = new HashMap<>();
@@ -108,10 +112,22 @@ public class ExcelController {
             return ResponseEntity.badRequest().body(result);
         }
         
+        if (file.getSize() > MAX_FILE_SIZE) {
+            result.put("success", false);
+            result.put("message", "文件过大，最大支持 10MB");
+            return ResponseEntity.badRequest().body(result);
+        }
+        
         try (InputStream is = file.getInputStream();
              Workbook workbook = new XSSFWorkbook(is)) {
             
             Sheet sheet = workbook.getSheetAt(0);
+            if (sheet.getLastRowNum() > MAX_ROWS) {
+                result.put("success", false);
+                result.put("message", "行数超过限制，最多导入 " + MAX_ROWS + " 行");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
             int imported = 0;
             int skipped = 0;
             List<String> errors = new ArrayList<>();
@@ -128,6 +144,12 @@ public class ExcelController {
                     String group = getCellValue(row.getCell(4));
                     
                     if (name == null || name.trim().isEmpty()) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    if (name.length() > MAX_FIELD_LENGTH || (input != null && input.length() > MAX_FIELD_LENGTH) || (expected != null && expected.length() > MAX_FIELD_LENGTH)) {
+                        errors.add("行 " + (i + 1) + ": 字段长度超过 " + MAX_FIELD_LENGTH + " 字符限制");
                         skipped++;
                         continue;
                     }
