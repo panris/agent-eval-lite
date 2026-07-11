@@ -377,15 +377,27 @@ public class EvalController {
 
 
         // Return result
-        return Map.of(
-            "success", true,
-            "reportId", reportId,
-            "summary", report.getSummary(),
-            "totalTestCases", report.getTotalTestCases(),
-            "passedTestCases", report.getPassedTestCases(),
-            "failedTestCases", report.getFailedTestCases(),
-            "executionTimeMs", report.getExecutionTimeMs()
-        );
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", true);
+        result.put("reportId", reportId);
+        result.put("summary", report.getSummary());
+        result.put("totalTestCases", report.getTotalTestCases());
+        result.put("passedTestCases", report.getPassedTestCases());
+        result.put("failedTestCases", report.getFailedTestCases());
+        result.put("executionTimeMs", report.getExecutionTimeMs());
+        if (group != null && !group.trim().isEmpty()) {
+            result.put("group", group.trim());
+        }
+        if (project != null && !project.trim().isEmpty()) {
+            result.put("project", project.trim());
+        }
+        if (module != null && !module.trim().isEmpty()) {
+            result.put("module", module.trim());
+        }
+        if (function != null && !function.trim().isEmpty()) {
+            result.put("function", function.trim());
+        }
+        return result;
     }
 
     @GetMapping("/api/reports")

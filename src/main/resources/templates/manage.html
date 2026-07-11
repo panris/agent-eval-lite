@@ -607,6 +607,11 @@
 
             <div id="eval-details" style="display: none; margin-bottom: 20px;">
                 <h3 style="color: var(--text-primary); margin-bottom: 15px;">评测详情</h3>
+                <div id="report-meta" style="display: none; margin-bottom: 15px; padding: 10px 14px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <span style="color: var(--text-secondary); font-size: 13px; margin-right: 6px;">分组维度:</span>
+                    <span id="report-meta-group"></span>
+                    <span id="report-meta-dims"></span>
+                </div>
                 <table class="table" id="details-table">
                     <thead>
                         <tr>
@@ -2173,6 +2178,7 @@
             
             // Render charts
             renderCharts(window.lastEvaluation.evaluations);
+            renderReportMeta(window.lastEvaluation);
             
             const evaluations = window.lastEvaluation.evaluations;
             tbody.innerHTML = evaluations.map(ev => {
@@ -2199,6 +2205,48 @@
             }).join('');
             
             detailsDiv.style.display = 'block';
+        }
+
+        function renderReportMeta(report) {
+            const metaDiv = document.getElementById('report-meta');
+            const groupSpan = document.getElementById('report-meta-group');
+            const dimsSpan = document.getElementById('report-meta-dims');
+            if (!metaDiv || !report) return;
+
+            const group = report.group;
+            const project = report.project;
+            const module = report.module;
+            const func = report.function;
+
+            const hasGroup = group && String(group).trim() !== '';
+            const hasDims = (project && String(project).trim() !== '') ||
+                            (module && String(module).trim() !== '') ||
+                            (func && String(func).trim() !== '');
+
+            if (!hasGroup && !hasDims) {
+                metaDiv.style.display = 'none';
+                return;
+            }
+
+            groupSpan.innerHTML = hasGroup
+                ? `<span class="badge badge-info">${utils.escapeHtml(String(group))}</span>`
+                : '';
+            groupSpan.style.display = hasGroup ? 'inline' : 'none';
+
+            const badges = [];
+            if (project && String(project).trim() !== '') {
+                badges.push(`<span class="badge" style="background: #2563eb;">${utils.escapeHtml(String(project))}</span>`);
+            }
+            if (module && String(module).trim() !== '') {
+                badges.push(`<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(String(module))}</span>`);
+            }
+            if (func && String(func).trim() !== '') {
+                badges.push(`<span class="badge" style="background: #db2777;">${utils.escapeHtml(String(func))}</span>`);
+            }
+            dimsSpan.innerHTML = badges.join(' ');
+            dimsSpan.style.display = badges.length ? 'inline' : 'none';
+
+            metaDiv.style.display = 'block';
         }
 
         // 导出报告
