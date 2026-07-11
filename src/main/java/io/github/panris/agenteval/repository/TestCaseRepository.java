@@ -103,6 +103,58 @@ public class TestCaseRepository {
             .count();
     }
 
+    /**
+     * 按三维分组筛选测试用例。任一维度为 null 或空表示不限制该维度。
+     * 三个维度之间是 AND 关系。
+     */
+    public List<TestCaseEntity> findTestCasesByDimensions(String project, String module, String function) {
+        final String p = (project != null && !project.isBlank()) ? project.trim() : null;
+        final String m = (module != null && !module.isBlank()) ? module.trim() : null;
+        final String f = (function != null && !function.isBlank()) ? function.trim() : null;
+        return testCases.values().stream()
+            .filter(tc -> p == null || p.equalsIgnoreCase(nullToEmpty(tc.getProject())))
+            .filter(tc -> m == null || m.equalsIgnoreCase(nullToEmpty(tc.getModule())))
+            .filter(tc -> f == null || f.equalsIgnoreCase(nullToEmpty(tc.getFunction())))
+            .collect(Collectors.toList());
+    }
+
+    public List<TestCaseEntity> findTestCasesByDimensionsPage(String project, String module, String function, int page, int size) {
+        List<TestCaseEntity> all = findTestCasesByDimensions(project, module, function);
+        int from = (page - 1) * size;
+        if (from >= all.size()) return List.of();
+        int to = Math.min(from + size, all.size());
+        return all.subList(from, to);
+    }
+
+    public int countTestCasesByDimensions(String project, String module, String function) {
+        return findTestCasesByDimensions(project, module, function).size();
+    }
+
+    public List<String> findDistinctProjects() {
+        return distinctValues(TestCaseEntity::getProject);
+    }
+
+    public List<String> findDistinctModules() {
+        return distinctValues(TestCaseEntity::getModule);
+    }
+
+    public List<String> findDistinctFunctions() {
+        return distinctValues(TestCaseEntity::getFunction);
+    }
+
+    private List<String> distinctValues(java.util.function.Function<TestCaseEntity, String> getter) {
+        return testCases.values().stream()
+            .map(getter)
+            .filter(v -> v != null && !v.isBlank())
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+    }
+
+    private String nullToEmpty(String s) {
+        return s == null ? "" : s;
+    }
+
     public void deleteTestCase(String id) {
         TestCaseEntity removed = testCases.remove(id);
         if (removed != null) {

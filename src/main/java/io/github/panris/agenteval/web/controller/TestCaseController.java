@@ -48,6 +48,9 @@ public class TestCaseController {
             request.getExpected()
         );
         testCase.setGroupId(request.getGroupId());
+        testCase.setProject(request.getProject());
+        testCase.setModule(request.getModule());
+        testCase.setFunction(request.getFunction());
         testCase.setMetadata(request.getMetadata());
 
         TestCaseEntity saved = repository.saveTestCase(testCase);
@@ -133,6 +136,19 @@ public class TestCaseController {
     }
 
     /**
+     * 获取所有测试用例的三维分组去重值，用于前端下拉框。
+     */
+    @GetMapping("/dimensions")
+    public Map<String, Object> getDimensions() {
+        return Map.of(
+            "success", true,
+            "projects", repository.findDistinctProjects(),
+            "modules", repository.findDistinctModules(),
+            "functions", repository.findDistinctFunctions()
+        );
+    }
+
+    /**
      * Get a specific test case.
      */
     @GetMapping("/{id}")
@@ -175,6 +191,15 @@ public class TestCaseController {
                 tc.setExpected(request.getExpected());
                 if (request.getGroupId() != null) {
                     tc.setGroupId(request.getGroupId());
+                }
+                if (request.getProject() != null) {
+                    tc.setProject(request.getProject());
+                }
+                if (request.getModule() != null) {
+                    tc.setModule(request.getModule());
+                }
+                if (request.getFunction() != null) {
+                    tc.setFunction(request.getFunction());
                 }
                 if (request.getMetadata() != null) {
                     tc.setMetadata(request.getMetadata());
@@ -248,6 +273,9 @@ public class TestCaseController {
                     req.getExpected()
                 );
                 tc.setGroupId(req.getGroupId());
+                tc.setProject(req.getProject());
+                tc.setModule(req.getModule());
+                tc.setFunction(req.getFunction());
                 tc.setMetadata(req.getMetadata());
                 return tc;
             })
@@ -268,6 +296,9 @@ class TestCaseRequest {
     private String input;
     private String expected;
     private String groupId;
+    private String project;
+    private String module;
+    private String function;
     private Map<String, Object> metadata;
 
     // Getters and Setters
@@ -301,6 +332,30 @@ class TestCaseRequest {
 
     public void setGroupId(String groupId) {
         this.groupId = groupId;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
+    public String getModule() {
+        return module;
+    }
+
+    public void setModule(String module) {
+        this.module = module;
+    }
+
+    public String getFunction() {
+        return function;
+    }
+
+    public void setFunction(String function) {
+        this.function = function;
     }
 
     public Map<String, Object> getMetadata() {

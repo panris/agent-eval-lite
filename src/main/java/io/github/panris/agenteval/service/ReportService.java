@@ -92,8 +92,9 @@ public class ReportService {
         return reportHistory.get(reportId);
     }
 
-    public Map<String, Object> getAllReports(String sort, Long since, Long until, String group, String sortBy,
-                                               int page, int size) {
+    public Map<String, Object> getAllReports(String sort, Long since, Long until, String group, String project,
+                                              String module, String function, String sortBy,
+                                              int page, int size) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> e : reportHistory.entrySet()) {
             Map<String, Object> report = new LinkedHashMap<>(e.getValue());
@@ -105,6 +106,20 @@ public class ReportService {
         if (group != null && !group.trim().isEmpty()) {
             String g = group.trim();
             list.removeIf(r -> !g.equalsIgnoreCase(String.valueOf(r.getOrDefault("group", ""))));
+        }
+
+        // 按三维分组过滤
+        if (project != null && !project.trim().isEmpty()) {
+            String p = project.trim();
+            list.removeIf(r -> !p.equalsIgnoreCase(String.valueOf(r.getOrDefault("project", ""))));
+        }
+        if (module != null && !module.trim().isEmpty()) {
+            String m = module.trim();
+            list.removeIf(r -> !m.equalsIgnoreCase(String.valueOf(r.getOrDefault("module", ""))));
+        }
+        if (function != null && !function.trim().isEmpty()) {
+            String f = function.trim();
+            list.removeIf(r -> !f.equalsIgnoreCase(String.valueOf(r.getOrDefault("function", ""))));
         }
 
         // 按日期范围过滤
@@ -384,7 +399,7 @@ public class ReportService {
     public void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, "time", 1, 10000).get("reports");
+        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, null, null, null, "time", 1, 10000).get("reports");
         int toRemove = reportHistory.size() - maxReports;
         for (int i = 0; i < toRemove; i++) {
             String id = sorted.get(i).get("id").toString();

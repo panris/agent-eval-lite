@@ -53,7 +53,7 @@ public class ExcelController {
             
             // Create header row
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"ID", "名称", "输入", "期望输出", "分组", "创建时间"};
+            String[] headers = {"ID", "名称", "输入", "期望输出", "分组", "项目", "模块", "功能", "创建时间"};
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -69,7 +69,10 @@ public class ExcelController {
                 row.createCell(2).setCellValue(sanitizeExcelCell(tc.getInput()));
                 row.createCell(3).setCellValue(sanitizeExcelCell(tc.getExpected()));
                 row.createCell(4).setCellValue(sanitizeExcelCell(tc.getGroupId()));
-                row.createCell(5).setCellValue(sanitizeExcelCell(tc.getCreatedAt() != null ? tc.getCreatedAt().toString() : ""));
+                row.createCell(5).setCellValue(sanitizeExcelCell(tc.getProject()));
+                row.createCell(6).setCellValue(sanitizeExcelCell(tc.getModule()));
+                row.createCell(7).setCellValue(sanitizeExcelCell(tc.getFunction()));
+                row.createCell(8).setCellValue(sanitizeExcelCell(tc.getCreatedAt() != null ? tc.getCreatedAt().toString() : ""));
             }
             
             // Auto size columns
@@ -143,6 +146,9 @@ public class ExcelController {
                     String input = getCellValue(row.getCell(2));
                     String expected = getCellValue(row.getCell(3));
                     String group = getCellValue(row.getCell(4));
+                    String project = getCellValue(row.getCell(5));
+                    String moduleDim = getCellValue(row.getCell(6));
+                    String functionDim = getCellValue(row.getCell(7));
                     
                     if (name == null || name.trim().isEmpty()) {
                         skipped++;
@@ -160,6 +166,9 @@ public class ExcelController {
                     tc.setInput(input != null ? input : "");
                     tc.setExpected(expected != null ? expected : "");
                     tc.setGroupId(group != null && !group.isEmpty() ? group : null);
+                    tc.setProject(project != null && !project.isEmpty() ? project : null);
+                    tc.setModule(moduleDim != null && !moduleDim.isEmpty() ? moduleDim : null);
+                    tc.setFunction(functionDim != null && !functionDim.isEmpty() ? functionDim : null);
                     
                     testCaseRepository.saveTestCase(tc);
                     imported++;
@@ -243,6 +252,9 @@ public class ExcelController {
                 String input = parts.length > 1 ? parts[1].trim() : "";
                 String expected = parts.length > 2 ? parts[2].trim() : "";
                 String group = parts.length > 3 ? parts[3].trim() : "";
+                String project = parts.length > 4 ? parts[4].trim() : "";
+                String moduleDim = parts.length > 5 ? parts[5].trim() : "";
+                String functionDim = parts.length > 6 ? parts[6].trim() : "";
                 
                 if (name.isEmpty()) {
                     skipped++;
@@ -260,6 +272,9 @@ public class ExcelController {
                 tc.setInput(input);
                 tc.setExpected(expected);
                 tc.setGroupId(group.isEmpty() ? null : group);
+                tc.setProject(project.isEmpty() ? null : project);
+                tc.setModule(moduleDim.isEmpty() ? null : moduleDim);
+                tc.setFunction(functionDim.isEmpty() ? null : functionDim);
                 testCaseRepository.saveTestCase(tc);
                 imported++;
             }

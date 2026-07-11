@@ -36,7 +36,7 @@ public class HealthController {
         int reportCount = 0;
         try {
             testCaseCount = testCaseRepository.countAllTestCases();
-            reportCount = (int) reportService.getAllReports("desc", null, null, null, "time", 1, 1).get("total");
+            reportCount = (int) reportService.getAllReports("desc", null, null, null, null, null, null, "time", 1, 1).get("total");
         } catch (Exception e) {
             // 健康检查时数据访问失败不影响主状态，仅返回 0
         }

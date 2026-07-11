@@ -109,7 +109,7 @@ public class EvalController {
             testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
         }
 
-        return runEvaluation(testCases, request.getMetrics(), agentType, null);
+        return runEvaluation(testCases, request.getMetrics(), agentType, null, null, null, null);
     }
 
     /**
@@ -154,7 +154,7 @@ public class EvalController {
         }
 
         // Run evaluation
-        return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), null);
+        return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), null, null, null, null);
     }
 
     /**
@@ -189,7 +189,7 @@ public class EvalController {
                     );
                 }
 
-                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), group.getName());
+                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), group.getName(), null, null, null);
             })
             .orElse(Map.of(
                 "success", false,
@@ -198,28 +198,72 @@ public class EvalController {
     }
 
     /**
+     * 按三维分组（项目/模块/功能）同步评测。任一维度为空表示不限制该维度。
+     */
+    @PostMapping("/api/evaluate/dimensions")
+    @ResponseBody
+    public Map<String, Object> evaluateByDimensions(@RequestBody EvalRequest request) {
+        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
+        if (metricsError != null) {
+            return metricsError;
+        }
+        List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(
+            request.getProject(), request.getModule(), request.getFunction());
+        if (byDims.isEmpty()) {
+            return Map.of("success", false, "error", "没有符合所选维度的测试用例");
+        }
+        if (byDims.size() > 100) {
+            return Map.of("success", false, "error", "测试用例数量不能超过 100 个（当前 " + byDims.size() + "）");
+        }
+        List<TestCase> testCases = byDims.stream()
+            .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null))
+            .toList();
+        String groupLabel = request.getFunction() != null ? request.getFunction()
+            : request.getModule() != null ? request.getModule()
+            : request.getProject();
+        return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), groupLabel,
+            request.getProject(), request.getModule(), request.getFunction());
+    }
+
+    /**
      * Submit async batch evaluation task.
      */
     @PostMapping("/api/evaluate/async")
     @ResponseBody
     public Map<String, Object> evaluateAsync(@RequestBody EvalRequest request) {
-        if (request == null || request.getTestCases() == null || request.getTestCases().isEmpty()) {
-            return Map.of("success", false, "error", "测试用例列表不能为空");
-        }
-        if (request.getTestCases().size() > 100) {
-            return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+        if (request == null) {
+            return Map.of("success", false, "error", "请求不能为空");
         }
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
             return metricsError;
         }
-        List<TestCase> testCases = new ArrayList<>();
-        for (TestCaseDto dto : request.getTestCases()) {
-            testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
-        }
         String agentType = request.getAgentType() != null ? request.getAgentType() : "demo";
+
+        List<TestCase> testCases = new ArrayList<>();
+        if (request.getTestCases() != null && !request.getTestCases().isEmpty()) {
+            if (request.getTestCases().size() > 100) {
+                return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+            }
+            for (TestCaseDto dto : request.getTestCases()) {
+                testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
+            }
+        } else {
+            // 未传具体用例时，按三维分组维度解析
+            List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(
+                request.getProject(), request.getModule(), request.getFunction());
+            if (byDims.isEmpty()) {
+                return Map.of("success", false, "error", "没有符合所选维度的测试用例");
+            }
+            if (byDims.size() > 100) {
+                return Map.of("success", false, "error", "测试用例数量不能超过 100 个（当前 " + byDims.size() + "）");
+            }
+            for (TestCaseEntity e : byDims) {
+                testCases.add(new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null));
+            }
+        }
         String taskId = asyncEvalService.submitTask(testCases, request.getMetrics(), agentType,
-                300, request.getGroup());
+                300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction());
         return Map.of("success", true, "taskId", taskId, "status", "PENDING");
     }
 
@@ -289,7 +333,10 @@ public class EvalController {
         List<TestCase> testCases,
         List<String> metrics,
         String agentType,
-        String group
+        String group,
+        String project,
+        String module,
+        String function
     ) {
         // Create agent
         Agent agent = createAgent(agentType, Map.of());
@@ -317,6 +364,15 @@ public class EvalController {
         if (group != null && !group.trim().isEmpty()) {
             reportData.put("group", group.trim());
         }
+        if (project != null && !project.trim().isEmpty()) {
+            reportData.put("project", project.trim());
+        }
+        if (module != null && !module.trim().isEmpty()) {
+            reportData.put("module", module.trim());
+        }
+        if (function != null && !function.trim().isEmpty()) {
+            reportData.put("function", function.trim());
+        }
         reportService.saveReport(reportId, reportData);
 
 
@@ -339,12 +395,15 @@ public class EvalController {
             @RequestParam(required = false) Long since,
             @RequestParam(required = false) Long until,
             @RequestParam(required = false) String group,
+            @RequestParam(required = false) String project,
+            @RequestParam(required = false) String module,
+            @RequestParam(required = false) String function,
             @RequestParam(defaultValue = "time") String sortBy,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
         if (size < 1) size = 20;
         if (size > 100) size = 100;
-        return reportService.getAllReports(sort, since, until, group, sortBy, page, size);
+        return reportService.getAllReports(sort, since, until, group, project, module, function, sortBy, page, size);
     }
 
     @GetMapping("/api/reports/{id}")
@@ -354,16 +413,20 @@ public class EvalController {
         if (report == null) {
             return Map.of("success", false, "error", "报告不存在");
         }
-        return Map.of(
-            "success", true,
-            "reportId", id,
-            "summary", report.get("summary"),
-            "evaluations", report.get("evaluations"),
-            "totalTestCases", report.get("totalTestCases"),
-            "passedTestCases", report.get("passedTestCases"),
-            "failedTestCases", report.get("failedTestCases"),
-            "executionTimeMs", report.get("executionTimeMs")
-        );
+        Map<String, Object> detail = new LinkedHashMap<>();
+        detail.put("success", true);
+        detail.put("reportId", id);
+        detail.put("summary", report.get("summary"));
+        detail.put("evaluations", report.get("evaluations"));
+        detail.put("totalTestCases", report.get("totalTestCases"));
+        detail.put("passedTestCases", report.get("passedTestCases"));
+        detail.put("failedTestCases", report.get("failedTestCases"));
+        detail.put("executionTimeMs", report.get("executionTimeMs"));
+        detail.put("project", report.getOrDefault("project", null));
+        detail.put("module", report.getOrDefault("module", null));
+        detail.put("function", report.getOrDefault("function", null));
+        detail.put("group", report.getOrDefault("group", null));
+        return detail;
     }
 
     @DeleteMapping("/api/reports/{id}")

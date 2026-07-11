@@ -463,6 +463,15 @@
                 <button class="btn btn-primary" onclick="createTestCase()">添加</button>
             </div>
 
+            <div class="form-row" style="margin-top: 8px;">
+                <input type="text" class="form-control" id="case-project" placeholder="项目（三维分组）" list="project-list" style="flex: 1; min-width: 120px;">
+                <input type="text" class="form-control" id="case-module" placeholder="模块（三维分组）" list="module-list" style="flex: 1; min-width: 120px;">
+                <input type="text" class="form-control" id="case-function" placeholder="功能（三维分组）" list="function-list" style="flex: 1; min-width: 120px;">
+                <datalist id="project-list"></datalist>
+                <datalist id="module-list"></datalist>
+                <datalist id="function-list"></datalist>
+            </div>
+
             <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="flex: 1; min-width: 200px;">
                 <button class="btn btn-success btn-sm" onclick="exportAllTestCases('json')">📤 导出 JSON</button>
@@ -483,6 +492,7 @@
                         <th>输入</th>
                         <th>期望输出</th>
                         <th>分组</th>
+                        <th>三维分组</th>
                         <th>标签</th>
                         <th>操作</th>
                     </tr>
@@ -559,6 +569,11 @@
                     <option value="">选择分组...</option>
                 </select>
                 <button class="btn btn-primary" onclick="runGroupEvaluation()">按分组评测</button>
+                <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
+                <select class="form-control" id="eval-project" style="width: auto;" list="project-list"><option value="">项目（任意）</option></select>
+                <select class="form-control" id="eval-module" style="width: auto;" list="module-list"><option value="">模块（任意）</option></select>
+                <select class="form-control" id="eval-function" style="width: auto;" list="function-list"><option value="">功能（任意）</option></select>
+                <button class="btn btn-warning" onclick="runDimensionEvaluation()">按三维评测</button>
             </div>
 
             <div class="loading" id="eval-loading">
@@ -653,6 +668,15 @@
                     <select id="history-group" class="form-control" style="width: 130px;" onchange="loadHistory()">
                         <option value="">全部分组</option>
                     </select>
+                    <select id="history-project" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
+                        <option value="">全部项目</option>
+                    </select>
+                    <select id="history-module" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
+                        <option value="">全部模块</option>
+                    </select>
+                    <select id="history-function" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
+                        <option value="">全部功能</option>
+                    </select>
                     <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除日期</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
@@ -689,6 +713,7 @@
                         <th>通过率</th>
                         <th>平均分</th>
                         <th>分组</th>
+                        <th>三维分组</th>
                         <th>标签</th>
                         <th>备注</th>
                         <th>操作</th>
@@ -816,6 +841,27 @@
                 </div>
             </div>
             
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-project-enabled" onchange="toggleBatchEditField('project')"> 项目（三维分组）
+                </label>
+                <input type="text" id="batch-edit-project" class="form-control" placeholder="统一修改为..." list="project-list" disabled>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-module-enabled" onchange="toggleBatchEditField('module')"> 模块（三维分组）
+                </label>
+                <input type="text" id="batch-edit-module" class="form-control" placeholder="统一修改为..." list="module-list" disabled>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-function-enabled" onchange="toggleBatchEditField('function')"> 功能（三维分组）
+                </label>
+                <input type="text" id="batch-edit-function" class="form-control" placeholder="统一修改为..." list="function-list" disabled>
+            </div>
+            
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-primary btn-sm" onclick="applyBatchEdit()">应用修改</button>
                 <button class="btn btn-sm" onclick="closeBatchEditModal()" style="background: #6c757d; color: white;">取消</button>
@@ -835,8 +881,8 @@
             </div>
             
             <p style="color: var(--text-secondary); font-size: 12px;">
-                Excel 列顺序：名称 | 输入 | 期望输出 | 分组<br>
-                CSV 格式：name,input,expected,group（首行可为表头）
+                Excel 列顺序：名称 | 输入 | 期望输出 | 分组 | 项目 | 模块 | 功能<br>
+                CSV 格式：name,input,expected,group,project,module,function（首行可为表头）
             </p>
             
             <div style="text-align: right; margin-top: 20px;">
@@ -969,6 +1015,32 @@
         let _reportSize = 20;
         let _reportTotalPages = 1;
         
+        function getDimensionFilters() {
+            return {
+                project: (document.getElementById('history-project')?.value || '').trim(),
+                module: (document.getElementById('history-module')?.value || '').trim(),
+                function: (document.getElementById('history-function')?.value || '').trim()
+            };
+        }
+
+        function buildDimensionQuery() {
+            const d = getDimensionFilters();
+            let q = '';
+            if (d.project) q += `&project=${encodeURIComponent(d.project)}`;
+            if (d.module) q += `&module=${encodeURIComponent(d.module)}`;
+            if (d.function) q += `&function=${encodeURIComponent(d.function)}`;
+            return q;
+        }
+
+        function buildHistoryParams() {
+            const params = new URLSearchParams({ sort: _sortDir, sortBy: _sortBy, page: _reportPage, size: _reportSize });
+            const d = getDimensionFilters();
+            if (d.project) params.set('project', d.project);
+            if (d.module) params.set('module', d.module);
+            if (d.function) params.set('function', d.function);
+            return params;
+        }
+
         async function loadHistory() {
             try {
                 document.getElementById('history-loading').classList.add('show');
@@ -978,7 +1050,7 @@
                 
                 _reportSize = parseInt(document.getElementById('page-size')?.value || '20');
                 
-                const params = new URLSearchParams({ sort: _sortDir, sortBy: _sortBy, page: _reportPage, size: _reportSize });
+                const params = buildHistoryParams();
             const dateStart = document.getElementById('history-date-start')?.value || '';
             const dateEnd = document.getElementById('history-date-end')?.value || '';
             const group = document.getElementById('history-group')?.value?.trim() || '';
@@ -993,7 +1065,7 @@
             // 并行获取：分页数据 + 全量数据（趋势图用）
             const [pagedRes, allRes] = await Promise.all([
                 fetch(`/api/reports?${params}`),
-                fetch(`/api/reports?sort=${_sortDir}&sortBy=${_sortBy}` + (dateStart ? `&since=${new Date(dateStart).getTime()}` : '') + (dateEnd ? `&until=${new Date(dateEnd).setHours(23,59,59,999)}` : '') + (group ? `&group=${encodeURIComponent(group)}` : ''))
+                fetch(`/api/reports?sort=${_sortDir}&sortBy=${_sortBy}` + (dateStart ? `&since=${new Date(dateStart).getTime()}` : '') + (dateEnd ? `&until=${new Date(dateEnd).setHours(23,59,59,999)}` : '') + (group ? `&group=${encodeURIComponent(group)}` : '') + buildDimensionQuery())
             ]);
             const [data, allData] = await Promise.all([pagedRes.json(), allRes.json()]);
                 
@@ -1103,7 +1175,7 @@
             // 渲染
             const tbody = document.getElementById('history-tbody');
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : (`无匹配结果（${filtered.length} / ${total > 0 ? total : reports.length} 条）`)}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : (`无匹配结果（${filtered.length} / ${total > 0 ? total : reports.length} 条）`)}</td></tr>`;
             } else {
                 tbody.innerHTML = filtered.map(report => {
                     const _id = utils.escapeHtml(report.id);
@@ -1123,6 +1195,14 @@
                         </td>
                         <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
                         <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
+                        <td>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                ${report.project ? `<span class="badge" style="background: #2563eb; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.project)}</span>` : ''}
+                                ${report.module ? `<span class="badge" style="background: #7c3aed; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.module)}</span>` : ''}
+                                ${report.function ? `<span class="badge" style="background: #db2777; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.function)}</span>` : ''}
+                                ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">—</span>' : ''}
+                            </div>
+                        </td>
                         <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
                                 ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
@@ -1537,6 +1617,14 @@
                         <td>${_expected}</td>
                         <td><span class="badge badge-info">${tc.groupId || '未分组'}</span></td>
                         <td>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                ${tc.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(tc.project)}</span>` : ''}
+                                ${tc.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(tc.module)}</span>` : ''}
+                                ${tc.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(tc.function)}</span>` : ''}
+                                ${(!tc.project && !tc.module && !tc.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">—</span>' : ''}
+                            </div>
+                        </td>
+                        <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
                                 ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
                                 <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${_id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
@@ -1579,6 +1667,9 @@
             const name = document.getElementById('case-name').value;
             const input = document.getElementById('case-input').value;
             const expected = document.getElementById('case-expected').value;
+            const project = document.getElementById('case-project').value.trim();
+            const moduleDim = document.getElementById('case-module').value.trim();
+            const functionDim = document.getElementById('case-function').value.trim();
 
             if (!input || !expected) {
                 showToast('请填写输入和期望输出', 'error');
@@ -1589,13 +1680,17 @@
                 await fetch('/api/testcases', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, input, expected })
+                    body: JSON.stringify({ name, input, expected, project, module: moduleDim, function: functionDim })
                 });
                 showToast('测试用例已添加', 'success');
                 loadTestCases();
+                loadDimensions();
                 document.getElementById('case-name').value = '';
                 document.getElementById('case-input').value = '';
                 document.getElementById('case-expected').value = '';
+                document.getElementById('case-project').value = '';
+                document.getElementById('case-module').value = '';
+                document.getElementById('case-function').value = '';
             } catch (error) {
                 logError('Failed to create test case:', error);
                 showToast('添加失败', 'error');
@@ -2186,6 +2281,53 @@
             }
         }
 
+        async function runDimensionEvaluation() {
+            const project = document.getElementById('eval-project').value;
+            const moduleDim = document.getElementById('eval-module').value;
+            const functionDim = document.getElementById('eval-function').value;
+
+            if (!project && !moduleDim && !functionDim) {
+                showToast('请至少选择一个维度（项目/模块/功能）', 'info');
+                return;
+            }
+
+            document.getElementById('eval-loading').classList.add('show');
+            document.getElementById('eval-result').style.display = 'none';
+            document.getElementById('eval-details').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/evaluate/dimensions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
+                        agentType: 'demo',
+                        project: project || null,
+                        module: moduleDim || null,
+                        function: functionDim || null
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const summary = data.summary || {};
+                    const passRate = (summary.pass_rate != null ? summary.pass_rate : 0).toFixed(1);
+                    document.getElementById('pass-rate').textContent = passRate + '%';
+                    document.getElementById('eval-result').style.display = 'block';
+                    showToast(`按三维评测完成！通过率: ${passRate}%`, 'success');
+                    window.lastEvaluation = data;
+                    window.lastReportId = data.reportId;
+                } else {
+                    showToast(data.error || '评测失败', 'error');
+                }
+            } catch (error) {
+                logError('Dimension evaluation failed:', error);
+                showToast('评测失败', 'error');
+            } finally {
+                document.getElementById('eval-loading').classList.remove('show');
+            }
+        }
+
         // 加载分组用例
         function loadGroupCases() {
             const groupId = document.getElementById('eval-group').value;
@@ -2216,6 +2358,50 @@
             loadGroups();
         };
 
+        // 加载三维分组去重值并填充下拉框 / datalist
+        async function loadDimensions() {
+            try {
+                const res = await fetch('/api/testcases/dimensions');
+                const data = await res.json();
+                if (!data.success) return;
+                const projects = data.projects || [];
+                const modules = data.modules || [];
+                const functions = data.functions || [];
+
+                // datalist（创建表单 + 评测下拉联想）
+                fillDataList('project-list', projects);
+                fillDataList('module-list', modules);
+                fillDataList('function-list', functions);
+
+                // 评测下拉
+                fillSelect('eval-project', projects, '项目（任意）');
+                fillSelect('eval-module', modules, '模块（任意）');
+                fillSelect('eval-function', functions, '功能（任意）');
+
+                // 历史筛选下拉
+                fillSelect('history-project', projects, '全部项目');
+                fillSelect('history-module', modules, '全部模块');
+                fillSelect('history-function', functions, '全部功能');
+            } catch (error) {
+                logError('Failed to load dimensions:', error);
+            }
+        }
+
+        function fillDataList(id, values) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = values.map(v => `<option value="${utils.escapeHtml(v)}">`).join('');
+        }
+
+        function fillSelect(id, values, allLabel) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const current = el.value;
+            el.innerHTML = `<option value="">${utils.escapeHtml(allLabel)}</option>` +
+                values.map(v => `<option value="${utils.escapeHtml(v)}">${utils.escapeHtml(v)}</option>`).join('');
+            if (values.includes(current)) el.value = current;
+        }
+
         
         // 批量导入相关函数
         function exportAllTestCases(format) {
@@ -2233,14 +2419,17 @@
                 mimeType = 'application/json';
             } else {
                 // CSV 格式
-                const headers = ['name', 'input', 'expected', 'groupId'];
+                const headers = ['name', 'input', 'expected', 'groupId', 'project', 'module', 'function'];
                 const rows = [headers.join(',')];
                 testCases.forEach(tc => {
                     rows.push([
                         `"${(tc.name || '').replace(/"/g, '""')}"`,
                         `"${(tc.input || '').replace(/"/g, '""')}"`,
                         `"${(tc.expected || '').replace(/"/g, '""')}"`,
-                        `"${tc.groupId || ''}"`
+                        `"${tc.groupId || ''}"`,
+                        `"${tc.project || ''}"`,
+                        `"${tc.module || ''}"`,
+                        `"${tc.function || ''}"`
                     ].join(','));
                 });
                 content = rows.join('\n');
@@ -2651,10 +2840,16 @@
             document.getElementById('batch-edit-expected-enabled').checked = false;
             document.getElementById('batch-edit-group-enabled').checked = false;
             document.getElementById('batch-edit-tags-enabled').checked = false;
+            document.getElementById('batch-edit-project-enabled').checked = false;
+            document.getElementById('batch-edit-module-enabled').checked = false;
+            document.getElementById('batch-edit-function-enabled').checked = false;
             toggleBatchEditField('name');
             toggleBatchEditField('expected');
             toggleBatchEditField('group');
             toggleBatchEditField('tags');
+            toggleBatchEditField('project');
+            toggleBatchEditField('module');
+            toggleBatchEditField('function');
         }
         
         // 批量编辑用例
@@ -2688,6 +2883,18 @@
                 const tags = tagsStr.split(',').map(t => t.trim()).filter(t => t);
                 updates.push({ field: 'tags', value: { action, tags } });
             }
+            if (document.getElementById('batch-edit-project-enabled')?.checked) {
+                const project = document.getElementById('batch-edit-project')?.value.trim();
+                updates.push({ field: 'project', value: project || null });
+            }
+            if (document.getElementById('batch-edit-module-enabled')?.checked) {
+                const moduleDim = document.getElementById('batch-edit-module')?.value.trim();
+                updates.push({ field: 'module', value: moduleDim || null });
+            }
+            if (document.getElementById('batch-edit-function-enabled')?.checked) {
+                const functionDim = document.getElementById('batch-edit-function')?.value.trim();
+                updates.push({ field: 'function', value: functionDim || null });
+            }
             
             if (updates.length === 0) {
                 showToast('请至少选择一项进行修改', 'info');
@@ -2711,6 +2918,12 @@
                             updateData.expected = update.value;
                         } else if (update.field === 'groupId') {
                             updateData.groupId = update.value;
+                        } else if (update.field === 'project') {
+                            updateData.project = update.value;
+                        } else if (update.field === 'module') {
+                            updateData.module = update.value;
+                        } else if (update.field === 'function') {
+                            updateData.function = update.value;
                         } else if (update.field === 'tags') {
                             const currentTags = tc.metadata?.tags || [];
                             if (update.value.action === 'add') {
@@ -2740,6 +2953,7 @@
             closeBatchEditModal();
             showToast(`成功更新 ${successCount} 个用例`, 'success');
             loadTestCases();
+            loadDimensions();
         }
         
         // 批量删除用例

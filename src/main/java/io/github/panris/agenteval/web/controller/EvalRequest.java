@@ -10,6 +10,12 @@ public class EvalRequest {
     private List<TestCaseDto> testCases;
     /** 报告所属分组名称，用于报告历史过滤 */
     private String group;
+    /** 三维分组：项目（评测时按维度筛选） */
+    private String project;
+    /** 三维分组：模块 */
+    private String module;
+    /** 三维分组：功能 */
+    private String function;
 
     // Getters and Setters
     public String getAgentType() {
@@ -50,6 +56,30 @@ public class EvalRequest {
 
     public void setGroup(String group) {
         this.group = group;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
+    public String getModule() {
+        return module;
+    }
+
+    public void setModule(String module) {
+        this.module = module;
+    }
+
+    public String getFunction() {
+        return function;
+    }
+
+    public void setFunction(String function) {
+        this.function = function;
     }
 }
 

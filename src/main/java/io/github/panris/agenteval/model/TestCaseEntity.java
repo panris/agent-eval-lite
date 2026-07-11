@@ -15,6 +15,12 @@ public class TestCaseEntity {
     private String input;
     private String expected;
     private String groupId;
+    /** 三维分组：项目 */
+    private String project;
+    /** 三维分组：模块 */
+    private String module;
+    /** 三维分组：功能 */
+    private String function;
     private Map<String, Object> metadata;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -72,6 +78,30 @@ public class TestCaseEntity {
 
     public void setGroupId(String groupId) {
         this.groupId = groupId;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
+    public String getModule() {
+        return module;
+    }
+
+    public void setModule(String module) {
+        this.module = module;
+    }
+
+    public String getFunction() {
+        return function;
+    }
+
+    public void setFunction(String function) {
+        this.function = function;
     }
 
     public Map<String, Object> getMetadata() {
