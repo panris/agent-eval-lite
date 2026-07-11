@@ -682,7 +682,7 @@
                     <select id="history-function" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
                         <option value="">全部功能</option>
                     </select>
-                    <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除日期</button>
+                    <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除筛选</button>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-sm" onclick="compareSelectedReports()">📊 对比选中</button>
@@ -1137,6 +1137,14 @@
         function clearDateFilter() {
             document.getElementById('history-date-start').value = '';
             document.getElementById('history-date-end').value = '';
+            const groupSel = document.getElementById('history-group');
+            if (groupSel) groupSel.value = '';
+            const projSel = document.getElementById('history-project');
+            if (projSel) projSel.value = '';
+            const modSel = document.getElementById('history-module');
+            if (modSel) modSel.value = '';
+            const funcSel = document.getElementById('history-function');
+            if (funcSel) funcSel.value = '';
             _reportPage = 1;
             loadHistory();
         }
