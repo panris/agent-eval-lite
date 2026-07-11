@@ -826,16 +826,17 @@
     <!-- 导入 Excel 模态框 -->
     <div id="import-excel-modal" class="confirm-overlay" style="display: none;">
         <div class="confirm-dialog" style="max-width: 500px;">
-            <h3>📥 导入 Excel 文件</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 15px;">支持 .xlsx 格式，包含测试用例数据</p>
+            <h3>📥 导入测试用例</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">支持 .xlsx / .csv 格式</p>
             
             <div style="margin: 20px 0;">
-                <input type="file" id="excel-file-input" accept=".xlsx,.xls" 
+                <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" 
                     style="padding: 10px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
             </div>
             
             <p style="color: var(--text-secondary); font-size: 12px;">
-                Excel 列顺序：名称 | 输入 | 期望输出 | 分组
+                Excel 列顺序：名称 | 输入 | 期望输出 | 分组<br>
+                CSV 格式：name,input,expected,group（首行可为表头）
             </p>
             
             <div style="text-align: right; margin-top: 20px;">
@@ -2295,16 +2296,19 @@
             const file = fileInput.files[0];
             
             if (!file) {
-                showToast('请选择 Excel 文件', 'error');
+                showToast('请选择文件', 'error');
                 return;
             }
+            
+            const isCsv = file.name.toLowerCase().endsWith('.csv');
+            const endpoint = isCsv ? '/api/testcases/import/csv' : '/api/testcases/import/excel';
             
             const formData = new FormData();
             formData.append('file', file);
             
             try {
                 showToast('正在导入...', 'info');
-                const response = await fetch('/api/testcases/import/excel', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
@@ -2319,8 +2323,8 @@
                     showToast(result.message || '导入失败', 'error');
                 }
             } catch (error) {
-                logError('Excel import failed:', error);
-                showToast('Excel 导入失败', 'error');
+                logError('Import failed:', error);
+                showToast(isCsv ? 'CSV 导入失败' : 'Excel 导入失败', 'error');
             }
         }
         

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +186,136 @@ public class ExcelController {
             return ResponseEntity.internalServerError().body(result);
         }
     }
+
+    @PostMapping("/import/csv")
+    public ResponseEntity<Map<String, Object>> importCsv(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = new HashMap<>();
+        
+        if (file.isEmpty()) {
+            result.put("success", false);
+            result.put("message", "文件不能为空");
+            return ResponseEntity.badRequest().body(result);
+        }
+        
+        if (file.getSize() > MAX_FILE_SIZE) {
+            result.put("success", false);
+            result.put("message", "文件过大，最大支持 10MB");
+            return ResponseEntity.badRequest().body(result);
+        }
+        
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            
+            String line;
+            int lineNum = 0;
+            int imported = 0;
+            int skipped = 0;
+            List<String> errors = new ArrayList<>();
+            boolean headerSkipped = false;
+            
+            while ((line = reader.readLine()) != null) {
+                lineNum++;
+                if (line.trim().isEmpty()) continue;
+                
+                // 跳过表头（首行且包含 name 或 名称）
+                if (!headerSkipped) {
+                    headerSkipped = true;
+                    if (line.toLowerCase().contains("name") || line.contains("名称")) {
+                        continue;
+                    }
+                }
+                
+                if (lineNum > MAX_ROWS + 1) {
+                    result.put("success", false);
+                    result.put("message", "行数超过限制，最多导入 " + MAX_ROWS + " 行");
+                    return ResponseEntity.badRequest().body(result);
+                }
+                
+                // CSV 简单解析：支持引号包裹（含逗号的情况）
+                String[] parts = parseCsvLine(line);
+                if (parts.length < 2) {
+                    skipped++;
+                    errors.add("行 " + lineNum + ": 列数不足（需要至少 名称,输入）");
+                    continue;
+                }
+                
+                String name = parts[0].trim();
+                String input = parts.length > 1 ? parts[1].trim() : "";
+                String expected = parts.length > 2 ? parts[2].trim() : "";
+                String group = parts.length > 3 ? parts[3].trim() : "";
+                
+                if (name.isEmpty()) {
+                    skipped++;
+                    continue;
+                }
+                
+                if (name.length() > MAX_FIELD_LENGTH || input.length() > MAX_FIELD_LENGTH || expected.length() > MAX_FIELD_LENGTH) {
+                    errors.add("行 " + lineNum + ": 字段长度超过 " + MAX_FIELD_LENGTH + " 字符限制");
+                    skipped++;
+                    continue;
+                }
+                
+                TestCaseEntity tc = new TestCaseEntity();
+                tc.setName(name);
+                tc.setInput(input);
+                tc.setExpected(expected);
+                tc.setGroupId(group.isEmpty() ? null : group);
+                testCaseRepository.saveTestCase(tc);
+                imported++;
+            }
+            
+            result.put("success", true);
+            result.put("imported", imported);
+            result.put("skipped", skipped);
+            if (!errors.isEmpty()) {
+                result.put("errors", errors);
+            }
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            log.error("Failed to import CSV: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "导入失败: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(result);
+        }
+    }
     
+    /**
+     * 简单 CSV 行解析：支持双引号包裹字段（字段内可含逗号），
+     * 双引号内两个双引号表示一个字面双引号。
+     */
+    private String[] parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (inQuotes) {
+                if (c == '"') {
+                    if (i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                        sb.append('"');
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    sb.append(c);
+                }
+            } else {
+                if (c == '"') {
+                    inQuotes = true;
+                } else if (c == ',') {
+                    fields.add(sb.toString());
+                    sb.setLength(0);
+                } else {
+                    sb.append(c);
+                }
+            }
+        }
+        fields.add(sb.toString());
+        return fields.toArray(new String[0]);
+    }
+
     /**
      * 防止 Excel 公式注入：对以 = + - @ 开头的单元格值前置单引号，
      * 使 Excel 将其视为文本而非公式。POI 的 String 单元格本身按类型存储为文本、
