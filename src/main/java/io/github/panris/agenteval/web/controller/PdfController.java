@@ -97,6 +97,20 @@ public class PdfController {
                     document.add(new Paragraph("评测时间: " + ts, normalFont));
                 }
                 
+                // 分组维度信息
+                StringBuilder gm = new StringBuilder();
+                Object grp = report.get("group");
+                if (grp != null && !String.valueOf(grp).trim().isEmpty()) gm.append("分组=").append(grp).append("  ");
+                Object proj = report.get("project");
+                if (proj != null && !String.valueOf(proj).trim().isEmpty()) gm.append("项目=").append(proj).append("  ");
+                Object mod = report.get("module");
+                if (mod != null && !String.valueOf(mod).trim().isEmpty()) gm.append("模块=").append(mod).append("  ");
+                Object fn = report.get("function");
+                if (fn != null && !String.valueOf(fn).trim().isEmpty()) gm.append("功能=").append(fn).append("  ");
+                if (gm.length() > 0) {
+                    document.add(new Paragraph("分组维度: " + gm.toString().trim(), normalFont));
+                }
+                
                 document.add(new Paragraph(" ", normalFont));
                 
                 // 评测结果详情

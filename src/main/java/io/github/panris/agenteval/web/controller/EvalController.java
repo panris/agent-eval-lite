@@ -496,13 +496,43 @@ public class EvalController {
     }
     
     private ResponseEntity<?> exportAsCsv(Map<String, Object> report, String reportId) {
-        String csv = generateCsvFromMap(report);
+        String csv = buildCsvMeta(report, reportId) + generateCsvFromMap(report);
         byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
         
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report_" + reportId + ".csv")
             .contentType(MediaType.parseMediaType("text/csv"))
             .body(bytes);
+    }
+    
+    /**
+     * 报告级元信息（分组维度）以注释行形式置于 CSV 顶部，
+     * 大多数表格解析器会忽略 # 开头的行。
+     */
+    private String buildCsvMeta(Map<String, Object> report, String reportId) {
+        StringBuilder meta = new StringBuilder();
+        meta.append("# 报告ID,").append(escapeCsv(reportId)).append("\n");
+        Object group = report.get("group");
+        if (group != null && !String.valueOf(group).trim().isEmpty()) {
+            meta.append("# 分组,").append(escapeCsv(group)).append("\n");
+        }
+        Object project = report.get("project");
+        if (project != null && !String.valueOf(project).trim().isEmpty()) {
+            meta.append("# 项目,").append(escapeCsv(project)).append("\n");
+        }
+        Object module = report.get("module");
+        if (module != null && !String.valueOf(module).trim().isEmpty()) {
+            meta.append("# 模块,").append(escapeCsv(module)).append("\n");
+        }
+        Object func = report.get("function");
+        if (func != null && !String.valueOf(func).trim().isEmpty()) {
+            meta.append("# 功能,").append(escapeCsv(func)).append("\n");
+        }
+        Object ts = report.get("timestamp");
+        if (ts instanceof Number) {
+            meta.append("# 评测时间,").append(escapeCsv(new java.util.Date(((Number) ts).longValue()))).append("\n");
+        }
+        return meta.toString();
     }
     
     @SuppressWarnings("unchecked")
