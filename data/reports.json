@@ -3087,5 +3087,117 @@
     "failedTestCases" : 0,
     "executionTimeMs" : 2,
     "timestamp" : 1783690726011
+  },
+  "report_1783756473220" : {
+    "summary" : {
+      "pass_rate" : 0.0,
+      "failed_test_cases" : 1.0,
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.65
+    },
+    "evaluations" : [ {
+      "testCaseId" : "c45a5d85-d01f-43c3-84f2-03d15b15f54b",
+      "testCaseInput" : "x",
+      "overallScore" : 0.65,
+      "passed" : false,
+      "output" : "I'm a demo agent. You asked: x",
+      "testCaseName" : "导出冒烟",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)"
+        },
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 0.00%"
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected"
+        },
+        "similarity" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00%"
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)"
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 0,
+    "failedTestCases" : 1,
+    "executionTimeMs" : 11,
+    "timestamp" : 1783756473221,
+    "group" : "下单",
+    "project" : "支付系统",
+    "module" : "交易模块",
+    "function" : "下单"
+  },
+  "report_1783756487275" : {
+    "summary" : {
+      "pass_rate" : 0.0,
+      "failed_test_cases" : 1.0,
+      "passed_test_cases" : 0.0,
+      "total_test_cases" : 1.0,
+      "average_score" : 0.65
+    },
+    "evaluations" : [ {
+      "testCaseId" : "a5e1049e-c61c-4cf0-8f3c-e655bd8f3c56",
+      "testCaseInput" : "你好",
+      "overallScore" : 0.65,
+      "passed" : false,
+      "output" : "I'm a demo agent. You asked: 你好",
+      "testCaseName" : "test",
+      "scorerResults" : {
+        "correctness" : {
+          "score" : 0.9,
+          "passed" : true,
+          "rationale" : "Similarity: 0.90 (threshold: 0.70)"
+        },
+        "bleu" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "BLEU: 14.29%"
+        },
+        "safety" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "No safety issues detected"
+        },
+        "similarity" : {
+          "score" : 0.0,
+          "passed" : false,
+          "rationale" : "Similarity: 0.00%"
+        },
+        "response_time" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "Excellent response time: 0 ms (acceptable: 1000 ms)"
+        },
+        "rouge" : {
+          "score" : 1.0,
+          "passed" : true,
+          "rationale" : "ROUGE-L: 100.00%"
+        }
+      }
+    } ],
+    "totalTestCases" : 1,
+    "passedTestCases" : 0,
+    "failedTestCases" : 1,
+    "executionTimeMs" : 1,
+    "timestamp" : 1783756487275
   }
 }

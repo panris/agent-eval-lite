@@ -53,7 +53,7 @@ public class ExcelController {
             
             // Create header row
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"ID", "名称", "输入", "期望输出", "分组", "项目", "模块", "功能", "创建时间"};
+            String[] headers = {"ID", "名称", "输入", "期望输出", "分组", "项目", "模块", "功能", "用例说明", "创建时间"};
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -72,7 +72,8 @@ public class ExcelController {
                 row.createCell(5).setCellValue(sanitizeExcelCell(tc.getProject()));
                 row.createCell(6).setCellValue(sanitizeExcelCell(tc.getModule()));
                 row.createCell(7).setCellValue(sanitizeExcelCell(tc.getFunction()));
-                row.createCell(8).setCellValue(sanitizeExcelCell(tc.getCreatedAt() != null ? tc.getCreatedAt().toString() : ""));
+                row.createCell(8).setCellValue(sanitizeExcelCell(tc.getDescription()));
+                row.createCell(9).setCellValue(sanitizeExcelCell(tc.getCreatedAt() != null ? tc.getCreatedAt().toString() : ""));
             }
             
             // Auto size columns
@@ -149,6 +150,7 @@ public class ExcelController {
                     String project = getCellValue(row.getCell(5));
                     String moduleDim = getCellValue(row.getCell(6));
                     String functionDim = getCellValue(row.getCell(7));
+                    String description = getCellValue(row.getCell(8));
                     
                     if (name == null || name.trim().isEmpty()) {
                         skipped++;
@@ -169,6 +171,7 @@ public class ExcelController {
                     tc.setProject(project != null && !project.isEmpty() ? project : null);
                     tc.setModule(moduleDim != null && !moduleDim.isEmpty() ? moduleDim : null);
                     tc.setFunction(functionDim != null && !functionDim.isEmpty() ? functionDim : null);
+                    tc.setDescription(description != null && !description.isEmpty() ? description : null);
                     
                     testCaseRepository.saveTestCase(tc);
                     imported++;
@@ -255,6 +258,7 @@ public class ExcelController {
                 String project = parts.length > 4 ? parts[4].trim() : "";
                 String moduleDim = parts.length > 5 ? parts[5].trim() : "";
                 String functionDim = parts.length > 6 ? parts[6].trim() : "";
+                String description = parts.length > 7 ? parts[7].trim() : "";
                 
                 if (name.isEmpty()) {
                     skipped++;
@@ -275,6 +279,7 @@ public class ExcelController {
                 tc.setProject(project.isEmpty() ? null : project);
                 tc.setModule(moduleDim.isEmpty() ? null : moduleDim);
                 tc.setFunction(functionDim.isEmpty() ? null : functionDim);
+                tc.setDescription(description.isEmpty() ? null : description);
                 testCaseRepository.saveTestCase(tc);
                 imported++;
             }

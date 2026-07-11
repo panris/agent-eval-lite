@@ -21,6 +21,8 @@ public class TestCaseEntity {
     private String module;
     /** 三维分组：功能 */
     private String function;
+    /** 用例说明 */
+    private String description;
     private Map<String, Object> metadata;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -102,6 +104,14 @@ public class TestCaseEntity {
 
     public void setFunction(String function) {
         this.function = function;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Map<String, Object> getMetadata() {

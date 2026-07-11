@@ -51,6 +51,7 @@ public class TestCaseController {
         testCase.setProject(request.getProject());
         testCase.setModule(request.getModule());
         testCase.setFunction(request.getFunction());
+        testCase.setDescription(request.getDescription());
         testCase.setMetadata(request.getMetadata());
 
         TestCaseEntity saved = repository.saveTestCase(testCase);
@@ -88,6 +89,7 @@ public class TestCaseController {
                         (tc.getName() != null && tc.getName().toLowerCase().contains(kw)) ||
                         (tc.getInput() != null && tc.getInput().toLowerCase().contains(kw)) ||
                         (tc.getExpected() != null && tc.getExpected().toLowerCase().contains(kw)) ||
+                        (tc.getDescription() != null && tc.getDescription().toLowerCase().contains(kw)) ||
                         (tc.getMetadata() != null && tc.getMetadata().toString().toLowerCase().contains(kw))
                     )
                     .toList();
@@ -107,6 +109,7 @@ public class TestCaseController {
                         (tc.getName() != null && tc.getName().toLowerCase().contains(kw)) ||
                         (tc.getInput() != null && tc.getInput().toLowerCase().contains(kw)) ||
                         (tc.getExpected() != null && tc.getExpected().toLowerCase().contains(kw)) ||
+                        (tc.getDescription() != null && tc.getDescription().toLowerCase().contains(kw)) ||
                         (tc.getMetadata() != null && tc.getMetadata().toString().toLowerCase().contains(kw))
                     )
                     .toList();
@@ -200,6 +203,9 @@ public class TestCaseController {
                 }
                 if (request.getFunction() != null) {
                     tc.setFunction(request.getFunction());
+                }
+                if (request.getDescription() != null) {
+                    tc.setDescription(request.getDescription());
                 }
                 if (request.getMetadata() != null) {
                     tc.setMetadata(request.getMetadata());
@@ -299,6 +305,7 @@ class TestCaseRequest {
     private String project;
     private String module;
     private String function;
+    private String description;
     private Map<String, Object> metadata;
 
     // Getters and Setters
@@ -356,6 +363,14 @@ class TestCaseRequest {
 
     public void setFunction(String function) {
         this.function = function;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Map<String, Object> getMetadata() {

@@ -30,7 +30,7 @@
             --badge-text: white;
             --btn-text: white;
         }
-        
+
         /* Dark Theme */
         [data-theme="dark"] {
             --bg-gradient-start: #1a1a2e;
@@ -54,9 +54,9 @@
             --success-text: #7ddfb8;
             --overlay-bg: rgba(0,0,0,0.7);
         }
-        
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-body);
@@ -64,9 +64,9 @@
             padding: 20px;
             transition: background 0.3s;
         }
-        
+
         .container { max-width: 1400px; margin: 0 auto; }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -77,7 +77,7 @@
         .header-content { text-align: center; flex: 1; }
         .header h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-inverse); }
         .header p { font-size: 1.1rem; opacity: 0.9; color: var(--text-inverse); }
-        
+
         .theme-toggle {
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.3);
@@ -92,13 +92,13 @@
             background: rgba(255,255,255,0.3);
             transform: scale(1.05);
         }
-        
+
         .tabs {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         .tab {
             padding: 12px 24px;
             background: var(--bg-card);
@@ -115,7 +115,7 @@
             background: #667eea;
             color: white;
         }
-        
+
         .card {
             background: var(--bg-card);
             border-radius: 12px;
@@ -126,7 +126,7 @@
             transition: background 0.3s, box-shadow 0.3s;
         }
         .card.show { display: block; }
-        
+
         .card-title {
             font-size: 1.5rem;
             margin-bottom: 20px;
@@ -134,7 +134,7 @@
             border-bottom: 2px solid #667eea;
             padding-bottom: 10px;
         }
-        
+
         /* Chart Container */
         .chart-container {
             display: flex;
@@ -162,14 +162,14 @@
             position: relative;
             height: 250px;
         }
-        
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr auto;
             gap: 10px;
             margin-bottom: 15px;
         }
-        
+
         .form-control {
             width: 100%;
             padding: 10px;
@@ -187,7 +187,7 @@
         .form-control::placeholder {
             color: var(--text-secondary);
         }
-        
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -202,7 +202,7 @@
         .btn-success { background: #28a745; color: white; }
         .btn-cancel { background: #6c757d; color: white; }
         .btn:hover { transform: translateY(-2px); }
-        
+
         .table {
             width: 100%;
             border-collapse: collapse;
@@ -219,10 +219,10 @@
             font-weight: 600;
         }
         .table tr:hover { background: var(--bg-table-row-hover); }
-        
+
         .checkbox-cell { width: 40px; text-align: center; }
         .checkbox-cell input { width: 18px; height: 18px; cursor: pointer; }
-        
+
         .action-bar {
             display: flex;
             gap: 10px;
@@ -230,17 +230,17 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        
+
         .badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
         .badge-info { background: #17a2b8; color: white; }
         .badge-success { background: #28a745; color: white; }
         .badge-danger { background: #dc3545; color: white; }
-        
+
         .actions { display: flex; gap: 5px; }
-        
+
         .loading { display: none; text-align: center; padding: 20px; background: var(--bg-loading); border-radius: 8px; }
         .loading.show { display: block; }
-        
+
         .spinner {
             border: 4px solid var(--spinner-border);
             border-top: 4px solid var(--spinner-top);
@@ -312,15 +312,15 @@
         .confirm-dialog h3 { margin-bottom: 15px; color: var(--text-primary); }
         .confirm-dialog p { margin-bottom: 20px; color: var(--text-secondary); line-height: 1.6; }
         .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        
+
         /* Result box */
         #eval-result { background: var(--success-bg); color: var(--success-text); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        
+
         /* Modal */
         #add-to-group-modal { background: var(--overlay-bg); }
         #add-to-group-modal > div { background: var(--bg-card); color: var(--text-primary); }
 
-        
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header {
@@ -331,7 +331,7 @@
             .header h1 {
                 font-size: 1.8rem;
             }
-            
+
             .tabs {
                 flex-wrap: wrap;
             }
@@ -342,67 +342,67 @@
                 padding: 10px 15px;
                 font-size: 14px;
             }
-            
+
             .form-row {
                 grid-template-columns: 1fr;
             }
-            
+
             .card {
                 padding: 15px;
             }
-            
+
             .table {
                 font-size: 12px;
             }
             .table th, .table td {
                 padding: 8px;
             }
-            
+
             .chart-container {
                 flex-direction: column;
             }
             .chart-box {
                 min-width: 100%;
             }
-            
+
             .btn {
                 padding: 8px 16px;
                 font-size: 14px;
             }
-            
+
             .action-bar {
                 flex-direction: column;
             }
             .action-bar .btn {
                 width: 100%;
             }
-            
+
             .toast {
                 min-width: auto;
                 width: calc(100% - 40px);
             }
         }
-        
+
         @media (max-width: 480px) {
             body {
                 padding: 10px;
             }
-            
+
             .header h1 {
                 font-size: 1.5rem;
             }
-            
+
             .card-title {
                 font-size: 1.2rem;
             }
-            
+
             .stat-box {
                 padding: 15px;
             }
             .stat-value {
                 font-size: 2rem;
             }
-            
+
             .test-case-grid {
                 grid-template-columns: 1fr;
             }
@@ -472,6 +472,11 @@
                 <datalist id="function-list"></datalist>
             </div>
 
+            <div class="form-row" style="margin-top: 8px;">
+                <textarea class="form-control" id="case-description" placeholder="用例说明" rows="2"
+                    style="resize: vertical; width: 100%; font-size: 13px;"></textarea>
+            </div>
+
             <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="flex: 1; min-width: 200px;">
                 <button class="btn btn-success btn-sm" onclick="exportAllTestCases('json')">📤 导出 JSON</button>
@@ -492,6 +497,7 @@
                         <th>输入</th>
                         <th>期望输出</th>
                         <th>分组</th>
+                        <th>说明</th>
                         <th>三维分组</th>
                         <th>标签</th>
                         <th>操作</th>
@@ -570,9 +576,9 @@
                 </select>
                 <button class="btn btn-primary" onclick="runGroupEvaluation()">按分组评测</button>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
-                <select class="form-control" id="eval-project" style="width: auto;"><option value="">项目（任意）</option></select>
-                <select class="form-control" id="eval-module" style="width: auto;"><option value="">模块（任意）</option></select>
-                <select class="form-control" id="eval-function" style="width: auto;"><option value="">功能（任意）</option></select>
+                <select class="form-control" id="eval-project" style="width: auto;"><option value="">项目(任意)</option></select>
+                <select class="form-control" id="eval-module" style="width: auto;"><option value="">模块(任意)</option></select>
+                <select class="form-control" id="eval-function" style="width: auto;"><option value="">功能(任意)</option></select>
                 <button class="btn btn-warning" onclick="runDimensionEvaluation()">按三维评测</button>
             </div>
 
@@ -583,7 +589,7 @@
 
             <div id="eval-result" style="display: none;">
                 <div style="margin-bottom: 10px;">
-                    ✅ 评测完成！通过率: <span id="pass-rate">0%</span>
+                    ✅ 评测完成!通过率: <span id="pass-rate">0%</span>
                 </div>
                 <div class="chart-container">
                     <div class="chart-box">
@@ -657,7 +663,7 @@
 
             <div class="action-bar" style="margin-bottom: 15px;">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..." 
+                    <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..."
                         style="width: 200px;" oninput="onHistorySearch()">
                     <select id="history-filter" class="form-control" style="width: 120px;" onchange="_reportPage=1;filterHistory()">
                         <option value="">全部报告</option>
@@ -734,7 +740,7 @@
         <div style="position: relative; width: 80%; max-width: 800px; margin: 50px auto; padding: 30px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
             <h2>批量添加用例到分组</h2>
             <button onclick="closeAddToGroupModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
-            
+
             <table class="table" style="margin-top: 20px;">
                 <thead>
                     <tr>
@@ -746,7 +752,7 @@
                 </thead>
                 <tbody id="modal-cases-tbody"></tbody>
             </table>
-            
+
             <div style="margin-top: 20px; text-align: right;">
                 <button class="btn btn-success" onclick="addSelectedToGroup()">添加选中</button>
                 <button class="btn" onclick="closeAddToGroupModal()" style="margin-left: 10px; background: #6c757d; color: white;">取消</button>
@@ -760,7 +766,7 @@
             <h3>📌 编辑标签</h3>
             <input type="hidden" id="tags-report-id">
             <div style="margin: 15px 0;">
-                <input type="text" id="tags-input" class="form-control" placeholder="输入标签后按回车添加" 
+                <input type="text" id="tags-input" class="form-control" placeholder="输入标签后按回车添加"
                     onkeypress="if(event.key==='Enter'){addTag();event.preventDefault();}">
             </div>
             <div id="tags-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; min-height: 30px;"></div>
@@ -777,7 +783,7 @@
             <h3>🏷️ 编辑用例标签</h3>
             <input type="hidden" id="case-tags-report-id">
             <div style="margin: 15px 0;">
-                <input type="text" id="case-tags-input" class="form-control" placeholder="输入标签后按回车添加" 
+                <input type="text" id="case-tags-input" class="form-control" placeholder="输入标签后按回车添加"
                     onkeypress="if(event.key==='Enter'){addCaseTag();event.preventDefault();}">
             </div>
             <div id="case-tags-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; min-height: 30px;"></div>
@@ -807,22 +813,22 @@
     <div id="batch-edit-modal" class="confirm-overlay" style="display: none;">
         <div class="confirm-dialog" style="max-width: 600px;">
             <h3>✏️ 批量编辑测试用例</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 15px;">将为选中的 <span id="batch-edit-count">0</span> 个用例应用以下修改：</p>
-            
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">将为选中的 <span id="batch-edit-count">0</span> 个用例应用以下修改:</p>
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
                     <input type="checkbox" id="batch-edit-name-enabled" onchange="toggleBatchEditField('name')"> 名称
                 </label>
                 <input type="text" id="batch-edit-name" class="form-control" placeholder="统一修改为..." disabled>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
                     <input type="checkbox" id="batch-edit-expected-enabled" onchange="toggleBatchEditField('expected')"> 期望输出
                 </label>
                 <input type="text" id="batch-edit-expected" class="form-control" placeholder="统一修改为..." disabled>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
                     <input type="checkbox" id="batch-edit-group-enabled" onchange="toggleBatchEditField('group')"> 分组
@@ -831,7 +837,7 @@
                     <option value="">移除分组</option>
                 </select>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
                     <input type="checkbox" id="batch-edit-tags-enabled" onchange="toggleBatchEditField('tags')"> 标签
@@ -845,28 +851,36 @@
                     <input type="text" id="batch-edit-tags" class="form-control" placeholder="标签1, 标签2..." disabled>
                 </div>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
-                    <input type="checkbox" id="batch-edit-project-enabled" onchange="toggleBatchEditField('project')"> 项目（三维分组）
+                    <input type="checkbox" id="batch-edit-project-enabled" onchange="toggleBatchEditField('project')"> 项目(三维分组)
                 </label>
                 <input type="text" id="batch-edit-project" class="form-control" placeholder="统一修改为..." list="project-list" disabled>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
-                    <input type="checkbox" id="batch-edit-module-enabled" onchange="toggleBatchEditField('module')"> 模块（三维分组）
+                    <input type="checkbox" id="batch-edit-module-enabled" onchange="toggleBatchEditField('module')"> 模块(三维分组)
                 </label>
                 <input type="text" id="batch-edit-module" class="form-control" placeholder="统一修改为..." list="module-list" disabled>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
-                    <input type="checkbox" id="batch-edit-function-enabled" onchange="toggleBatchEditField('function')"> 功能（三维分组）
+                    <input type="checkbox" id="batch-edit-function-enabled" onchange="toggleBatchEditField('function')"> 功能(三维分组)
                 </label>
-                <input type="text" id="batch-edit-function" class="form-control" placeholder="统一修改为..." list="function-list" disabled>
+                <input type="text" id="batch-edit-function" class="form-control" placeholder="统一修改为…" list="function-list" disabled>
             </div>
-            
+
+            <div style="margin: 15px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+                    <input type="checkbox" id="batch-edit-description-enabled" onchange="toggleBatchEditField('description')"> 用例说明
+                </label>
+                <textarea id="batch-edit-description" class="form-control" placeholder="统一修改为…" rows="2" disabled
+                    style="resize: vertical;"></textarea>
+            </div>
+
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-primary btn-sm" onclick="applyBatchEdit()">应用修改</button>
                 <button class="btn btn-sm" onclick="closeBatchEditModal()" style="background: #6c757d; color: white;">取消</button>
@@ -879,17 +893,17 @@
         <div class="confirm-dialog" style="max-width: 500px;">
             <h3>📥 导入测试用例</h3>
             <p style="color: var(--text-secondary); margin-bottom: 15px;">支持 .xlsx / .csv 格式</p>
-            
+
             <div style="margin: 20px 0;">
-                <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" 
+                <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv"
                     style="padding: 10px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
             </div>
-            
+
             <p style="color: var(--text-secondary); font-size: 12px;">
-                Excel 列顺序：名称 | 输入 | 期望输出 | 分组 | 项目 | 模块 | 功能<br>
-                CSV 格式：name,input,expected,group,project,module,function（首行可为表头）
+                Excel 列顺序:名称 | 输入 | 期望输出 | 分组 | 项目 | 模块 | 功能<br>
+                CSV 格式:name,input,expected,group,project,module,function(首行可为表头)
             </p>
-            
+
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-primary btn-sm" onclick="importTestCasesExcel()">导入</button>
                 <button class="btn btn-sm" onclick="closeImportExcelModal()" style="background: #6c757d; color: white;">取消</button>
@@ -901,7 +915,7 @@
     <div id="confirm-overlay" class="confirm-overlay">
         <div class="confirm-dialog">
             <h3 id="confirm-title">确认操作</h3>
-            <p id="confirm-message">确定要执行此操作吗？</p>
+            <p id="confirm-message">确定要执行此操作吗?</p>
             <div class="confirm-actions">
                 <button class="btn btn-cancel" id="confirm-no">取消</button>
                 <button class="btn btn-danger" id="confirm-yes">确定</button>
@@ -915,14 +929,14 @@
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
+
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            
+
             // Update button icon
             document.getElementById('theme-btn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
-        
+
         // Load saved theme
         function loadTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -938,16 +952,16 @@
                 container.className = 'toast-container';
                 document.body.appendChild(container);
             }
-            
+
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.innerHTML = `
-                <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
+                <span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'i️'}</span>
                 <span>${utils.escapeHtml(message)}</span>
             `;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => toast.remove(), 300);
@@ -959,16 +973,16 @@
             const overlay = document.getElementById('confirm-overlay');
             document.getElementById('confirm-title').textContent = title;
             document.getElementById('confirm-message').textContent = message;
-            
+
             document.getElementById('confirm-yes').onclick = () => {
                 overlay.classList.remove('show');
                 onConfirm();
             };
-            
+
             document.getElementById('confirm-no').onclick = () => {
                 overlay.classList.remove('show');
             };
-            
+
             overlay.classList.add('show');
         }
 
@@ -980,7 +994,7 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.card').forEach(c => c.classList.remove('show'));
 
-            // 支持显式传入 event，或使用全局 event（onclick 调用时）
+            // 支持显式传入 event,或使用全局 event(onclick 调用时)
             const target = evt?.target || (typeof event !== 'undefined' ? event.target : null);
             if (target) target.classList.add('active');
             document.getElementById(`${tab}-card`).classList.add('show');
@@ -1012,14 +1026,14 @@
         }, 300);
 
         let trendChart = null;
-        
+
         // 加载评测历史
         let _sortBy = 'time';   // 'time' | 'score'
         let _sortDir = 'desc';  // 'desc' | 'asc'
         let _reportPage = 1;
         let _reportSize = 20;
         let _reportTotalPages = 1;
-        
+
         function getDimensionFilters() {
             return {
                 project: (document.getElementById('history-project')?.value || '').trim(),
@@ -1048,12 +1062,12 @@
         async function loadHistory() {
             try {
                 document.getElementById('history-loading').classList.add('show');
-                
+
                 // 确保分组下拉框已初始化
                 await ensureGroups();
-                
+
                 _reportSize = parseInt(document.getElementById('page-size')?.value || '20');
-                
+
                 const params = buildHistoryParams();
                 const dateStart = document.getElementById('history-date-start')?.value || '';
                 const dateEnd = document.getElementById('history-date-end')?.value || '';
@@ -1064,19 +1078,19 @@
                     params.set('until', until.getTime());
                 }
 
-                // 趋势图用：全量（不分页）且复用相同过滤条件
+                // 趋势图用:全量(不分页)且复用相同过滤条件
                 const allParams = new URLSearchParams(params);
                 allParams.delete('page');
                 allParams.delete('size');
                 allParams.set('all', 'true');
 
-                // 并行获取：分页数据 + 全量数据（趋势图用）
+                // 并行获取:分页数据 + 全量数据(趋势图用)
                 const [pagedRes, allRes] = await Promise.all([
                     fetch(`/api/reports?${params}`),
                     fetch(`/api/reports?${allParams}`)
                 ]);
             const [data, allData] = await Promise.all([pagedRes.json(), allRes.json()]);
-                
+
                 window._allReports = data.reports || [];
                 window._reportTotal = data.total || 0;
                 window._reportFiltered = data.filtered || 0;
@@ -1084,10 +1098,10 @@
                 if (_reportPage > _reportTotalPages) { _reportPage = _reportTotalPages; }
                 updateHistoryStats();
                 updatePaginationUI();
-                
+
                 filterHistory(window._allReports);
                 renderTrendChart(allData.reports || []);
-                
+
             } catch (error) {
                 logError('Failed to load history:', error);
                 showToast('加载评测历史失败', 'error');
@@ -1095,7 +1109,7 @@
                 document.getElementById('history-loading').classList.remove('show');
             }
         }
-        
+
         function toggleSort() {
             // 循环: time_desc → time_asc → score_desc → score_asc → time_desc
             if (_sortBy === 'time' && _sortDir === 'desc') { _sortBy = 'time'; _sortDir = 'asc'; }
@@ -1112,13 +1126,13 @@
             btn.textContent = labels[_sortBy + '_' + _sortDir] || '↕️ 最新优先';
             loadHistory();
         }
-        
+
         function updateHistoryStats() {
             const total = window._reportTotal || 0;
             const filtered = window._reportFiltered || 0;
             const el = document.getElementById('history-stats');
             if (!el) return;
-            el.textContent = total === 0 ? '' : `共 ${total} 条报告${filtered < total ? `（已过滤至 ${filtered} 条）` : ''}  ·  按${_sortBy === 'score' ? '分数' : '时间'}${_sortDir === 'desc' ? '倒序' : '正序'}`;
+            el.textContent = total === 0 ? '' : `共 ${total} 条报告${filtered < total ? `(已过滤至 ${filtered} 条)` : ''}  ·  按${_sortBy === 'score' ? '分数' : '时间'}${_sortDir === 'desc' ? '倒序' : '正序'}`;
         }
 
         function updatePaginationUI() {
@@ -1136,7 +1150,7 @@
             _reportPage = n;
             loadHistory();
         }
-        
+
         function clearDateFilter() {
             document.getElementById('history-date-start').value = '';
             document.getElementById('history-date-end').value = '';
@@ -1151,9 +1165,9 @@
             _reportPage = 1;
             loadHistory();
         }
-        
+
         function filterHistory(reports) {
-            // 由筛选项触发（无参）：服务端统一过滤，所有筛选项由 loadHistory 下发
+            // 由筛选项触发(无参):服务端统一过滤,所有筛选项由 loadHistory 下发
             if (reports === undefined) {
                 _reportPage = 1;
                 loadHistory();
@@ -1188,7 +1202,7 @@
                             ${report.project ? `<span class="badge" style="background: #2563eb; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.project)}</span>` : ''}
                             ${report.module ? `<span class="badge" style="background: #7c3aed; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.module)}</span>` : ''}
                             ${report.function ? `<span class="badge" style="background: #db2777; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.function)}</span>` : ''}
-                            ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">—</span>' : ''}
+                            ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
                         </div>
                     </td>
                     <td>
@@ -1236,8 +1250,8 @@
             }
         }
 
-        
-// 对比选中报告（增强版：可视化对比弹窗）
+
+// 对比选中报告(增强版:可视化对比弹窗)
         async function compareSelectedReports() {
             const checkboxes = document.querySelectorAll('.history-checkbox:checked');
             const ids = Array.from(checkboxes).map(cb => cb.value);
@@ -1318,7 +1332,7 @@
                                         const info = scorerStats[scorer];
                                         const sc = info.scores || {};
                                         const st = info.stats || {};
-                                        // 计算各报告的平均分（保留2位）
+                                        // 计算各报告的平均分(保留2位)
                                         const vals = Object.values(sc);
                                         const minColor = vals.length ? (vals.reduce((a,b)=>a<b?a:b, vals[0]) === vals[0] ? '#f44336' : '#4CAF50') : '#999';
                                         const maxColor = vals.length ? (vals.reduce((a,b)=>a>b?a:b, vals[0]) === vals[0] ? '#4CAF50' : '#f44336') : '#999';
@@ -1416,7 +1430,7 @@
                 showToast('复制失败', 'error');
             }
         }
-        
+
         // 分享报告
         async function shareReport(reportId) {
             try {
@@ -1447,13 +1461,13 @@
         async function deleteSelectedReports() {
             const checkboxes = document.querySelectorAll('.history-checkbox:checked');
             const ids = Array.from(checkboxes).map(cb => cb.value);
-            
+
             if (ids.length === 0) {
                 showToast('请至少选择一条记录', 'info');
                 return;
             }
-            
-            showConfirm('删除记录', `确定要删除选中的 ${ids.length} 条记录吗？`, async () => {
+
+            showConfirm('删除记录', `确定要删除选中的 ${ids.length} 条记录吗?`, async () => {
                 try {
                     for (const id of ids) {
                         await fetch(`/api/reports/${id}`, { method: 'DELETE' });
@@ -1469,9 +1483,9 @@
 
         // 清空全部报告
         async function deleteAllReports() {
-            showConfirm('清空全部', '⚠️ 确定要清空所有评测历史记录吗？此操作不可恢复！', async () => {
+            showConfirm('清空全部', '⚠️ 确定要清空所有评测历史记录吗?此操作不可恢复!', async () => {
                 try {
-                    await fetch('/api/reports', { 
+                    await fetch('/api/reports', {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'clearAll' })
@@ -1490,24 +1504,24 @@
             try {
                 const response = await fetch(`/api/reports/${reportId}`);
                 const report = await response.json();
-                
+
                 window.lastEvaluation = report;
                 window.lastReportId = reportId;
-                
+
                 // 渲染图表
                 if (report.evaluations) {
                     renderCharts(report.evaluations);
                 }
-                
+
                 // 显示通过率
                 if (report.success && report.summary) {
                     document.getElementById('pass-rate').textContent = report.summary.pass_rate.toFixed(1) + '%';
                     document.getElementById('eval-result').style.display = 'block';
                 }
-                
+
                 showEvalDetails();
-                switchTab('evaluate', null);  // 无 event 对象，跳过高亮 tab  // 从此处调用时无 event，但已修复 switchTab 支持无 target 调用
-                
+                switchTab('evaluate', null);  // 无 event 对象,跳过高亮 tab  // 从此处调用时无 event,但已修复 switchTab 支持无 target 调用
+
             } catch (error) {
                 logError('Failed to load report details:', error);
                 showToast('加载报告详情失败', 'error');
@@ -1536,12 +1550,12 @@
 
             info.textContent = tcTotal === 0
                 ? '暂无数据'
-                : `共 ${tcTotal} 条，第 ${tcPage}/${tcTotalPages} 页`;
+                : `共 ${tcTotal} 条,第 ${tcPage}/${tcTotalPages} 页`;
 
             prevBtn.disabled = tcPage <= 1;
             nextBtn.disabled = tcPage >= tcTotalPages;
 
-            // 页码按钮（最多显示7个，两端省略）
+            // 页码按钮(最多显示7个,两端省略)
             const maxVisible = 7;
             let pages = [];
             if (tcTotalPages <= maxVisible) {
@@ -1550,15 +1564,15 @@
                 pages.push(1);
                 const start = Math.max(2, tcPage - 2);
                 const end = Math.min(tcTotalPages - 1, tcPage + 2);
-                if (start > 2) pages.push('…');
+                if (start > 2) pages.push('...');
                 for (let i = start; i <= end; i++) pages.push(i);
-                if (end < tcTotalPages - 1) pages.push('…');
+                if (end < tcTotalPages - 1) pages.push('...');
                 pages.push(tcTotalPages);
             }
 
             pageNumbers.innerHTML = pages.map(p => {
-                if (p === '…') {
-                    return `<span style="padding: 4px 8px; color: var(--text-secondary);">…</span>`;
+                if (p === '...') {
+                    return `<span style="padding: 4px 8px; color: var(--text-secondary);">...</span>`;
                 }
                 const active = p === tcPage ? 'background: var(--accent); color: #fff; border-color: var(--accent);' : '';
                 return `<button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 13px; ${active}" onclick="tcGoToPage(${p})">${p}</button>`;
@@ -1602,6 +1616,8 @@
                     const _input = utils.escapeHtml(tc.input);
                     const _expected = utils.escapeHtml(tc.expected);
                     const _tags = (tc.metadata?.tags || []).map(t => utils.escapeHtml(t));
+                    const _desc = utils.escapeHtml(tc.description || '');
+                    const _descShort = _desc.length > 30 ? _desc.substring(0, 30) + '…' : _desc;
                     return `
                     <tr>
                         <td class="checkbox-cell"><input type="checkbox" class="case-checkbox" value="${_id}"></td>
@@ -1610,11 +1626,15 @@
                         <td>${_expected}</td>
                         <td><span class="badge badge-info">${tc.groupId || '未分组'}</span></td>
                         <td>
+                            <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-secondary);"
+                                title="${_desc}">${_desc ? _descShort : '<span style="color: var(--text-secondary);">—</span>'}</div>
+                        </td>
+                        <td>
                             <div style="display: flex; gap: 4px; flex-wrap: wrap;">
                                 ${tc.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(tc.project)}</span>` : ''}
                                 ${tc.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(tc.module)}</span>` : ''}
                                 ${tc.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(tc.function)}</span>` : ''}
-                                ${(!tc.project && !tc.module && !tc.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">—</span>' : ''}
+                                ${(!tc.project && !tc.module && !tc.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
                             </div>
                         </td>
                         <td>
@@ -1660,6 +1680,7 @@
             const name = document.getElementById('case-name').value;
             const input = document.getElementById('case-input').value;
             const expected = document.getElementById('case-expected').value;
+            const description = document.getElementById('case-description').value;
             const project = document.getElementById('case-project').value.trim();
             const moduleDim = document.getElementById('case-module').value.trim();
             const functionDim = document.getElementById('case-function').value.trim();
@@ -1673,13 +1694,15 @@
                 await fetch('/api/testcases', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, input, expected, project, module: moduleDim, function: functionDim })
+                    body: JSON.stringify({ name, input, expected, description, project, module: moduleDim, function: functionDim })
                 });
                 showToast('测试用例已添加', 'success');
                 loadTestCases();
                 loadDimensions();
                 document.getElementById('case-name').value = '';
                 document.getElementById('case-input').value = '';
+                document.getElementById('case-expected').value = '';
+                document.getElementById('case-description').value = '';
                 document.getElementById('case-expected').value = '';
                 document.getElementById('case-project').value = '';
                 document.getElementById('case-module').value = '';
@@ -1692,7 +1715,7 @@
 
         // 删除测试用例
         async function deleteTestCase(id) {
-            showConfirm('删除测试用例', '确定要删除该测试用例吗？此操作不可恢复。', async () => {
+            showConfirm('删除测试用例', '确定要删除该测试用例吗?此操作不可恢复。', async () => {
                 try {
                     await fetch(`/api/testcases/${id}`, { method: 'DELETE' });
                     showToast('测试用例已删除', 'success');
@@ -1704,7 +1727,7 @@
             });
         }
 
-        // 确保分组列表已加载（history 下拉框需要）
+        // 确保分组列表已加载(history 下拉框需要)
         async function ensureGroups() {
             if (groups.length > 0) return;
             try {
@@ -1778,19 +1801,19 @@
             try {
                 const response = await fetch(`/api/groups/${groupId}`);
                 const group = await response.json();
-                
+
                 // 加载所有测试用例
                 const tcResponse = await fetch('/api/testcases');
                 const tcData = await tcResponse.json();
                 const allTestCases = tcData.testCases || [];
-                
+
                 const testCaseList = group.testCaseIds.map(id => {
                     const tc = allTestCases.find(t => t.id === id);
                     return tc ? `- ${tc.name}: ${tc.input} → ${tc.expected}` : `- ${id} (未找到)`;
                 }).join('\n');
-                
+
                 showConfirm(`分组: ${group.name}`, `用例列表:\n${testCaseList || '无'}`, () => {});
-                
+
             } catch (error) {
                 logError('Failed to load group cases:', error);
                 showToast('加载分组用例失败', 'error');
@@ -1809,7 +1832,7 @@
             try {
                 const response = await fetch('/api/testcases');
                 const allTestCases = await response.json();
-                
+
                 const tbody = document.getElementById('modal-cases-tbody');
                 tbody.innerHTML = allTestCases.map(tc => `
                     <tr>
@@ -1829,19 +1852,19 @@
             const groupId = window.currentGroupId;
             const checkboxes = document.querySelectorAll('#modal-cases-tbody input:checked');
             const testCaseIds = Array.from(checkboxes).map(cb => cb.value);
-            
+
             if (testCaseIds.length === 0) {
                 showToast('请至少选择一个测试用例', 'error');
                 return;
             }
-            
+
             try {
                 await fetch(`/api/groups/${groupId}/testcases`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ testCaseIds })
                 });
-                
+
                 showToast(`成功添加 ${testCaseIds.length} 个用例到分组`, 'success');
                 closeAddToGroupModal();
                 loadGroups();
@@ -1892,7 +1915,7 @@
 
         // 删除分组
         async function deleteGroup(id) {
-            showConfirm('删除分组', '确定要删除该分组吗？此操作不可恢复。', async () => {
+            showConfirm('删除分组', '确定要删除该分组吗?此操作不可恢复。', async () => {
                 try {
                     await fetch(`/api/groups/${id}`, { method: 'DELETE' });
                     showToast('分组已删除', 'success');
@@ -1934,8 +1957,8 @@
                     const passRate = data.summary.pass_rate.toFixed(1);
                     document.getElementById('pass-rate').textContent = passRate + '%';
                     document.getElementById('eval-result').style.display = 'block';
-                    showToast(`评测完成！通过率: ${passRate}%`, 'success');
-                    
+                    showToast(`评测完成!通过率: ${passRate}%`, 'success');
+
                     window.lastEvaluation = data;
                     window.lastReportId = data.reportId;
                 }
@@ -1952,22 +1975,22 @@
         let passRateChart = null;
         let scoreChart = null;
         let chartRenderPending = false;
-        
+
         function renderCharts(evaluations) {
             // 防止重复渲染
             if (chartRenderPending) return;
             chartRenderPending = true;
-            
+
             requestAnimationFrame(() => {
                 // Get theme colors
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
                 const textColor = isDark ? '#e0e0e0' : '#333';
                 const gridColor = isDark ? '#3d3d5c' : '#e0e0e0';
-                
+
                 // Pass Rate Pie Chart
                 const passed = evaluations.filter(e => e.passed).length;
                 const failed = evaluations.length - passed;
-                
+
                 if (passRateChart) passRateChart.destroy();
                 passRateChart = new Chart(document.getElementById('passRateChart'), {
                     type: 'pie',
@@ -1992,13 +2015,13 @@
                         }
                     }
                 });
-                
+
                 // Score Distribution Bar Chart
                 const scores = evaluations.map(e => ({
                     score: e.overallScore || 0,
                     name: e.testCaseId ? e.testCaseId.substring(0, 10) : 'N/A'
                 }));
-                
+
                 if (scoreChart) scoreChart.destroy();
                 scoreChart = new Chart(document.getElementById('scoreChart'), {
                     type: 'bar',
@@ -2032,11 +2055,11 @@
                         }
                     }
                 });
-                
+
                 chartRenderPending = false;
             });
         }
-        
+
         // 页面隐藏时销毁图表节省资源
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
@@ -2044,7 +2067,7 @@
                 if (scoreChart) { scoreChart.destroy(); scoreChart = null; }
             }
         });
-        
+
         // 渲染趋势图表
         function renderTrendChart(reportsOverride) {
             const reports = reportsOverride || window._allReports || [];
@@ -2056,29 +2079,29 @@
                 }
                 return;
             }
-            
+
             // 按时间排序
             const sorted = [...reports].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            
+
             // 获取最近 10 条记录
             const recent = sorted.slice(-10);
-            
+
             const labels = recent.map(r => {
                 const d = new Date(r.timestamp);
                 return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
             });
             const passRates = recent.map(r => r.summary?.pass_rate || 0);
             const avgScores = recent.map(r => r.summary?.average_score || 0);
-            
+
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             const textColor = isDark ? '#e0e0e0' : '#333';
             const gridColor = isDark ? '#3d3d5c' : '#e0e0e0';
-            
+
             if (trendChart) trendChart.destroy();
-            
+
             const ctx = document.getElementById('trend-chart');
             if (!ctx) return;
-            
+
             trendChart = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -2154,20 +2177,20 @@
                 }
             });
         }
-        
+
         function showEvalDetails() {
             const detailsDiv = document.getElementById('eval-details');
             const tbody = document.getElementById('details-tbody');
-            
+
             if (!window.lastEvaluation || !window.lastEvaluation.evaluations) {
                 showToast('没有评测详情', 'info');
                 return;
             }
-            
+
             // Render charts
             renderCharts(window.lastEvaluation.evaluations);
             renderReportMeta(window.lastEvaluation);
-            
+
             const evaluations = window.lastEvaluation.evaluations;
             tbody.innerHTML = evaluations.map(ev => {
                 const testCase = testCases.find(tc => tc.id === ev.testCaseId) || {};
@@ -2176,7 +2199,7 @@
                 const _expected = utils.escapeHtml(testCase.expected);
                 const scorerNames = Object.keys(ev.scorerResults || {}).join(', ');
                 const scorerScores = Object.values(ev.scorerResults || {}).map(sr => sr.score.toFixed(2)).join(', ');
-                
+
                 return `
                     <tr>
                         <td>${_name}</td>
@@ -2191,7 +2214,7 @@
                     </tr>
                 `;
             }).join('');
-            
+
             detailsDiv.style.display = 'block';
         }
 
@@ -2243,25 +2266,25 @@
                 showToast('没有可导出的评测报告', 'info');
                 return;
             }
-            
+
             const url = `/api/reports/${window.lastReportId}/export?format=${format}`;
             window.open(url, '_blank');
         }
-        
+
         // 导出 PDF 报告
-        // 导出 PDF 报告（服务器端生成，支持中文）
+        // 导出 PDF 报告(服务器端生成,支持中文)
         async function exportReportPdf() {
             if (!window.lastReportId) {
                 showToast('没有可导出的评测报告', 'info');
                 return;
             }
-            
+
             try {
                 showToast('正在生成 PDF...', 'info');
                 const response = await fetch(`/api/reports/${window.lastReportId}/export/pdf`);
-                
+
                 if (!response.ok) throw new Error('PDF 生成失败');
-                
+
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -2270,7 +2293,7 @@
                 a.click();
                 URL.revokeObjectURL(url);
                 showToast('PDF 报告已下载', 'success');
-                
+
             } catch (error) {
                 logError('PDF export failed:', error);
                 showToast('PDF 导出失败', 'error');
@@ -2304,8 +2327,8 @@
                     const passRate = data.summary.pass_rate.toFixed(1);
                     document.getElementById('pass-rate').textContent = passRate + '%';
                     document.getElementById('eval-result').style.display = 'block';
-                    showToast(`评测完成！通过率: ${passRate}%`, 'success');
-                    
+                    showToast(`评测完成!通过率: ${passRate}%`, 'success');
+
                     window.lastEvaluation = data;
                     window.lastReportId = data.reportId;
                 }
@@ -2323,7 +2346,7 @@
             const functionDim = document.getElementById('eval-function').value;
 
             if (!project && !moduleDim && !functionDim) {
-                showToast('请至少选择一个维度（项目/模块/功能）', 'info');
+                showToast('请至少选择一个维度(项目/模块/功能)', 'info');
                 return;
             }
 
@@ -2350,7 +2373,7 @@
                     const passRate = (summary.pass_rate != null ? summary.pass_rate : 0).toFixed(1);
                     document.getElementById('pass-rate').textContent = passRate + '%';
                     document.getElementById('eval-result').style.display = 'block';
-                    showToast(`按三维评测完成！通过率: ${passRate}%`, 'success');
+                    showToast(`按三维评测完成!通过率: ${passRate}%`, 'success');
                     window.lastEvaluation = data;
                     window.lastReportId = data.reportId;
                 } else {
@@ -2405,15 +2428,15 @@
                 const modules = data.modules || [];
                 const functions = data.functions || [];
 
-                // datalist（创建表单 + 评测下拉联想）
+                // datalist(创建表单 + 评测下拉联想)
                 fillDataList('project-list', projects);
                 fillDataList('module-list', modules);
                 fillDataList('function-list', functions);
 
                 // 评测下拉
-                fillSelect('eval-project', projects, '项目（任意）');
-                fillSelect('eval-module', modules, '模块（任意）');
-                fillSelect('eval-function', functions, '功能（任意）');
+                fillSelect('eval-project', projects, '项目(任意)');
+                fillSelect('eval-module', modules, '模块(任意)');
+                fillSelect('eval-function', functions, '功能(任意)');
 
                 // 历史筛选下拉
                 fillSelect('history-project', projects, '全部项目');
@@ -2439,7 +2462,7 @@
             if (values.includes(current)) el.value = current;
         }
 
-        
+
         // 批量导入相关函数
         function exportAllTestCases(format) {
             const testCases = window._testCases || [];
@@ -2447,16 +2470,16 @@
                 showToast('没有可导出的测试用例', 'info');
                 return;
             }
-            
+
             let content, filename, mimeType;
-            
+
             if (format === 'json') {
                 content = JSON.stringify(testCases, null, 2);
                 filename = `testcases_${Date.now()}.json`;
                 mimeType = 'application/json';
             } else {
                 // CSV 格式
-                const headers = ['name', 'input', 'expected', 'groupId', 'project', 'module', 'function'];
+                const headers = ['name', 'input', 'expected', 'groupId', 'project', 'module', 'function', 'description'];
                 const rows = [headers.join(',')];
                 testCases.forEach(tc => {
                     rows.push([
@@ -2466,14 +2489,15 @@
                         `"${tc.groupId || ''}"`,
                         `"${tc.project || ''}"`,
                         `"${tc.module || ''}"`,
-                        `"${tc.function || ''}"`
+                        `"${tc.function || ''}"`,
+                        `"${(tc.description || '').replace(/"/g, '""')}"`
                     ].join(','));
                 });
                 content = rows.join('\n');
                 filename = `testcases_${Date.now()}.csv`;
                 mimeType = 'text/csv';
             }
-            
+
             const blob = new Blob([content], { type: mimeType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -2483,14 +2507,14 @@
             URL.revokeObjectURL(url);
             showToast(`已导出 ${testCases.length} 条测试用例`, 'success');
         }
-        
+
         // 导出 Excel
         async function exportTestCasesExcel() {
             try {
                 showToast('正在导出 Excel...', 'info');
                 const response = await fetch('/api/testcases/export/excel');
                 if (!response.ok) throw new Error('导出失败');
-                
+
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -2504,43 +2528,43 @@
                 showToast('Excel 导出失败', 'error');
             }
         }
-        
+
         // 打开导入 Excel 模态框
         function openImportExcelModal() {
             document.getElementById('import-excel-modal').style.display = 'block';
             document.getElementById('excel-file-input').value = '';
         }
-        
+
         // 关闭导入 Excel 模态框
         function closeImportExcelModal() {
             document.getElementById('import-excel-modal').style.display = 'none';
         }
-        
+
         // 导入 Excel 文件
         async function importTestCasesExcel() {
             const fileInput = document.getElementById('excel-file-input');
             const file = fileInput.files[0];
-            
+
             if (!file) {
                 showToast('请选择文件', 'error');
                 return;
             }
-            
+
             const isCsv = file.name.toLowerCase().endsWith('.csv');
             const endpoint = isCsv ? '/api/testcases/import/csv' : '/api/testcases/import/excel';
-            
+
             const formData = new FormData();
             formData.append('file', file);
-            
+
             try {
                 showToast('正在导入...', 'info');
                 const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showToast(`成功导入 ${result.imported} 条测试用例`, 'success');
                     closeImportExcelModal();
@@ -2553,26 +2577,26 @@
                 showToast(isCsv ? 'CSV 导入失败' : 'Excel 导入失败', 'error');
             }
         }
-        
+
         function openImportModal() {
             document.getElementById('import-modal').style.display = 'block';
         }
-        
+
         function closeImportModal() {
             document.getElementById('import-modal').style.display = 'none';
             document.getElementById('import-data').value = '';
         }
-        
+
         async function importTestCases() {
             const data = document.getElementById('import-data').value.trim();
             if (!data) {
                 showToast('请输入导入数据', 'error');
                 return;
             }
-            
+
             let testCases = [];
             let format = '';
-            
+
             // 检测格式并解析
             try {
                 if (data.startsWith('[') || data.startsWith('{')) {
@@ -2585,20 +2609,20 @@
                     format = 'csv';
                     const lines = data.split('\n').filter(l => l.trim());
                     if (lines.length < 2) {
-                        showToast('CSV 格式错误：需要表头和数据行', 'error');
+                        showToast('CSV 格式错误:需要表头和数据行', 'error');
                         return;
                     }
-                    
+
                     const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
                     const nameIdx = headers.indexOf('name');
                     const inputIdx = headers.indexOf('input');
                     const expectedIdx = headers.indexOf('expected');
-                    
+
                     if (inputIdx === -1 || expectedIdx === -1) {
-                        showToast('CSV 格式错误：需要 input 和 expected 列', 'error');
+                        showToast('CSV 格式错误:需要 input 和 expected 列', 'error');
                         return;
                     }
-                    
+
                     for (let i = 1; i < lines.length; i++) {
                         const values = lines[i].split(',').map(v => v.trim());
                         testCases.push({
@@ -2608,15 +2632,15 @@
                         });
                     }
                 }
-                
+
                 // 过滤无效数据
                 testCases = testCases.filter(tc => tc.input && tc.expected);
-                
+
                 if (testCases.length === 0) {
                     showToast('没有找到有效数据', 'error');
                     return;
                 }
-                
+
                 // 逐个创建
                 let successCount = 0;
                 for (const tc of testCases) {
@@ -2627,11 +2651,11 @@
                     });
                     successCount++;
                 }
-                
+
                 showToast(`成功导入 ${successCount} 条测试用例`, 'success');
                 closeImportModal();
                 loadTestCases();
-                
+
             } catch (e) {
                 showToast(`解析失败: ${e.message}`, 'error');
             }
@@ -2640,7 +2664,7 @@
         // ===== 测试用例标签功能 =====
         let currentCaseTags = [];
         let currentCaseId = '';
-        
+
         function openCaseTagsModal(caseId, existingTags) {
             currentCaseId = caseId;
             currentCaseTags = [...(existingTags || [])];
@@ -2649,11 +2673,11 @@
             document.getElementById('case-tags-modal').style.display = 'flex';
             document.getElementById('case-tags-input').focus();
         }
-        
+
         function closeCaseTagsModal() {
             document.getElementById('case-tags-modal').style.display = 'none';
         }
-        
+
         function renderCaseTags() {
             const container = document.getElementById('case-tags-list');
             container.innerHTML = currentCaseTags.map((tag, i) => `
@@ -2663,7 +2687,7 @@
                 </span>
             `).join('') || '<span style="color: var(--text-secondary);">暂无标签</span>';
         }
-        
+
         function addCaseTag() {
             const input = document.getElementById('case-tags-input');
             const tag = input.value.trim();
@@ -2673,12 +2697,12 @@
                 renderCaseTags();
             }
         }
-        
+
         function removeCaseTag(index) {
             currentCaseTags.splice(index, 1);
             renderCaseTags();
         }
-        
+
         async function saveCaseTags() {
             try {
                 const response = await fetch(`/api/testcases/${currentCaseId}/tags`, {
@@ -2696,10 +2720,10 @@
                 showToast('保存失败', 'error');
             }
         }
-        
+
         // ===== 报告标签功能 =====
         let currentTags = [];
-        
+
         function openTagsModal(reportId, existingTags) {
             currentTags = [...(existingTags || [])];
             document.getElementById('tags-report-id').value = reportId;
@@ -2707,12 +2731,12 @@
             document.getElementById('tags-modal').style.display = 'flex';
             document.getElementById('tags-input').focus();
         }
-        
+
         function closeTagsModal() {
             document.getElementById('tags-modal').style.display = 'none';
             document.getElementById('tags-input').value = '';
         }
-        
+
         function renderTags() {
             const container = document.getElementById('tags-list');
             container.innerHTML = currentTags.map((tag, i) => `
@@ -2722,7 +2746,7 @@
                 </span>
             `).join('');
         }
-        
+
         function addTag() {
             const input = document.getElementById('tags-input');
             const tag = input.value.trim();
@@ -2732,12 +2756,12 @@
             }
             input.value = '';
         }
-        
+
         function removeTag(index) {
             currentTags.splice(index, 1);
             renderTags();
         }
-        
+
         async function saveTags() {
             const reportId = document.getElementById('tags-report-id').value;
             try {
@@ -2756,7 +2780,7 @@
                 showToast('保存失败', 'error');
             }
         }
-        
+
         // ===== 报告备注功能 =====
         function openNoteModal(reportId, existingNote) {
             document.getElementById('note-report-id').value = reportId;
@@ -2764,11 +2788,11 @@
             document.getElementById('note-modal').style.display = 'flex';
             document.getElementById('note-input').focus();
         }
-        
+
         function closeNoteModal() {
             document.getElementById('note-modal').style.display = 'none';
         }
-        
+
         async function saveNote() {
             const reportId = document.getElementById('note-report-id').value;
             const note = document.getElementById('note-input').value;
@@ -2788,7 +2812,7 @@
                 showToast('保存失败', 'error');
             }
         }
-        
+
         // ===== 报告复制功能 =====
         async function copyReport(reportId) {
             try {
@@ -2802,24 +2826,24 @@
                 showToast('复制失败', 'error');
             }
         }
-        
+
         // ===== 批量评测功能 =====
         function updateSelectedCaseCount() {
             const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked').length;
             document.getElementById('selected-case-count').textContent = checked;
         }
-        
+
         function selectAllCases() {
             document.querySelectorAll('#cases-tbody .case-checkbox').forEach(cb => cb.checked = true);
             updateSelectedCaseCount();
         }
-        
+
         function deselectAllCases() {
             document.querySelectorAll('#cases-tbody .case-checkbox').forEach(cb => cb.checked = false);
             document.getElementById('select-all-cases').checked = false;
             updateSelectedCaseCount();
         }
-        
+
         // 打开批量编辑模态框
         function openBatchEditModal() {
             const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
@@ -2827,21 +2851,21 @@
                 showToast('请先选择测试用例', 'info');
                 return;
             }
-            
+
             document.getElementById('batch-edit-count').textContent = checked.length;
             document.getElementById('batch-edit-modal').classList.add('show');
-            
+
             // 加载分组列表
             loadGroupsForBatchEdit();
         }
-        
+
         // 加载分组列表到批量编辑
         async function loadGroupsForBatchEdit() {
             try {
                 const response = await fetch('/api/groups');
                 const data = await response.json();
                 const groups = data.groups || [];
-                
+
                 const select = document.getElementById('batch-edit-group');
                 select.innerHTML = '<option value="">移除分组</option>';
                 groups.forEach(g => {
@@ -2851,7 +2875,7 @@
                 logError('Failed to load groups:', e);
             }
         }
-        
+
         // 切换批量编辑字段可用状态
         function toggleBatchEditField(field) {
             const checkbox = document.getElementById(`batch-edit-${field}-enabled`);
@@ -2860,7 +2884,7 @@
                 input.disabled = !checkbox.checked;
             }
         }
-        
+
         function toggleBatchTagsAction() {
             const action = document.getElementById('batch-edit-tags-action')?.value;
             const input = document.getElementById('batch-edit-tags');
@@ -2868,7 +2892,7 @@
                 input.disabled = document.getElementById('batch-edit-tags-enabled')?.checked !== true;
             }
         }
-        
+
         // 关闭批量编辑模态框
         function closeBatchEditModal() {
             document.getElementById('batch-edit-modal').classList.remove('show');
@@ -2888,19 +2912,19 @@
             toggleBatchEditField('module');
             toggleBatchEditField('function');
         }
-        
+
         // 批量编辑用例
         async function applyBatchEdit() {
             const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
             const ids = Array.from(checked).map(cb => cb.value);
-            
+
             if (ids.length === 0) {
                 showToast('请先选择测试用例', 'info');
                 return;
             }
-            
+
             const updates = [];
-            
+
             // 收集需要更新的字段
             if (document.getElementById('batch-edit-name-enabled')?.checked) {
                 const name = document.getElementById('batch-edit-name')?.value;
@@ -2932,12 +2956,16 @@
                 const functionDim = document.getElementById('batch-edit-function')?.value.trim();
                 updates.push({ field: 'function', value: functionDim || null });
             }
-            
+            if (document.getElementById('batch-edit-description-enabled')?.checked) {
+                const description = document.getElementById('batch-edit-description')?.value || '';
+                updates.push({ field: 'description', value: description || null });
+            }
+
             if (updates.length === 0) {
                 showToast('请至少选择一项进行修改', 'info');
                 return;
             }
-            
+
             // 逐个更新用例
             let successCount = 0;
             for (const id of ids) {
@@ -2945,9 +2973,9 @@
                     // 获取当前用例
                     const tc = window._testCases?.find(t => t.id === id);
                     if (!tc) continue;
-                    
+
                     let updateData = { ...tc };
-                    
+
                     for (const update of updates) {
                         if (update.field === 'name') {
                             updateData.name = update.value;
@@ -2961,6 +2989,8 @@
                             updateData.module = update.value;
                         } else if (update.field === 'function') {
                             updateData.function = update.value;
+                        } else if (update.field === 'description') {
+                            updateData.description = update.value;
                         } else if (update.field === 'tags') {
                             const currentTags = tc.metadata?.tags || [];
                             if (update.value.action === 'add') {
@@ -2975,7 +3005,7 @@
                             }
                         }
                     }
-                    
+
                     await fetch(`/api/testcases/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -2986,24 +3016,24 @@
                     logError(`Failed to update case ${id}:`, e);
                 }
             }
-            
+
             closeBatchEditModal();
             showToast(`成功更新 ${successCount} 个用例`, 'success');
             loadTestCases();
             loadDimensions();
         }
-        
+
         // 批量删除用例
         async function batchDeleteCases() {
             const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
             const ids = Array.from(checked).map(cb => cb.value);
-            
+
             if (ids.length === 0) {
                 showToast('请先选择测试用例', 'info');
                 return;
             }
-            
-            showConfirm('批量删除', `确定要删除选中的 ${ids.length} 个测试用例吗？`, async () => {
+
+            showConfirm('批量删除', `确定要删除选中的 ${ids.length} 个测试用例吗?`, async () => {
                 let successCount = 0;
                 for (const id of ids) {
                     try {
@@ -3017,19 +3047,19 @@
                 loadTestCases();
             });
         }
-        
+
         async function runSelectedEvaluation() {
             const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
             if (checked.length === 0) {
                 showToast('请先选择测试用例', 'info');
                 return;
             }
-            
+
             const caseIds = Array.from(checked).map(cb => cb.value);
-            
+
             try {
                 document.getElementById('cases-loading').classList.add('show');
-                
+
                 const response = await fetch('/api/evaluate/cases', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -3039,12 +3069,12 @@
                         agentType: 'demo'
                     })
                 });
-                
+
                 const data = await response.json();
                 document.getElementById('cases-loading').classList.remove('show');
-                
+
                 if (data.success) {
-                    showToast(`评测完成！通过率: ${data.summary?.pass_rate?.toFixed(1) || 0}%`, 'success');
+                    showToast(`评测完成!通过率: ${data.summary?.pass_rate?.toFixed(1) || 0}%`, 'success');
                     loadHistory();
                     switchTab('history');
                 } else {
@@ -3055,7 +3085,7 @@
                 showToast('评测请求失败', 'error');
             }
         }
-        
+
         // 复选框变化时更新计数
         document.addEventListener('DOMContentLoaded', () => {
             const casesTbody = document.getElementById('cases-tbody');
