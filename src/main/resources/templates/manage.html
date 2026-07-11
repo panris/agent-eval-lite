@@ -658,7 +658,7 @@
             <div class="action-bar" style="margin-bottom: 15px;">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..." 
-                        style="width: 200px;" oninput="filterHistory()">
+                        style="width: 200px;" oninput="onHistorySearch()">
                     <select id="history-filter" class="form-control" style="width: 120px;" onchange="_reportPage=1;filterHistory()">
                         <option value="">全部报告</option>
                         <option value="favorites">⭐ 收藏</option>
@@ -1028,21 +1028,20 @@
             };
         }
 
-        function buildDimensionQuery() {
-            const d = getDimensionFilters();
-            let q = '';
-            if (d.project) q += `&project=${encodeURIComponent(d.project)}`;
-            if (d.module) q += `&module=${encodeURIComponent(d.module)}`;
-            if (d.function) q += `&function=${encodeURIComponent(d.function)}`;
-            return q;
-        }
-
         function buildHistoryParams() {
             const params = new URLSearchParams({ sort: _sortDir, sortBy: _sortBy, page: _reportPage, size: _reportSize });
             const d = getDimensionFilters();
             if (d.project) params.set('project', d.project);
             if (d.module) params.set('module', d.module);
             if (d.function) params.set('function', d.function);
+            const group = document.getElementById('history-group')?.value?.trim() || '';
+            if (group) params.set('group', group);
+            const search = document.getElementById('history-search')?.value?.trim() || '';
+            if (search) params.set('keyword', search);
+            const filterValue = document.getElementById('history-filter')?.value || '';
+            if (filterValue === 'favorites') params.set('favorite', 'true');
+            else if (filterValue === 'passed') params.set('status', 'passed');
+            else if (filterValue === 'failed') params.set('status', 'failed');
             return params;
         }
 
@@ -1056,22 +1055,26 @@
                 _reportSize = parseInt(document.getElementById('page-size')?.value || '20');
                 
                 const params = buildHistoryParams();
-            const dateStart = document.getElementById('history-date-start')?.value || '';
-            const dateEnd = document.getElementById('history-date-end')?.value || '';
-            const group = document.getElementById('history-group')?.value?.trim() || '';
-            if (dateStart) params.set('since', new Date(dateStart).getTime());
-            if (dateEnd) {
-                const until = new Date(dateEnd);
-                until.setHours(23, 59, 59, 999);
-                params.set('until', until.getTime());
-            }
-            if (group) params.set('group', group);
+                const dateStart = document.getElementById('history-date-start')?.value || '';
+                const dateEnd = document.getElementById('history-date-end')?.value || '';
+                if (dateStart) params.set('since', new Date(dateStart).getTime());
+                if (dateEnd) {
+                    const until = new Date(dateEnd);
+                    until.setHours(23, 59, 59, 999);
+                    params.set('until', until.getTime());
+                }
 
-            // 并行获取：分页数据 + 全量数据（趋势图用）
-            const [pagedRes, allRes] = await Promise.all([
-                fetch(`/api/reports?${params}`),
-                fetch(`/api/reports?sort=${_sortDir}&sortBy=${_sortBy}` + (dateStart ? `&since=${new Date(dateStart).getTime()}` : '') + (dateEnd ? `&until=${new Date(dateEnd).setHours(23,59,59,999)}` : '') + (group ? `&group=${encodeURIComponent(group)}` : '') + buildDimensionQuery())
-            ]);
+                // 趋势图用：全量（不分页）且复用相同过滤条件
+                const allParams = new URLSearchParams(params);
+                allParams.delete('page');
+                allParams.delete('size');
+                allParams.set('all', 'true');
+
+                // 并行获取：分页数据 + 全量数据（趋势图用）
+                const [pagedRes, allRes] = await Promise.all([
+                    fetch(`/api/reports?${params}`),
+                    fetch(`/api/reports?${allParams}`)
+                ]);
             const [data, allData] = await Promise.all([pagedRes.json(), allRes.json()]);
                 
                 window._allReports = data.reports || [];
@@ -1082,7 +1085,7 @@
                 updateHistoryStats();
                 updatePaginationUI();
                 
-                filterHistory();
+                filterHistory(window._allReports);
                 renderTrendChart(allData.reports || []);
                 
             } catch (error) {
@@ -1149,97 +1152,74 @@
             loadHistory();
         }
         
-        function filterHistory() {
-            const searchText = (document.getElementById('history-search')?.value || '').toLowerCase();
-            const filterValue = document.getElementById('history-filter')?.value || '';
-            const dateStart = document.getElementById('history-date-start')?.value || '';
-            const dateEnd = document.getElementById('history-date-end')?.value || '';
-            const group = document.getElementById('history-group')?.value || '';
-
-            // 日期范围或分组变化时重新请求后端过滤（重置到第1页）
-            if (dateStart || dateEnd || group) {
+        function filterHistory(reports) {
+            // 由筛选项触发（无参）：服务端统一过滤，所有筛选项由 loadHistory 下发
+            if (reports === undefined) {
                 _reportPage = 1;
                 loadHistory();
                 return;
             }
-
-            const reports = window._allReports || [];
-            const total = window._reportTotal || 0;
-            updateHistoryStats();
-            
-            // 应用过滤
-            let filtered = reports.filter(report => {
-                // 搜索过滤
-                if (searchText) {
-                    const id = (report.id || '').toLowerCase();
-                    const note = (report.note || '').toLowerCase();
-                    const tags = (report.tags || []).join(' ').toLowerCase();
-                    if (!id.includes(searchText) && !note.includes(searchText) && !tags.includes(searchText)) {
-                        return false;
-                    }
-                }
-                // 分类过滤
-                if (filterValue === 'favorites' && !report.favorite) return false;
-                if (filterValue === 'passed' && (report.summary?.pass_rate || 0) < 70) return false;
-                if (filterValue === 'failed' && (report.summary?.pass_rate || 0) >= 70) return false;
-                return true;
-            });
-            
-            // 渲染
             const tbody = document.getElementById('history-tbody');
-            if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-secondary);">${reports.length === 0 ? '暂无评测记录' : (`无匹配结果（${filtered.length} / ${total > 0 ? total : reports.length} 条）`)}</td></tr>`;
-            } else {
-                tbody.innerHTML = filtered.map(report => {
-                    const _id = utils.escapeHtml(report.id);
-                    const _note = utils.escapeHtml(report.note || '');
-                    const _tags = (report.tags || []).map(t => utils.escapeHtml(t));
-                    const _displayNote = _note.length > 15 ? _note.substring(0, 15) + '...' : _note;
-                    const _group = utils.escapeHtml(report.group || '');
-                    return `
-                    <tr>
-                        <td><input type="checkbox" class="history-checkbox" value="${_id}"></td>
-                        <td><code>${_id}</code></td>
-                        <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
-                        <td>
-                            <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
-                                ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
-                            </span>
-                        </td>
-                        <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
-                        <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
-                        <td>
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                ${report.project ? `<span class="badge" style="background: #2563eb; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.project)}</span>` : ''}
-                                ${report.module ? `<span class="badge" style="background: #7c3aed; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.module)}</span>` : ''}
-                                ${report.function ? `<span class="badge" style="background: #db2777; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.function)}</span>` : ''}
-                                ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">—</span>' : ''}
-                            </div>
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                                ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
-                                <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${_id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
-                            </div>
-                        </td>
-                        <td>
-                            <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${_note}">
-                                ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
-                            </div>
-                        </td>
-                        <td>
-                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                                <button class="btn btn-sm" onclick="openNoteModal('${_id}', '${_note.replace(/'/g, "&#39;")}')">📝</button>
-                                <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${_id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
-                                <button class="btn btn-sm" onclick="viewHistoryDetails('${_id}')">详情</button>
-                                <button class="btn btn-sm" onclick="shareReport('${_id}')" title="分享">🔗</button>
-                                <button class="btn btn-sm" onclick="copyReport('${_id}')">📋</button>
-                            </div>
-                        </td>
-                    </tr>
-                    `;
-                }).join('');
+            const total = window._reportTotal || 0;
+            if (!reports || reports.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-secondary);">${total === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
+                return;
             }
+            tbody.innerHTML = reports.map(report => {
+                const _id = utils.escapeHtml(report.id);
+                const _note = utils.escapeHtml(report.note || '');
+                const _tags = (report.tags || []).map(t => utils.escapeHtml(t));
+                const _displayNote = _note.length > 15 ? _note.substring(0, 15) + '...' : _note;
+                const _group = utils.escapeHtml(report.group || '');
+                return `
+                <tr>
+                    <td><input type="checkbox" class="history-checkbox" value="${_id}"></td>
+                    <td><code>${_id}</code></td>
+                    <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
+                    <td>
+                        <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
+                            ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
+                        </span>
+                    </td>
+                    <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
+                    <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
+                    <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            ${report.project ? `<span class="badge" style="background: #2563eb; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.project)}</span>` : ''}
+                            ${report.module ? `<span class="badge" style="background: #7c3aed; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.module)}</span>` : ''}
+                            ${report.function ? `<span class="badge" style="background: #db2777; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.function)}</span>` : ''}
+                            ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">—</span>' : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                            ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                            <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${_id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${_note}">
+                            ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            <button class="btn btn-sm" onclick="openNoteModal('${_id}', '${_note.replace(/'/g, "&#39;")}')">📝</button>
+                            <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${_id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
+                            <button class="btn btn-sm" onclick="viewHistoryDetails('${_id}')">详情</button>
+                            <button class="btn btn-sm" onclick="shareReport('${_id}')" title="分享">🔗</button>
+                            <button class="btn btn-sm" onclick="copyReport('${_id}')">📋</button>
+                        </div>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        let _historySearchTimer = null;
+        function onHistorySearch() {
+            clearTimeout(_historySearchTimer);
+            _historySearchTimer = setTimeout(() => { _reportPage = 1; loadHistory(); }, 300);
         }
 
         // 收藏/取消收藏

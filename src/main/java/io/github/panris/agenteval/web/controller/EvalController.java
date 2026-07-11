@@ -410,12 +410,16 @@ public class EvalController {
             @RequestParam(required = false) String project,
             @RequestParam(required = false) String module,
             @RequestParam(required = false) String function,
+            @RequestParam(required = false) Boolean favorite,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "time") String sortBy,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "false") boolean all) {
         if (size < 1) size = 20;
         if (size > 100) size = 100;
-        return reportService.getAllReports(sort, since, until, group, project, module, function, sortBy, page, size);
+        return reportService.getAllReports(sort, since, until, group, project, module, function, favorite, status, keyword, sortBy, page, size, all);
     }
 
     @GetMapping("/api/reports/{id}")

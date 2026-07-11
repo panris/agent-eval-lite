@@ -93,8 +93,8 @@ public class ReportService {
     }
 
     public Map<String, Object> getAllReports(String sort, Long since, Long until, String group, String project,
-                                              String module, String function, String sortBy,
-                                              int page, int size) {
+                                              String module, String function, Boolean favorite, String status,
+                                              String keyword, String sortBy, int page, int size, boolean all) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> e : reportHistory.entrySet()) {
             Map<String, Object> report = new LinkedHashMap<>(e.getValue());
@@ -122,6 +122,41 @@ public class ReportService {
             list.removeIf(r -> !f.equalsIgnoreCase(String.valueOf(r.getOrDefault("function", ""))));
         }
 
+        // 按收藏过滤
+        if (favorite != null) {
+            final boolean fv = favorite;
+            list.removeIf(r -> Boolean.TRUE.equals(r.get("favorite")) != fv);
+        }
+        // 按状态过滤（通过率 >= 70 视为通过）
+        if (status != null && !status.trim().isEmpty()) {
+            final String st = status.trim().toLowerCase();
+            list.removeIf(r -> {
+                double pr = extractPassRate(r.get("summary"));
+                boolean passed = pr >= 70.0;
+                if ("passed".equals(st)) return !passed;
+                if ("failed".equals(st)) return passed;
+                return false;
+            });
+        }
+        // 按关键字过滤（id / 备注 / 标签）
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            final String kw = keyword.trim().toLowerCase();
+            list.removeIf(r -> {
+                String id = String.valueOf(r.getOrDefault("id", "")).toLowerCase();
+                String note = String.valueOf(r.getOrDefault("note", "")).toLowerCase();
+                StringBuilder tagsB = new StringBuilder();
+                Object tagsObj = r.get("tags");
+                if (tagsObj instanceof java.util.List) {
+                    for (Object t : (java.util.List<?>) tagsObj) {
+                        if (tagsB.length() > 0) tagsB.append(' ');
+                        tagsB.append(t);
+                    }
+                }
+                String tags = tagsB.toString().toLowerCase();
+                return !(id.contains(kw) || note.contains(kw) || tags.contains(kw));
+            });
+        }
+
         // 按日期范围过滤
         if (since != null || until != null) {
             long sinceMs = since != null ? since : Long.MIN_VALUE;
@@ -144,6 +179,18 @@ public class ReportService {
             long tsA = getTimestamp(a), tsB = getTimestamp(b);
             return asc ? Long.compare(tsA, tsB) : Long.compare(tsB, tsA);
         });
+
+        // 全量返回（趋势图用，复用相同过滤条件，不分页）
+        if (all) {
+            Map<String, Object> allResult = new LinkedHashMap<>();
+            allResult.put("reports", list);
+            allResult.put("total", reportHistory.size());
+            allResult.put("filtered", list.size());
+            allResult.put("page", 1);
+            allResult.put("size", list.size());
+            allResult.put("totalPages", 1);
+            return allResult;
+        }
 
         // 分页
         int total = reportHistory.size();
@@ -172,6 +219,15 @@ public class ReportService {
         if (score == null) score = s.get("average_score");
         if (score instanceof Number) return ((Number) score).doubleValue();
         return null;
+    }
+
+    private double extractPassRate(Object summaryObj) {
+        if (!(summaryObj instanceof Map)) return 0.0;
+        Map<?, ?> s = (Map<?, ?>) summaryObj;
+        Object pr = s.get("pass_rate");
+        if (pr == null) pr = s.get("passRate");
+        if (pr instanceof Number) return ((Number) pr).doubleValue();
+        return 0.0;
     }
 
     public Map<String, Object> deleteReport(String reportId) {
@@ -399,7 +455,7 @@ public class ReportService {
     public void cleanupOldReports(int maxReports) {
         if (reportHistory.size() <= maxReports) return;
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, null, null, null, "time", 1, 10000).get("reports");
+        List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, null, null, null, null, null, null, "time", 1, 10000, false).get("reports");
         int toRemove = reportHistory.size() - maxReports;
         for (int i = 0; i < toRemove; i++) {
             String id = sorted.get(i).get("id").toString();
