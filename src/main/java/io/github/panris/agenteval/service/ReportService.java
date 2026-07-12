@@ -19,7 +19,12 @@ import java.util.stream.Collectors;
 @Service
 public class ReportService {
     private static final Logger log = LoggerFactory.getLogger(ReportService.class);
-    private static final Path REPORTS_FILE = Paths.get("data/reports.json");
+    private static String dataDir() {
+        return System.getProperty("agenteval.data.dir", "data");
+    }
+    private static Path reportsFile() {
+        return Paths.get(dataDir(), "reports.json");
+    }
 
     private final Map<String, Map<String, Object>> reportHistory = new LinkedHashMap<>();
     private final Map<String, String> sharedReports = new LinkedHashMap<>(); // shareId -> reportId
@@ -35,9 +40,9 @@ public class ReportService {
     // ============ 持久化 ============
 
     public void loadReportHistory() {
-        if (!Files.exists(REPORTS_FILE)) return;
+        if (!Files.exists(reportsFile())) return;
         try {
-            String content = Files.readString(REPORTS_FILE);
+            String content = Files.readString(reportsFile());
             Map<String, Map<String, Object>> loaded = objectMapper.readValue(content,
                 objectMapper.getTypeFactory().constructMapType(LinkedHashMap.class, String.class, Map.class));
             reportHistory.putAll(loaded);
@@ -49,16 +54,16 @@ public class ReportService {
 
     public void saveReportHistory() {
         try {
-            Files.createDirectories(REPORTS_FILE.getParent());
+            Files.createDirectories(reportsFile().getParent());
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reportHistory);
-            Files.writeString(REPORTS_FILE, json);
+            Files.writeString(reportsFile(), json);
         } catch (Exception e) {
             log.error("Failed to save report history: {}", e.getMessage(), e);
         }
     }
 
     private void loadSharedReports() {
-        Path sharesFile = Paths.get("data/shares.json");
+        Path sharesFile = Paths.get(dataDir(), "shares.json");
         if (!Files.exists(sharesFile)) return;
         try {
             @SuppressWarnings("unchecked")
@@ -72,7 +77,7 @@ public class ReportService {
 
     public void saveSharedReports() {
         try {
-            Path sharesFile = Paths.get("data/shares.json");
+            Path sharesFile = Paths.get(dataDir(), "shares.json");
             Files.createDirectories(sharesFile.getParent());
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sharedReports);
             Files.writeString(sharesFile, json);
@@ -235,14 +240,25 @@ public class ReportService {
             return Map.of("success", false, "error", "报告不存在");
         }
         reportHistory.remove(reportId);
+        removeShareByReportId(reportId);
         saveReportHistory();
+        saveSharedReports();
         return Map.of("success", true, "message", "报告已删除");
     }
 
     public Map<String, Object> clearAllReports() {
         reportHistory.clear();
+        sharedReports.clear();
         saveReportHistory();
+        saveSharedReports();
         return Map.of("success", true, "message", "所有报告已清除");
+    }
+
+    /**
+     * 清理指定 reportId 对应的所有分享链接。
+     */
+    private void removeShareByReportId(String reportId) {
+        sharedReports.entrySet().removeIf(e -> reportId.equals(e.getValue()));
     }
 
     // ============ 报告操作 ============
@@ -290,7 +306,7 @@ public class ReportService {
                 favorites.put(reportId, report);
             }
         });
-        return Map.of("success", true, "favorites", favorites);
+        return Map.of("success", true, "favorites", favorites, "total", favorites.size());
     }
 
     public Map<String, Object> updateTags(String reportId, List<String> tags) {
@@ -457,11 +473,14 @@ public class ReportService {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, null, null, null, null, null, null, "time", 1, 10000, false).get("reports");
         int toRemove = reportHistory.size() - maxReports;
-        for (int i = 0; i < toRemove; i++) {
+        // sorted is descending by timestamp (newest first), so iterate backward to remove the oldest
+        for (int i = sorted.size() - 1; i >= sorted.size() - toRemove; i--) {
             String id = sorted.get(i).get("id").toString();
             reportHistory.remove(id);
+            removeShareByReportId(id);
         }
         saveReportHistory();
+        saveSharedReports();
         log.info("自动清理 {} 条旧报告，保留最近 {} 条", toRemove, maxReports);
     }
 }

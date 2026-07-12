@@ -330,5 +330,18 @@ const Table = {
 };
 
 // utils namespace — 暴露 Table 的 escapeHtml 供模板字符串使用
-const utils = { escapeHtml: Table.escapeHtml };
+const utils = {
+    escapeHtml: Table.escapeHtml,
+    toggleClearBtn(inputId, btnId) {
+        const input = document.getElementById(inputId);
+        const btn = document.getElementById(btnId);
+        if (!input || !btn) return;
+        btn.style.display = input.value.trim() ? 'block' : 'none';
+    },
+    clearInput(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.value = '';
+    }
+};
 

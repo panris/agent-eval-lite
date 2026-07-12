@@ -663,8 +663,12 @@
 
             <div class="action-bar" style="margin-bottom: 15px;">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..."
-                        style="width: 200px;" oninput="onHistorySearch()">
+                    <div style="position: relative; display: inline-block;">
+                        <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..."
+                            style="width: 200px; padding-right: 28px;" oninput="onHistorySearch(); utils.toggleClearBtn('history-search','history-search-clr')">
+                        <button id="history-search-clr" type="button" onclick="utils.clearInput('history-search'); onHistorySearch()"
+                            style="display:none; position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; color:var(--text-secondary); line-height:1;">×</button>
+                    </div>
                     <select id="history-filter" class="form-control" style="width: 120px;" onchange="_reportPage=1;filterHistory()">
                         <option value="">全部报告</option>
                         <option value="favorites">⭐ 收藏</option>
