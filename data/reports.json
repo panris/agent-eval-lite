@@ -1,0 +1,14 @@
+{
+  "GroupA1" : {
+    "group" : "GroupA",
+    "summary" : {
+      "pass_rate" : 0.5
+    }
+  },
+  "GroupB1" : {
+    "group" : "GroupB",
+    "summary" : {
+      "pass_rate" : 0.5
+    }
+  }
+}
