@@ -6,3 +6,4 @@ target/
 *.class
 out/
 data/shares.json
+data/reports.json
