@@ -8,6 +8,8 @@ public class EvalRequest {
     private Map<String, Object> agentConfig;
     private List<String> metrics;
     private List<TestCaseDto> testCases;
+    /** 测试用例 ID 列表（用于 async endpoint）；若同时传 testCases 则优先用 testCases */
+    private List<String> caseIds;
     /** 报告所属分组名称，用于报告历史过滤 */
     private String group;
     /** 三维分组：项目（评测时按维度筛选） */
@@ -48,6 +50,14 @@ public class EvalRequest {
 
     public void setTestCases(List<TestCaseDto> testCases) {
         this.testCases = testCases;
+    }
+
+    public List<String> getCaseIds() {
+        return caseIds;
+    }
+
+    public void setCaseIds(List<String> caseIds) {
+        this.caseIds = caseIds;
     }
 
     public String getGroup() {

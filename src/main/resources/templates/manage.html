@@ -201,6 +201,7 @@
         .btn-danger { background: #dc3545; color: white; }
         .btn-success { background: #28a745; color: white; }
         .btn-cancel { background: #6c757d; color: white; }
+        .btn-info { background: #6f42c1; color: white; }
         .btn:hover { transform: translateY(-2px); }
 
         .table {
@@ -529,6 +530,7 @@
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-success btn-sm" onclick="openImportExcelModal()">📥 导入 Excel</button>
                     <button class="btn btn-primary btn-sm" onclick="runSelectedEvaluation()">🚀 评测选中用例</button>
+                    <button class="btn btn-info btn-sm" onclick="runAsyncSelectedEvaluation()">⚡ 异步评测</button>
                     <button class="btn btn-warning btn-sm" onclick="openBatchEditModal()">✏️ 批量编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="batchDeleteCases()">🗑️ 批量删除</button>
                     <button class="btn btn-secondary btn-sm" onclick="selectAllCases()">全选</button>
@@ -649,6 +651,7 @@
         <div id="history-card" class="card">
             <h2 class="card-title">评测历史记录
                 <button id="sort-btn" class="btn btn-sm" onclick="toggleSort()" style="margin-left: 10px; font-size: 12px;" title="切换排序">↕️ 最新优先</button>
+                <button class="btn btn-sm" onclick="openAsyncTasksModal()" style="margin-left: 6px; font-size: 12px; background:#6f42c1; color:white;">⚡ 任务监控</button>
             </h2>
 
             <!-- 趋势图表 -->
@@ -888,6 +891,22 @@
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-primary btn-sm" onclick="applyBatchEdit()">应用修改</button>
                 <button class="btn btn-sm" onclick="closeBatchEditModal()" style="background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 异步任务监控模态框 -->
+    <div id="async-tasks-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog" style="max-width: 560px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="margin:0;">⚡ 异步评测任务</h3>
+                <button onclick="closeAsyncTasksModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">&times;</button>
+            </div>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">运行中的任务每2秒自动刷新，完成后自动停止轮询</p>
+            <div id="async-tasks-body" style="max-height:400px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px;margin-bottom:16px;"></div>
+            <div style="text-align:right;">
+                <button class="btn btn-secondary btn-sm" onclick="pollAsyncTasks()">🔄 刷新</button>
+                <button class="btn btn-cancel" onclick="closeAsyncTasksModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -2915,6 +2934,138 @@
             toggleBatchEditField('project');
             toggleBatchEditField('module');
             toggleBatchEditField('function');
+        }
+
+        // ============ 异步评测模态框 ============
+        let _asyncPollTimer = null;
+        let _asyncCompletedNotified = new Set();
+
+        function openAsyncTasksModal() {
+            document.getElementById('async-tasks-modal').style.display = 'flex';
+            pollAsyncTasks();
+        }
+
+        function closeAsyncTasksModal() {
+            if (_asyncPollTimer) {
+                clearInterval(_asyncPollTimer);
+                _asyncPollTimer = null;
+            }
+            document.getElementById('async-tasks-modal').style.display = 'none';
+        }
+
+        async function pollAsyncTasks() {
+            try {
+                const resp = await fetch('/api/tasks');
+                const tasks = await resp.json();
+                renderAsyncTasks(tasks);
+
+                const hasRunning = tasks.some(t => t.status === 'PENDING' || t.status === 'RUNNING');
+                if (hasRunning && !_asyncPollTimer) {
+                    _asyncPollTimer = setInterval(pollAsyncTasks, 2000);
+                } else if (!hasRunning && _asyncPollTimer) {
+                    clearInterval(_asyncPollTimer);
+                    _asyncPollTimer = null;
+                }
+            } catch (e) {
+                console.error('轮询异步任务失败:', e);
+            }
+        }
+
+        function renderAsyncTasks(tasks) {
+            const container = document.getElementById('async-tasks-body');
+            if (!tasks || tasks.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:30px;">暂无异步任务</div>';
+                return;
+            }
+
+            const statusBadge = (s) => {
+                const map = {
+                    'PENDING': '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">⏳ 等待中</span>',
+                    'RUNNING': '<span style="background:#007bff;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">🔄 运行中</span>',
+                    'COMPLETED': '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">✅ 完成</span>',
+                    'FAILED': '<span style="background:#dc3545;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">❌ 失败</span>',
+                    'TIMED_OUT': '<span style="background:#fd7e14;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">⏱️ 超时</span>',
+                };
+                return map[s] || `<span>${s}</span>`;
+            };
+
+            const progress = (t) => {
+                if (!t.totalCases || t.totalCases === 0) return '';
+                const pct = Math.round((t.completedCases / t.totalCases) * 100);
+                const color = t.status === 'COMPLETED' ? '#28a745' : t.status === 'FAILED' || t.status === 'TIMED_OUT' ? '#dc3545' : '#007bff';
+                return `<div style="margin-top:6px;">
+                    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:3px;">
+                        <span>${t.completedCases}/${t.totalCases} 用例</span><span>${pct}%</span>
+                    </div>
+                    <div style="height:6px;background:var(--border-color);border-radius:3px;overflow:hidden;">
+                        <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .3s;"></div>
+                    </div>
+                </div>`;
+            };
+
+            const timeAgo = (ts) => {
+                const diff = Math.round((Date.now() - ts) / 1000);
+                if (diff < 60) return diff + '秒前';
+                if (diff < 3600) return Math.round(diff / 60) + '分钟前';
+                return Math.round(diff / 3600) + '小时前';
+            };
+
+            const rows = tasks.map(t => {
+                // 通知完成
+                if (t.status === 'COMPLETED' && t.reportId && !_asyncCompletedNotified.has(t.taskId)) {
+                    _asyncCompletedNotified.add(t.taskId);
+                    showToast(`异步评测完成！通过率将更新至历史记录`, 'success');
+                    loadHistory && loadHistory();
+                }
+
+                const viewBtn = t.reportId
+                    ? `<button class="btn btn-success btn-sm" style="padding:2px 10px;font-size:12px;" onclick="closeAsyncTasksModal();viewHistoryDetails('${t.reportId}')">查看报告</button>`
+                    : '';
+                const errInfo = t.error ? `<div style="font-size:11px;color:#dc3545;margin-top:4px;">${utils.escapeHtml(t.error)}</div>` : '';
+
+                return `<div style="padding:12px;border-bottom:1px solid var(--border-color);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;">任务 ${t.taskId.slice(-8)}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${timeAgo(t.createdAt)}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            ${statusBadge(t.status)}${viewBtn}
+                        </div>
+                    </div>
+                    ${progress(t)}${errInfo}
+                </div>`;
+            }).join('');
+
+            container.innerHTML = rows;
+        }
+
+        async function runAsyncSelectedEvaluation() {
+            const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
+            const caseIds = Array.from(checked).map(cb => cb.value);
+
+            if (caseIds.length === 0) {
+                showToast('请先选择测试用例', 'error');
+                return;
+            }
+
+            const response = await fetch('/api/evaluate/async', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    caseIds,
+                    metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
+                    agentType: 'demo'
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                showToast(`异步任务已提交: ${data.taskId.slice(-8)}，可在任务监控中查看进度`, 'success');
+                openAsyncTasksModal();
+            } else {
+                showToast(data.error || '提交异步任务失败', 'error');
+            }
         }
 
         // 批量编辑用例

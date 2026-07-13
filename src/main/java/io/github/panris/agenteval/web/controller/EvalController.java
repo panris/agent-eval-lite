@@ -248,6 +248,21 @@ public class EvalController {
             for (TestCaseDto dto : request.getTestCases()) {
                 testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
             }
+        } else if (request.getCaseIds() != null && !request.getCaseIds().isEmpty()) {
+            // 根据 ID 列表从仓库加载
+            if (request.getCaseIds().size() > 100) {
+                return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
+            }
+            for (String caseId : request.getCaseIds()) {
+                var opt = testCaseRepository.findTestCaseById(caseId);
+                if (opt.isPresent()) {
+                    TestCaseEntity e = opt.get();
+                    testCases.add(new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null));
+                }
+            }
+            if (testCases.isEmpty()) {
+                return Map.of("success", false, "error", "未找到有效的测试用例");
+            }
         } else {
             // 未传具体用例时，按三维分组维度解析
             List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(
