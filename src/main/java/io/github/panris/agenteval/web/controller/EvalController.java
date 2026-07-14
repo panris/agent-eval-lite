@@ -37,6 +37,8 @@ public class EvalController {
     private final AsyncEvalService asyncEvalService;
     private static final List<String> VALID_METRICS =
             List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
+    private static final int MAX_CASES = 100;
+    private static final int MAX_INPUT_LEN = 10000;
 
     public EvalController(TestCaseRepository testCaseRepository,
                            AsyncEvalService asyncEvalService,
@@ -64,52 +66,25 @@ public class EvalController {
     @PostMapping("/api/evaluate")
     @ResponseBody
     public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
-        // Validate request
         if (request == null) {
-            return Map.of("success", false, "error", "请求体不能为空");
+            return error("请求体不能为空");
         }
-        
         if (request.getTestCases() == null || request.getTestCases().isEmpty()) {
-            return Map.of("success", false, "error", "测试用例列表不能为空");
+            return error("测试用例列表不能为空");
         }
-        
-        if (request.getTestCases().size() > 100) {
-            return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
-        }
-        
-        // Validate each test case
-        for (int i = 0; i < request.getTestCases().size(); i++) {
-            TestCaseDto dto = request.getTestCases().get(i);
-            if (dto.getInput() == null || dto.getInput().trim().isEmpty()) {
-                return Map.of("success", false, "error", "第 " + (i + 1) + " 个测试用例的输入不能为空");
-            }
-            if (dto.getInput().length() > 10000) {
-                return Map.of("success", false, "error", "第 " + (i + 1) + " 个测试用例的输入过长（最大 10000 字符）");
-            }
-            if (dto.getExpected() != null && dto.getExpected().length() > 10000) {
-                return Map.of("success", false, "error", "第 " + (i + 1) + " 个测试用例的期望输出过长（最大 10000 字符）");
-            }
-        }
-        
-        // Validate agent type
         String agentType = request.getAgentType();
         if (agentType == null || agentType.trim().isEmpty()) {
             agentType = "demo";
         }
-        
-        // Validate metrics
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
             return metricsError;
         }
-        
-        // Create test cases
-        List<TestCase> testCases = new ArrayList<>();
-        for (TestCaseDto dto : request.getTestCases()) {
-            testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
+        CaseResolution cr = resolveFromDtos(request.getTestCases());
+        if (cr.hasError()) {
+            return error(cr.errorMessage());
         }
-
-        return runEvaluation(testCases, request.getMetrics(), agentType, null, null, null, null);
+        return runEvaluation(cr.testCases(), request.getMetrics(), agentType, null, null, null, null);
     }
 
     /**
@@ -118,43 +93,21 @@ public class EvalController {
     @PostMapping("/api/evaluate/cases")
     @ResponseBody
     public Map<String, Object> evaluateByCaseIds(@RequestBody EvaluateByCaseIdsRequest request) {
-        // Validate request
         if (request == null) {
-            return Map.of("success", false, "error", "请求体不能为空");
+            return error("请求体不能为空");
         }
-        
         if (request.getCaseIds() == null || request.getCaseIds().isEmpty()) {
-            return Map.of("success", false, "error", "测试用例 ID 列表不能为空");
+            return error("测试用例 ID 列表不能为空");
         }
-        
-        if (request.getCaseIds().size() > 100) {
-            return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
-        }
-        
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
             return metricsError;
         }
-        
-        // Get test cases by IDs
-        List<TestCase> testCases = request.getCaseIds().stream()
-            .map(caseId -> testCaseRepository.findTestCaseById(caseId))
-            .filter(opt -> opt.isPresent())
-            .map(opt -> {
-                TestCaseEntity entity = opt.get();
-                return new TestCase(entity.getId(), entity.getInput(), entity.getExpected(), null, null);
-            })
-            .toList();
-
-        if (testCases.isEmpty()) {
-            return Map.of(
-                "success", false,
-                "error", "未找到有效的测试用例"
-            );
+        CaseResolution cr = resolveFromCaseIds(request.getCaseIds());
+        if (cr.hasError()) {
+            return error(cr.errorMessage());
         }
-
-        // Run evaluation
-        return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), null, null, null, null);
+        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, null, null);
     }
 
     /**
@@ -183,18 +136,12 @@ public class EvalController {
                     .toList();
 
                 if (testCases.isEmpty()) {
-                    return Map.<String, Object>of(
-                        "success", false,
-                        "error", "该分组没有测试用例"
-                    );
+                    return error("该分组没有测试用例");
                 }
 
                 return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), group.getName(), null, null, null);
             })
-            .orElse(Map.of(
-                "success", false,
-                "error", "分组不存在"
-            ));
+            .orElse(error("分组不存在"));
     }
 
     /**
@@ -207,21 +154,14 @@ public class EvalController {
         if (metricsError != null) {
             return metricsError;
         }
-        List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(
-            request.getProject(), request.getModule(), request.getFunction());
-        if (byDims.isEmpty()) {
-            return Map.of("success", false, "error", "没有符合所选维度的测试用例");
+        CaseResolution cr = resolveFromDimensions(request.getProject(), request.getModule(), request.getFunction());
+        if (cr.hasError()) {
+            return error(cr.errorMessage());
         }
-        if (byDims.size() > 100) {
-            return Map.of("success", false, "error", "测试用例数量不能超过 100 个（当前 " + byDims.size() + "）");
-        }
-        List<TestCase> testCases = byDims.stream()
-            .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null))
-            .toList();
         String groupLabel = request.getFunction() != null ? request.getFunction()
             : request.getModule() != null ? request.getModule()
             : request.getProject();
-        return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), groupLabel,
+        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), groupLabel,
             request.getProject(), request.getModule(), request.getFunction());
     }
 
@@ -232,7 +172,7 @@ public class EvalController {
     @ResponseBody
     public Map<String, Object> evaluateAsync(@RequestBody EvalRequest request) {
         if (request == null) {
-            return Map.of("success", false, "error", "请求不能为空");
+            return error("请求不能为空");
         }
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
@@ -240,44 +180,18 @@ public class EvalController {
         }
         String agentType = request.getAgentType() != null ? request.getAgentType() : "demo";
 
-        List<TestCase> testCases = new ArrayList<>();
+        CaseResolution cr;
         if (request.getTestCases() != null && !request.getTestCases().isEmpty()) {
-            if (request.getTestCases().size() > 100) {
-                return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
-            }
-            for (TestCaseDto dto : request.getTestCases()) {
-                testCases.add(new TestCase(dto.getInput(), dto.getExpected()));
-            }
+            cr = resolveFromDtos(request.getTestCases());
         } else if (request.getCaseIds() != null && !request.getCaseIds().isEmpty()) {
-            // 根据 ID 列表从仓库加载
-            if (request.getCaseIds().size() > 100) {
-                return Map.of("success", false, "error", "测试用例数量不能超过 100 个");
-            }
-            for (String caseId : request.getCaseIds()) {
-                var opt = testCaseRepository.findTestCaseById(caseId);
-                if (opt.isPresent()) {
-                    TestCaseEntity e = opt.get();
-                    testCases.add(new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null));
-                }
-            }
-            if (testCases.isEmpty()) {
-                return Map.of("success", false, "error", "未找到有效的测试用例");
-            }
+            cr = resolveFromCaseIds(request.getCaseIds());
         } else {
-            // 未传具体用例时，按三维分组维度解析
-            List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(
-                request.getProject(), request.getModule(), request.getFunction());
-            if (byDims.isEmpty()) {
-                return Map.of("success", false, "error", "没有符合所选维度的测试用例");
-            }
-            if (byDims.size() > 100) {
-                return Map.of("success", false, "error", "测试用例数量不能超过 100 个（当前 " + byDims.size() + "）");
-            }
-            for (TestCaseEntity e : byDims) {
-                testCases.add(new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null));
-            }
+            cr = resolveFromDimensions(request.getProject(), request.getModule(), request.getFunction());
         }
-        String taskId = asyncEvalService.submitTask(testCases, request.getMetrics(), agentType,
+        if (cr.hasError()) {
+            return error(cr.errorMessage());
+        }
+        String taskId = asyncEvalService.submitTask(cr.testCases(), request.getMetrics(), agentType,
                 300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction());
         return Map.of("success", true, "taskId", taskId, "status", "PENDING");
     }
@@ -290,7 +204,7 @@ public class EvalController {
     public Map<String, Object> getTaskStatus(@PathVariable String taskId) {
         AsyncEvalService.TaskStatus status = asyncEvalService.getStatus(taskId);
         if (status == null) {
-            return Map.of("success", false, "error", "任务不存在");
+            return error("任务不存在");
         }
         return Map.of(
             "success", true,
@@ -334,11 +248,11 @@ public class EvalController {
      */
     private Map<String, Object> validateMetrics(List<String> metrics) {
         if (metrics == null || metrics.isEmpty()) {
-            return Map.of("success", false, "error", "评测指标不能为空");
+            return error("评测指标不能为空");
         }
         for (String metric : metrics) {
             if (metric == null || !VALID_METRICS.contains(metric)) {
-                return Map.of("success", false, "error", "不支持的评测指标: " + metric);
+                return error("不支持的评测指标: " + metric);
             }
         }
         return null;
@@ -376,18 +290,7 @@ public class EvalController {
         reportData.put("failedTestCases", report.getFailedTestCases());
         reportData.put("executionTimeMs", report.getExecutionTimeMs());
         reportData.put("timestamp", System.currentTimeMillis());
-        if (group != null && !group.trim().isEmpty()) {
-            reportData.put("group", group.trim());
-        }
-        if (project != null && !project.trim().isEmpty()) {
-            reportData.put("project", project.trim());
-        }
-        if (module != null && !module.trim().isEmpty()) {
-            reportData.put("module", module.trim());
-        }
-        if (function != null && !function.trim().isEmpty()) {
-            reportData.put("function", function.trim());
-        }
+        putDimensions(reportData, group, project, module, function);
         reportService.saveReport(reportId, reportData);
 
 
@@ -400,19 +303,31 @@ public class EvalController {
         result.put("passedTestCases", report.getPassedTestCases());
         result.put("failedTestCases", report.getFailedTestCases());
         result.put("executionTimeMs", report.getExecutionTimeMs());
+        putDimensions(result, group, project, module, function);
+        return result;
+    }
+
+    /**
+     * Helper: set dimension fields on a map, trimming and skipping null/blank values.
+     */
+    private void putDimensions(Map<String, Object> map, String group, String project, String module, String function) {
         if (group != null && !group.trim().isEmpty()) {
-            result.put("group", group.trim());
+            map.put("group", group.trim());
         }
         if (project != null && !project.trim().isEmpty()) {
-            result.put("project", project.trim());
+            map.put("project", project.trim());
         }
         if (module != null && !module.trim().isEmpty()) {
-            result.put("module", module.trim());
+            map.put("module", module.trim());
         }
         if (function != null && !function.trim().isEmpty()) {
-            result.put("function", function.trim());
+            map.put("function", function.trim());
         }
-        return result;
+    }
+
+    /** Shorthand: return an error result map. */
+    private static Map<String, Object> error(String message) {
+        return Map.of("success", false, "error", message);
     }
 
     @GetMapping("/api/reports")
@@ -442,7 +357,7 @@ public class EvalController {
     public Map<String, Object> getReport(@PathVariable String id) {
         Map<String, Object> report = reportService.getReport(id);
         if (report == null) {
-            return Map.of("success", false, "error", "报告不存在");
+            return error("报告不存在");
         }
         Map<String, Object> detail = new LinkedHashMap<>();
         detail.put("success", true);
@@ -472,7 +387,7 @@ public class EvalController {
         if (body != null && "clearAll".equals(body.get("action"))) {
             return reportService.clearAllReports();
         }
-        return Map.of("success", false, "error", "无效的操作");
+        return error("无效的操作");
     }
 
     @GetMapping("/api/reports/{id}/export")
@@ -659,7 +574,7 @@ public class EvalController {
             @RequestBody Map<String, Object> body) {
         Object tags = body.get("tags");
         if (!(tags instanceof List)) {
-            return Map.of("success", false, "error", "tags 必须是一个列表");
+            return error("tags 必须是一个列表");
         }
         @SuppressWarnings("unchecked")
         List<String> tagList = (List<String>) tags;
@@ -682,7 +597,13 @@ public class EvalController {
             @RequestParam String ids,
             @RequestParam(required = false) String metric) {
         List<String> idList = java.util.Arrays.asList(ids.split(",")).stream()
-            .map(String::trim).collect(java.util.stream.Collectors.toList());
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .distinct()
+            .collect(java.util.stream.Collectors.toList());
+        if (idList.size() < 2) {
+            return error("至少需要 2 个报告进行对比");
+        }
         return reportService.compareReports(idList);
     }
 
@@ -716,6 +637,70 @@ public class EvalController {
             }
             return "I'm a demo agent. You asked: " + input;
         };
+    }
+
+    /** Result holder for test-case resolution. */
+    private record CaseResolution(List<TestCase> testCases, String errorMessage) {
+        CaseResolution(List<TestCase> testCases) { this(testCases, null); }
+        CaseResolution(String errorMessage) { this(null, errorMessage); }
+        boolean hasError() { return errorMessage != null; }
+    }
+
+    /** Resolve test cases from DTO list (used by sync evaluate + async). */
+    private CaseResolution resolveFromDtos(List<TestCaseDto> dtos) {
+        if (dtos.size() > MAX_CASES) {
+            return new CaseResolution("测试用例数量不能超过 " + MAX_CASES + " 个");
+        }
+        for (int i = 0; i < dtos.size(); i++) {
+            TestCaseDto dto = dtos.get(i);
+            if (dto.getInput() == null || dto.getInput().trim().isEmpty()) {
+                return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入不能为空");
+            }
+            if (dto.getInput().length() > MAX_INPUT_LEN) {
+                return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入过长（最大 " + MAX_INPUT_LEN + " 字符）");
+            }
+            if (dto.getExpected() != null && dto.getExpected().length() > MAX_INPUT_LEN) {
+                return new CaseResolution("第 " + (i + 1) + " 个测试用例的期望输出过长（最大 " + MAX_INPUT_LEN + " 字符）");
+            }
+        }
+        List<TestCase> cases = dtos.stream()
+            .map(dto -> new TestCase(dto.getInput(), dto.getExpected()))
+            .toList();
+        return new CaseResolution(cases);
+    }
+
+    /** Resolve test cases from repository by IDs (used by evaluateByCaseIds + async). */
+    private CaseResolution resolveFromCaseIds(List<String> caseIds) {
+        if (caseIds.size() > MAX_CASES) {
+            return new CaseResolution("测试用例数量不能超过 " + MAX_CASES + " 个");
+        }
+        List<TestCase> cases = caseIds.stream()
+            .map(id -> testCaseRepository.findTestCaseById(id))
+            .filter(java.util.Optional::isPresent)
+            .map(opt -> {
+                TestCaseEntity e = opt.get();
+                return new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null);
+            })
+            .toList();
+        if (cases.isEmpty()) {
+            return new CaseResolution("未找到有效的测试用例");
+        }
+        return new CaseResolution(cases);
+    }
+
+    /** Resolve test cases by project/module/function dimensions (used by evaluateByDimensions + async). */
+    private CaseResolution resolveFromDimensions(String project, String module, String function) {
+        List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(project, module, function);
+        if (byDims.isEmpty()) {
+            return new CaseResolution("没有符合所选维度的测试用例");
+        }
+        if (byDims.size() > MAX_CASES) {
+            return new CaseResolution("测试用例数量不能超过 " + MAX_CASES + " 个（当前 " + byDims.size() + "）");
+        }
+        List<TestCase> cases = byDims.stream()
+            .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null))
+            .toList();
+        return new CaseResolution(cases);
     }
 }
 

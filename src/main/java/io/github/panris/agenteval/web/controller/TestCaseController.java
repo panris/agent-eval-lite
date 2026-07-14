@@ -30,18 +30,8 @@ public class TestCaseController {
      */
     @PostMapping
     public Map<String, Object> createTestCase(@RequestBody TestCaseRequest request) {
-        if (request.getInput() == null || request.getInput().isBlank()) {
-            log.warn("createTestCase: input is required");
-            return Map.of("success", false, "error", "输入不能为空");
-        }
-        if (request.getExpected() == null || request.getExpected().isBlank()) {
-            log.warn("createTestCase: expected is required");
-            return Map.of("success", false, "error", "期望输出不能为空");
-        }
-        if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
-            log.warn("createTestCase: input or expected exceeds 10000 characters");
-            return Map.of("success", false, "error", "输入或期望输出不能超过 10000 字符");
-        }
+        Map<String, Object> valError = validateInput(request);
+        if (valError != null) return valError;
         TestCaseEntity testCase = new TestCaseEntity(
             request.getName(),
             request.getInput(),
@@ -175,18 +165,8 @@ public class TestCaseController {
         @PathVariable String id,
         @RequestBody TestCaseRequest request
     ) {
-        if (request.getInput() == null || request.getInput().isBlank()) {
-            log.warn("updateTestCase [{}]: input is required", id);
-            return Map.of("success", false, "error", "输入不能为空");
-        }
-        if (request.getExpected() == null || request.getExpected().isBlank()) {
-            log.warn("updateTestCase [{}]: expected is required", id);
-            return Map.of("success", false, "error", "期望输出不能为空");
-        }
-        if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
-            log.warn("updateTestCase [{}]: input or expected exceeds 10000 chars", id);
-            return Map.of("success", false, "error", "输入或期望输出不能超过 10000 字符");
-        }
+        Map<String, Object> valError = validateInput(request);
+        if (valError != null) return valError;
         return repository.findTestCaseById(id)
             .map(tc -> {
                 tc.setName(request.getName());
@@ -294,6 +274,19 @@ public class TestCaseController {
             "imported", saved.size(),
             "testCases", saved
         );
+    }
+
+    private Map<String, Object> validateInput(TestCaseRequest request) {
+        if (request.getInput() == null || request.getInput().isBlank()) {
+            return Map.of("success", false, "error", "输入不能为空");
+        }
+        if (request.getExpected() == null || request.getExpected().isBlank()) {
+            return Map.of("success", false, "error", "期望输出不能为空");
+        }
+        if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
+            return Map.of("success", false, "error", "输入或期望输出不能超过 10000 字符");
+        }
+        return null;
     }
 }
 
