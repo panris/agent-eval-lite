@@ -138,26 +138,20 @@ public class GroupController {
         @PathVariable String id,
         @RequestBody Map<String, String> request
     ) {
-        String testCaseId = request.get("testCaseId");
-        if (testCaseId == null) {
-            return Map.of(
-                "success", false,
-                "error", "testCaseId 不能为空"
-            );
+        String testCaseId = request != null ? request.get("testCaseId") : null;
+        if (testCaseId == null || testCaseId.isBlank()) {
+            return Map.of("success", false, "error", "testCaseId 不能为空");
+        }
+
+        if (repository.findGroupById(id).isEmpty()) {
+            return Map.of("success", false, "error", "分组不存在");
+        }
+        if (repository.findTestCaseById(testCaseId).isEmpty()) {
+            return Map.of("success", false, "error", "测试用例不存在");
         }
 
         TestCaseGroup group = repository.addTestCaseToGroup(id, testCaseId);
-        if (group == null) {
-            return Map.of(
-                "success", false,
-                "error", "分组或测试用例不存在"
-            );
-        }
-
-        return Map.of(
-            "success", true,
-            "group", group
-        );
+        return Map.of("success", true, "group", group);
     }
 
     /**
@@ -168,18 +162,11 @@ public class GroupController {
         @PathVariable String id,
         @PathVariable String testCaseId
     ) {
-        TestCaseGroup group = repository.removeTestCaseFromGroup(id, testCaseId);
-        if (group == null) {
-            return Map.of(
-                "success", false,
-                "error", "分组不存在"
-            );
+        if (repository.findGroupById(id).isEmpty()) {
+            return Map.of("success", false, "error", "分组不存在");
         }
-
-        return Map.of(
-            "success", true,
-            "group", group
-        );
+        TestCaseGroup group = repository.removeTestCaseFromGroup(id, testCaseId);
+        return Map.of("success", true, "group", group);
     }
 }
 

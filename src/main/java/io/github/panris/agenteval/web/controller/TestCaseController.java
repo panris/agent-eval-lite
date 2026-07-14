@@ -227,12 +227,22 @@ public class TestCaseController {
     public Map<String, Object> updateTags(
             @PathVariable String id,
             @RequestBody Map<String, Object> body) {
+        if (body == null || !body.containsKey("tags")) {
+            return Map.of("success", false, "error", "tags 不能为空");
+        }
+        Object tagsObj = body.get("tags");
+        if (!(tagsObj instanceof List)) {
+            return Map.of("success", false, "error", "tags 必须是一个列表");
+        }
         Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
         if (opt.isEmpty()) {
             return Map.of("success", false, "error", "测试用例不存在");
         }
         TestCaseEntity tc = opt.get();
-        tc.getMetadata().put("tags", body.get("tags"));
+        if (tc.getMetadata() == null) {
+            tc.setMetadata(new java.util.LinkedHashMap<>());
+        }
+        tc.getMetadata().put("tags", tagsObj);
         tc.updateTimestamp();
         repository.saveTestCase(tc);
         return Map.of("success", true, "tags", tc.getMetadata().get("tags"));
@@ -250,6 +260,14 @@ public class TestCaseController {
         if (requests.size() > 100) {
             log.warn("batchImport: batch size {} exceeds 100 items", requests.size());
             return Map.of("success", false, "error", "Batch size exceeds 100 items");
+        }
+        // Validate each item
+        for (int i = 0; i < requests.size(); i++) {
+            Map<String, Object> ve = validateInput(requests.get(i));
+            if (ve != null) {
+                log.warn("batchImport: item {} validation failed", i);
+                return ve;
+            }
         }
         List<TestCaseEntity> testCases = requests.stream()
             .map(req -> {
