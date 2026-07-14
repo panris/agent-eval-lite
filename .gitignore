@@ -7,3 +7,4 @@ target/
 out/
 data/shares.json
 data/reports.json
+memory/
