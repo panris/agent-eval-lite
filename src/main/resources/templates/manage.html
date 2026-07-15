@@ -528,6 +528,7 @@
                     已选择 <span id="selected-case-count">0</span> 个用例
                 </span>
                 <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success btn-sm" onclick="openRequirementModal()">📝 从需求生成</button>
                     <button class="btn btn-success btn-sm" onclick="openImportExcelModal()">📥 导入 Excel</button>
                     <button class="btn btn-primary btn-sm" onclick="runSelectedEvaluation()">🚀 评测选中用例</button>
                     <button class="btn btn-info btn-sm" onclick="runAsyncSelectedEvaluation()">⚡ 异步评测</button>
@@ -930,6 +931,60 @@
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-primary btn-sm" onclick="importTestCasesExcel()">导入</button>
                 <button class="btn btn-sm" onclick="closeImportExcelModal()" style="background: #6c757d; color: white;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 从需求生成测试用例模态框 -->
+    <div id="requirement-modal" class="confirm-overlay" style="display: none;">
+        <div class="confirm-dialog" style="max-width: 800px; width: 95%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0;">📝 从需求文档生成测试用例</h3>
+                <button onclick="closeRequirementModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</button>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-primary); font-size: 14px;">需求文档内容</label>
+                <textarea id="req-text" class="form-control" rows="10"
+                    placeholder="粘贴需求文档内容，支持 Markdown 格式...
+
+格式示例：
+## 用户登录
+### 登录成功
+输入：admin / 123456
+期望：返回 token，状态码 200"
+                    style="resize: vertical; width: 100%; font-family: monospace; font-size: 13px;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+                <input type="text" id="req-project" class="form-control" placeholder="项目（默认）" list="project-list">
+                <input type="text" id="req-module" class="form-control" placeholder="模块（默认）" list="module-list">
+                <input type="text" id="req-function" class="form-control" placeholder="功能（默认）" list="function-list">
+                <input type="text" id="req-group" class="form-control" placeholder="分组（默认）">
+            </div>
+
+            <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
+                <button class="btn btn-primary" onclick="parseRequirement()" id="req-parse-btn">🔍 解析生成</button>
+                <button class="btn btn-success" onclick="saveParsedCases()" id="req-save-btn" disabled>💾 保存选中</button>
+                <span id="req-count" style="color: var(--text-secondary); font-size: 13px;"></span>
+                <div class="loading" id="req-loading" style="display: none; padding: 5px;">
+                    <div class="spinner" style="width: 24px; height: 24px;"></div>
+                </div>
+            </div>
+
+            <div id="req-preview" style="display: none; max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                <table class="table" style="margin: 0;">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell"><input type="checkbox" id="req-select-all" onchange="toggleReqSelectAll()"></th>
+                            <th>名称</th>
+                            <th>输入</th>
+                            <th>期望输出</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody id="req-preview-tbody"></tbody>
+                </table>
             </div>
         </div>
     </div>

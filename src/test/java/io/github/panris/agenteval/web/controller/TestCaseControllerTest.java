@@ -2,6 +2,7 @@ package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.service.RequirementParser;
 import org.junit.jupiter.api.*;
 import org.springframework.ui.Model;
 
@@ -18,11 +19,13 @@ class TestCaseControllerTest {
 
     private TestCaseController controller;
     private TestCaseRepository mockRepository;
+    private RequirementParser mockRequirementParser;
 
     @BeforeEach
     void setUp() {
         mockRepository = mock(TestCaseRepository.class);
-        controller = new TestCaseController(mockRepository);
+        mockRequirementParser = mock(RequirementParser.class);
+        controller = new TestCaseController(mockRepository, mockRequirementParser);
     }
 
     // ============ POST /api/testcases — create ============

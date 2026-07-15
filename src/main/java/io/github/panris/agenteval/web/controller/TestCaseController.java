@@ -2,10 +2,12 @@ package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.service.RequirementParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,9 +22,11 @@ public class TestCaseController {
     private static final Logger log = LoggerFactory.getLogger(TestCaseController.class);
 
     private final TestCaseRepository repository;
+    private final RequirementParser requirementParser;
 
-    public TestCaseController(TestCaseRepository repository) {
+    public TestCaseController(TestCaseRepository repository, RequirementParser requirementParser) {
         this.repository = repository;
+        this.requirementParser = requirementParser;
     }
 
     /**
@@ -292,6 +296,83 @@ public class TestCaseController {
             "imported", saved.size(),
             "testCases", saved
         );
+    }
+
+    /**
+     * Parse requirement text into test case candidates.
+     */
+    @PostMapping("/parse-from-requirements")
+    public Map<String, Object> parseFromRequirements(@RequestBody Map<String, String> body) {
+        String text = body.get("text");
+        if (text == null || text.isBlank()) {
+            return Map.of("success", false, "error", "需求文档内容不能为空");
+        }
+        if (text.length() > 50000) {
+            text = text.substring(0, 50000);
+        }
+
+        String defaultGroup = body.getOrDefault("groupId", null);
+        String defaultProject = body.getOrDefault("project", null);
+        String defaultModule = body.getOrDefault("module", null);
+        String defaultFunction = body.getOrDefault("function", null);
+
+        // Treat empty strings as null
+        if (defaultGroup != null && defaultGroup.isBlank()) defaultGroup = null;
+        if (defaultProject != null && defaultProject.isBlank()) defaultProject = null;
+        if (defaultModule != null && defaultModule.isBlank()) defaultModule = null;
+        if (defaultFunction != null && defaultFunction.isBlank()) defaultFunction = null;
+
+        return requirementParser.parse(text, defaultGroup, defaultProject, defaultModule, defaultFunction);
+    }
+
+    /**
+     * Save parsed test cases from requirement documents.
+     */
+    @PostMapping("/save-parsed")
+    public Map<String, Object> saveParsed(@RequestBody List<Map<String, Object>> cases) {
+        if (cases == null || cases.isEmpty()) {
+            return Map.of("success", false, "error", "没有要保存的测试用例");
+        }
+        if (cases.size() > 200) {
+            return Map.of("success", false, "error", "一次最多保存 200 个测试用例");
+        }
+
+        int savedCount = 0;
+        for (Map<String, Object> caseMap : cases) {
+            String name = (String) caseMap.getOrDefault("name", "");
+            String input = (String) caseMap.get("input");
+            String expected = (String) caseMap.get("expected");
+
+            if (input == null || input.isBlank()) continue;
+            if (expected == null || expected.isBlank()) continue;
+
+            TestCaseEntity tc = new TestCaseEntity(name, input, expected);
+
+            if (caseMap.containsKey("groupId")) {
+                String gid = (String) caseMap.get("groupId");
+                if (gid != null && !gid.isBlank()) tc.setGroupId(gid);
+            }
+            if (caseMap.containsKey("project")) {
+                tc.setProject((String) caseMap.get("project"));
+            }
+            if (caseMap.containsKey("module")) {
+                tc.setModule((String) caseMap.get("module"));
+            }
+            if (caseMap.containsKey("function")) {
+                tc.setFunction((String) caseMap.get("function"));
+            }
+            if (caseMap.containsKey("description")) {
+                tc.setDescription((String) caseMap.get("description"));
+            }
+
+            repository.saveTestCase(tc);
+            savedCount++;
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("success", true);
+        result.put("saved", savedCount);
+        return result;
     }
 
     private Map<String, Object> validateInput(TestCaseRequest request) {
