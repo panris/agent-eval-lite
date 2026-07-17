@@ -5,6 +5,7 @@ import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.RequirementParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
@@ -32,6 +33,7 @@ public class TestCaseController {
     /**
      * Create a new test case.
      */
+    @Operation(summary = "创建新的测试用例")
     @PostMapping
     public Map<String, Object> createTestCase(@RequestBody TestCaseRequest request) {
         Map<String, Object> valError = validateInput(request);
@@ -59,6 +61,7 @@ public class TestCaseController {
     /**
      * List test cases with pagination.
      */
+    @Operation(summary = "分页列出测试用例，支持按分组和关键词过滤")
     @GetMapping
     public Map<String, Object> listTestCases(
         @RequestParam(required = false) String groupId,
@@ -135,6 +138,7 @@ public class TestCaseController {
     /**
      * 获取所有测试用例的三维分组去重值，用于前端下拉框。
      */
+    @Operation(summary = "获取所有三维分组去重值（projects/modules/functions）")
     @GetMapping("/dimensions")
     public Map<String, Object> getDimensions() {
         return Map.of(
@@ -148,6 +152,7 @@ public class TestCaseController {
     /**
      * Get a specific test case.
      */
+    @Operation(summary = "获取指定测试用例详情")
     @GetMapping("/{id}")
     public Map<String, Object> getTestCase(@PathVariable String id) {
         return repository.findTestCaseById(id)
@@ -164,6 +169,7 @@ public class TestCaseController {
     /**
      * Update a test case.
      */
+    @Operation(summary = "更新指定测试用例内容")
     @PutMapping("/{id}")
     public Map<String, Object> updateTestCase(
         @PathVariable String id,
@@ -209,6 +215,7 @@ public class TestCaseController {
     /**
      * Delete a test case.
      */
+    @Operation(summary = "删除指定测试用例")
     @DeleteMapping("/{id}")
     public Map<String, Object> deleteTestCase(@PathVariable String id) {
         if (repository.findTestCaseById(id).isPresent()) {
@@ -227,6 +234,7 @@ public class TestCaseController {
     /**
      * Update test case tags.
      */
+    @Operation(summary = "批量更新测试用例标签")
     @PutMapping("/{id}/tags")
     public Map<String, Object> updateTags(
             @PathVariable String id,
@@ -255,6 +263,7 @@ public class TestCaseController {
     /**
      * Batch import test cases.
      */
+    @Operation(summary = "批量导入测试用例（Excel/CSV）")
     @PostMapping("/batch")
     public Map<String, Object> batchImport(@RequestBody List<TestCaseRequest> requests) {
         if (requests == null || requests.isEmpty()) {
@@ -301,6 +310,7 @@ public class TestCaseController {
     /**
      * Parse requirement text into test case candidates.
      */
+    @Operation(summary = "从需求文档解析生成测试用例候选")
     @PostMapping("/parse-from-requirements")
     public Map<String, Object> parseFromRequirements(@RequestBody Map<String, String> body) {
         String text = body.get("text");
@@ -328,6 +338,7 @@ public class TestCaseController {
     /**
      * Save parsed test cases from requirement documents.
      */
+    @Operation(summary = "保存解析后的测试用例到数据库")
     @PostMapping("/save-parsed")
     public Map<String, Object> saveParsed(@RequestBody List<Map<String, Object>> cases) {
         if (cases == null || cases.isEmpty()) {

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.Operation;
 
 @Controller
 public class ShareController {
@@ -19,6 +20,7 @@ public class ShareController {
         this.reportService = reportService;
     }
 
+    @Operation(summary = "展示分享报告页面")
     @GetMapping("/share/{shareId}")
     public String showSharedReport(@PathVariable String shareId, Model model) {
         String reportId = reportService.resolveShareId(shareId);

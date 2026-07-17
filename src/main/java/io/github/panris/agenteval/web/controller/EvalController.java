@@ -12,6 +12,7 @@ import io.github.panris.agenteval.service.ReportService;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.PostConstruct;
@@ -63,6 +64,7 @@ public class EvalController {
         return "manage";
     }
 
+    @Operation(summary = "执行同步评测，返回完整报告")
     @PostMapping("/api/evaluate")
     @ResponseBody
     public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
@@ -90,6 +92,7 @@ public class EvalController {
     /**
      * Evaluate by specific test case IDs.
      */
+    @Operation(summary = "按用例 ID 列表执行同步评测")
     @PostMapping("/api/evaluate/cases")
     @ResponseBody
     public Map<String, Object> evaluateByCaseIds(@RequestBody EvaluateByCaseIdsRequest request) {
@@ -113,6 +116,7 @@ public class EvalController {
     /**
      * Evaluate by group ID.
      */
+    @Operation(summary = "按分组执行同步评测")
     @PostMapping("/api/evaluate/group/{groupId}")
     @ResponseBody
     public Map<String, Object> evaluateByGroup(
@@ -147,6 +151,7 @@ public class EvalController {
     /**
      * 按三维分组（项目/模块/功能）同步评测。任一维度为空表示不限制该维度。
      */
+    @Operation(summary = "按三维维度执行同步评测")
     @PostMapping("/api/evaluate/dimensions")
     @ResponseBody
     public Map<String, Object> evaluateByDimensions(@RequestBody EvalRequest request) {
@@ -168,6 +173,7 @@ public class EvalController {
     /**
      * Submit async batch evaluation task.
      */
+    @Operation(summary = "提交异步评测任务，返回任务 ID")
     @PostMapping("/api/evaluate/async")
     @ResponseBody
     public Map<String, Object> evaluateAsync(@RequestBody EvalRequest request) {
@@ -199,6 +205,7 @@ public class EvalController {
     /**
      * Get async task status.
      */
+    @Operation(summary = "查询异步评测任务状态")
     @GetMapping("/api/tasks/{taskId}")
     @ResponseBody
     public Map<String, Object> getTaskStatus(@PathVariable String taskId) {
@@ -381,6 +388,7 @@ public class EvalController {
         return reportService.deleteReport(id);
     }
 
+    @Operation(summary = "清空所有评测报告")
     @RequestMapping(value = "/api/reports", method = RequestMethod.DELETE)
     @ResponseBody
     public Map<String, Object> clearAllReports(@RequestBody(required = false) Map<String, String> body) {
@@ -539,6 +547,7 @@ public class EvalController {
     }
 
     // 复制报告
+    @Operation(summary = "复制报告（生成新 ID）")
     @PostMapping("/api/reports/{id}/copy")
     @ResponseBody
     public Map<String, Object> copyReport(@PathVariable String id) {
@@ -546,6 +555,7 @@ public class EvalController {
     }
 
     // 收藏/取消收藏
+    @Operation(summary = "切换报告收藏状态")
     @PostMapping("/api/reports/{id}/favorite")
     @ResponseBody
     public Map<String, Object> toggleFavorite(@PathVariable String id) {
@@ -553,6 +563,7 @@ public class EvalController {
     }
 
     // 生成报告分享链接
+    @Operation(summary = "生成分享链接")
     @PostMapping("/api/reports/{id}/share")
     @ResponseBody
     public Map<String, Object> shareReport(@PathVariable String id) {
@@ -560,6 +571,7 @@ public class EvalController {
     }
 
     // 获取分享列表
+    @Operation(summary = "获取收藏报告列表")
     @GetMapping("/api/reports/favorites")
     @ResponseBody
     public Map<String, Object> getFavorites() {
@@ -567,6 +579,7 @@ public class EvalController {
     }
 
     // 更新报告标签
+    @Operation(summary = "批量更新报告标签")
     @PutMapping("/api/reports/{id}/tags")
     @ResponseBody
     public Map<String, Object> updateTags(
@@ -582,6 +595,7 @@ public class EvalController {
     }
 
     // 更新报告备注
+    @Operation(summary = "更新报告备注")
     @PutMapping("/api/reports/{id}/note")
     @ResponseBody
     public Map<String, Object> updateNote(

@@ -4,6 +4,7 @@ import io.github.panris.agenteval.model.TestCaseGroup;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class GroupController {
     /**
      * Create a new group.
      */
+    @Operation(summary = "创建新分组")
     @PostMapping
     public Map<String, Object> createGroup(@RequestBody GroupRequest request) {
         if (request == null || request.getName() == null || request.getName().isBlank()) {
@@ -49,6 +51,7 @@ public class GroupController {
     /**
      * List all groups.
      */
+    @Operation(summary = "获取所有分组列表")
     @GetMapping
     public Map<String, Object> listGroups() {
         List<TestCaseGroup> groups = repository.findAllGroups();
@@ -63,6 +66,7 @@ public class GroupController {
     /**
      * Get a specific group with test cases.
      */
+    @Operation(summary = "获取指定分组详情")
     @GetMapping("/{id}")
     public Map<String, Object> getGroup(@PathVariable String id) {
         return repository.findGroupById(id)
@@ -93,6 +97,7 @@ public class GroupController {
     /**
      * Update a group.
      */
+    @Operation(summary = "更新分组名称")
     @PutMapping("/{id}")
     public Map<String, Object> updateGroup(
         @PathVariable String id,
@@ -120,6 +125,7 @@ public class GroupController {
     /**
      * Delete a group.
      */
+    @Operation(summary = "删除分组及其关联的测试用例")
     @DeleteMapping("/{id}")
     public Map<String, Object> deleteGroup(@PathVariable String id) {
         if (repository.findGroupById(id).isPresent()) {
@@ -133,6 +139,7 @@ public class GroupController {
     /**
      * Add test case to group.
      */
+    @Operation(summary = "将测试用例添加到分组")
     @PostMapping("/{id}/testcases")
     public Map<String, Object> addTestCaseToGroup(
         @PathVariable String id,
@@ -157,6 +164,7 @@ public class GroupController {
     /**
      * Remove test case from group.
      */
+    @Operation(summary = "将测试用例移出分组")
     @DeleteMapping("/{id}/testcases/{testCaseId}")
     public Map<String, Object> removeTestCaseFromGroup(
         @PathVariable String id,

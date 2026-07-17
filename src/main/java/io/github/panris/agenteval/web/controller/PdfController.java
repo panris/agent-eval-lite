@@ -7,6 +7,7 @@ import io.github.panris.agenteval.service.ReportService;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 
 import java.awt.Color;
@@ -33,6 +34,7 @@ public class PdfController {
     /**
      * 生成中文支持的 PDF
      */
+    @Operation(summary = "导出评测报告为 PDF（含中文支持）")
     @GetMapping("/reports/{id}/export/pdf")
     public ResponseEntity<Resource> exportReportPdf(@PathVariable String id) {
         try {

@@ -7,6 +7,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ public class ExcelController {
     /**
      * 导出所有测试用例为 Excel
      */
+    @Operation(summary = "导出测试用例为 Excel 文件")
     @GetMapping("/export/excel")
     public ResponseEntity<Resource> exportExcel() {
         try {
@@ -107,6 +109,7 @@ public class ExcelController {
     private static final int MAX_ROWS = 1000;
     private static final int MAX_FIELD_LENGTH = 10000;
 
+    @Operation(summary = "导入 Excel 文件生成测试用例")
     @PostMapping("/import/excel")
     public ResponseEntity<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
         Map<String, Object> result = new HashMap<>();
@@ -199,6 +202,7 @@ public class ExcelController {
         }
     }
 
+    @Operation(summary = "导入 CSV 文件生成测试用例")
     @PostMapping("/import/csv")
     public ResponseEntity<Map<String, Object>> importCsv(@RequestParam("file") MultipartFile file) {
         Map<String, Object> result = new HashMap<>();

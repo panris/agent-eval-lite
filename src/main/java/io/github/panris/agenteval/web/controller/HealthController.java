@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 public class HealthController {
@@ -23,6 +24,7 @@ public class HealthController {
         this.reportService = reportService;
     }
 
+    @Operation(summary = "健康检查接口")
     @GetMapping("/api/health")
     public Map<String, Object> health() {
         Map<String, Object> result = new LinkedHashMap<>();

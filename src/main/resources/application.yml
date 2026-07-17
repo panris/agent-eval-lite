@@ -1,6 +1,15 @@
 server:
   port: 8080
 
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    enabled: true
+
 spring:
   application:
     name: agent-eval-lite
