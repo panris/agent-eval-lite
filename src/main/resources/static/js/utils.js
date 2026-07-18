@@ -332,6 +332,37 @@ const Table = {
 // utils namespace — 暴露 Table 的 escapeHtml 供模板字符串使用
 const utils = {
     escapeHtml: Table.escapeHtml,
+    toast: Toast,
+    logError,
+    
+    // API 辅助方法
+    api: {
+        async get(url) {
+            const res = await fetch(url);
+            return res.json();
+        },
+        async post(url, data) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        },
+        async put(url, data) {
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        },
+        async delete(url) {
+            const res = await fetch(url, { method: 'DELETE' });
+            return res.json();
+        }
+    },
+    
     toggleClearBtn(inputId, btnId) {
         const input = document.getElementById(inputId);
         const btn = document.getElementById(btnId);
