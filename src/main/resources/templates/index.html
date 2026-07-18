@@ -3,409 +3,492 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Eval Lite - 评测控制台</title>
+    <title>Agent Eval Lite - 控制台</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <style>
+        /* 首页专用样式 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .stat-card .stat-trend {
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .stat-trend.up { color: #10b981; }
+        .stat-trend.down { color: #ef4444; }
+
+        /* 快速操作卡片 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-card:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-card:hover .action-icon,
+        .action-card:hover .action-title,
+        .action-card:hover .action-desc {
+            color: white;
+        }
+
+        .action-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .action-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .action-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 最近评测历史 */
+        .recent-reports {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .view-all-link {
+            font-size: 14px;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .view-all-link:hover {
+            text-decoration: underline;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .report-table th {
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .report-table td {
+            padding: 12px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .report-table tr:hover {
+            background: var(--hover-bg);
+        }
+
+        .report-table .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* 系统状态卡片 */
+        .system-status {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.healthy { background: #10b981; }
+        .status-indicator.warning { background: #f59e0b; }
+        .status-indicator.error { background: #ef4444; }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .report-table {
+                font-size: 12px;
+            }
+
+            .report-table th:nth-child(3),
+            .report-table td:nth-child(3),
+            .report-table th:nth-child(4),
+            .report-table td:nth-child(4) {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
+        <!-- 头部 -->
         <div class="header">
             <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" id="theme-btn">🌙</button>
             <div class="header-content">
                 <h1>🤖 Agent Eval Lite</h1>
-                <p>简单易用的 Agent 评测系统</p>
+                <p>轻量级 Agent 评测系统</p>
             </div>
             <div style="width: 60px;"></div>
         </div>
 
-        <!-- 评测配置 -->
-        <div class="card">
-            <h2 class="card-title">评测配置</h2>
-
-            <div class="form-group">
-                <label>Agent 类型</label>
-                <select class="form-control" id="agentType">
-                    <option value="demo">Demo Agent (内置演示)</option>
-                    <option value="openai">OpenAI Agent</option>
-                    <option value="custom">Custom Agent</option>
-                </select>
+        <!-- 数据概览 -->
+        <div class="dashboard-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="totalTestCases">-</div>
+                <div class="stat-label">测试用例总数</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-value" id="totalReports">-</div>
+                <div class="stat-label">评测报告总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value" id="avgPassRate">-</div>
+                <div class="stat-label">平均通过率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-value" id="avgResponseTime">-</div>
+                <div class="stat-label">平均响应时间</div>
+            </div>
+        </div>
 
-            <div class="form-group">
-                <label>评测指标</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-item">
-                        <input type="checkbox" name="metric" value="correctness" checked>
-                        <span>Correctness (准确性)</span>
-                    </label>
-                    <label class="checkbox-item">
-                        <input type="checkbox" name="metric" value="safety" checked>
-                        <span>Safety (安全性)</span>
-                    </label>
-                    <label class="checkbox-item">
-                        <input type="checkbox" name="metric" value="response_time" checked>
-                        <span>Response Time (响应时间)</span>
-                    </label>
+        <!-- 快速操作 -->
+        <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary);">快速操作</h2>
+        <div class="quick-actions">
+            <a href="/manage" class="action-card">
+                <span class="action-icon">📝</span>
+                <div class="action-title">管理用例</div>
+                <div class="action-desc">创建、编辑、导入测试用例</div>
+            </a>
+            <a href="/manage#eval-tab" class="action-card">
+                <span class="action-icon">🚀</span>
+                <div class="action-title">开始评测</div>
+                <div class="action-desc">选择用例并执行评测</div>
+            </a>
+            <a href="/manage#history-tab" class="action-card">
+                <span class="action-icon">📈</span>
+                <div class="action-title">查看报告</div>
+                <div class="action-desc">浏览历史评测结果</div>
+            </a>
+            <a href="/agents" class="action-card">
+                <span class="action-icon">🤖</span>
+                <div class="action-title">配置 Agent</div>
+                <div class="action-desc">管理 Agent 接口配置</div>
+            </a>
+        </div>
+
+        <!-- 最近评测历史 -->
+        <div class="recent-reports">
+            <div class="section-header">
+                <h2 class="section-title">最近评测记录</h2>
+                <a href="/manage#history-tab" class="view-all-link">查看全部 →</a>
+            </div>
+            <div id="recentReportsContent">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>暂无评测记录</p>
                 </div>
             </div>
         </div>
 
-        <!-- 测试用例 -->
-        <div class="card">
-            <h2 class="card-title">测试用例</h2>
-
-            <div class="test-case-list" id="testCaseList">
-                <div class="test-case-item">
-                    <div class="test-case-grid">
-                        <div>
-                            <label style="font-size: 12px;">输入</label>
-                            <input type="text" class="form-control" name="input" value="2+2=?">
-                        </div>
-                        <div>
-                            <label style="font-size: 12px;">期望输出</label>
-                            <input type="text" class="form-control" name="expected" value="4">
-                        </div>
-                        <button class="btn btn-danger" onclick="removeTestCase(this)">删除</button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="margin-top: 15px;">
-                <button class="btn btn-secondary btn-sm" onclick="addTestCase()">+ 添加测试用例</button>
-                <button class="btn btn-secondary btn-sm" onclick="loadSampleData()">加载示例数据</button>
-            </div>
-        </div>
-
-        <!-- 操作按钮 -->
-        <div class="card">
-            <button class="btn btn-primary" onclick="runEvaluation()" style="width: 100%;">
-                🚀 开始评测
-            </button>
-        </div>
-
-        <!-- 加载状态 -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>正在评测中...</p>
-        </div>
-
-        <!-- 评测结果 -->
-        <div class="card result-card" id="resultCard">
-            <h2 class="card-title">评测结果</h2>
-
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-value" id="totalTestCases">0</div>
-                    <div class="stat-label">测试用例总数</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="passedTestCases">0</div>
-                    <div class="stat-label">通过数</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="failedTestCases">0</div>
-                    <div class="stat-label">失败数</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-value" id="passRate">0%</div>
-                    <div class="stat-label">通过率</div>
-                </div>
-            </div>
-
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
-            </div>
-
-            <div id="resultDetails"></div>
-        </div>
-
-        <!-- 历史记录 -->
-        <div class="card">
-            <h2 class="card-title">历史记录</h2>
-            <div id="historyList">
-                <p style="color: var(--text-secondary); text-align: center;">暂无历史记录</p>
+        <!-- 系统状态 -->
+        <div class="system-status">
+            <h2 class="section-title" style="margin-bottom: 16px;">系统状态</h2>
+            <div id="systemStatusContent">
+                <!-- 动态加载 -->
             </div>
         </div>
     </div>
 
-    <script src="/js/utils.js"></script>
+    <script th:src="@{/js/utils.js}"></script>
     <script>
-        function showToast(message, type = 'info', duration = 3000) {
-            Toast.show(message, type, duration);
-        }
-
-        // Theme Toggle
+        // 主题切换
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
+
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            
+
             document.getElementById('theme-btn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
         }
-        
-        // Load saved theme
+
+        // 加载保存的主题
         function loadTheme() {
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
             document.getElementById('theme-btn').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
         }
 
-        function addTestCase(input = '', expected = '') {
-            const list = document.getElementById('testCaseList');
-            const item = document.createElement('div');
-            item.className = 'test-case-item';
-            item.innerHTML = `
-                <div class="test-case-grid">
-                    <div>
-                        <label style="font-size: 12px;">输入</label>
-                        <input type="text" class="form-control" name="input" value="${utils.escapeHtml(input)}">
-                    </div>
-                    <div>
-                        <label style="font-size: 12px;">期望输出</label>
-                        <input type="text" class="form-control" name="expected" value="${utils.escapeHtml(expected)}">
-                    </div>
-                    <button class="btn btn-danger" onclick="removeTestCase(this)">删除</button>
-                </div>
-            `;
-            list.appendChild(item);
-        }
-
-        function removeTestCase(btn) {
-            btn.closest('.test-case-item').remove();
-        }
-
-        function loadSampleData() {
-            document.getElementById('testCaseList').innerHTML = '';
-
-            const samples = [
-                { input: '2+2=?', expected: '4' },
-                { input: '3*3=?', expected: '9' },
-                { input: '10-5=?', expected: '5' },
-                { input: 'What is Java?', expected: 'Java is a programming language' }
-            ];
-
-            samples.forEach(s => addTestCase(s.input, s.expected));
-        }
-
-        async function runEvaluation() {
-            const testCases = [];
-            document.querySelectorAll('.test-case-item').forEach(item => {
-                const input = item.querySelector('input[name="input"]').value;
-                const expected = item.querySelector('input[name="expected"]').value;
-                if (input && expected) {
-                    testCases.push({ input, expected });
-                }
-            });
-
-            const metrics = [];
-            document.querySelectorAll('input[name="metric"]:checked').forEach(cb => {
-                metrics.push(cb.value);
-            });
-
-            if (testCases.length === 0) {
-                showToast('请至少添加一个测试用例', 'error');
-                return;
-            }
-
-            if (metrics.length === 0) {
-                showToast('请至少选择一个评测指标', 'error');
-                return;
-            }
-
-            document.getElementById('loading').classList.add('show');
-            document.getElementById('resultCard').classList.remove('show');
-
+        // 加载统计数据
+        async function loadStats() {
             try {
-                const response = await fetch('/api/evaluate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        agentType: document.getElementById('agentType').value,
-                        agentConfig: {},
-                        metrics: metrics,
-                        testCases: testCases
-                    })
-                });
+                const health = await utils.api.get('/api/health');
+                const reports = await utils.api.get('/api/reports?size=100');
 
-                const result = await response.json();
+                document.getElementById('totalTestCases').textContent = health.testCases || 0;
+                document.getElementById('totalReports').textContent = health.reports || 0;
 
-                document.getElementById('loading').classList.remove('show');
+                // 计算平均通过率和响应时间
+                const reportList = reports.reports || [];
+                if (reportList.length > 0) {
+                    const avgPassRate = reportList.reduce((sum, r) => {
+                        const rate = r.summary?.pass_rate || 0;
+                        return sum + rate;
+                    }, 0) / reportList.length;
 
-                if (result.success) {
-                    showResult(result);
-                    loadHistory();
+                    const avgTime = reportList.reduce((sum, r) => {
+                        const time = r.summary?.avg_response_time || 0;
+                        return sum + time;
+                    }, 0) / reportList.length;
+
+                    document.getElementById('avgPassRate').textContent = avgPassRate.toFixed(1) + '%';
+                    document.getElementById('avgResponseTime').textContent = avgTime.toFixed(0) + 'ms';
                 } else {
-                    showToast('评测失败: ' + (result.error || '未知错误'), 'error');
+                    document.getElementById('avgPassRate').textContent = '-';
+                    document.getElementById('avgResponseTime').textContent = '-';
                 }
-            } catch (error) {
-                document.getElementById('loading').classList.remove('show');
-                showToast('请求失败: ' + error.message, 'error');
+            } catch (err) {
+                utils.logError('加载统计数据失败:', err);
             }
         }
 
-        function showResult(result) {
-            document.getElementById('resultCard').classList.add('show');
-
-            document.getElementById('totalTestCases').textContent = result.totalTestCases;
-            document.getElementById('passedTestCases').textContent = result.passedTestCases;
-            document.getElementById('failedTestCases').textContent = result.failedTestCases;
-
-            const passRate = (result.summary.pass_rate || 0).toFixed(1);
-            document.getElementById('passRate').textContent = passRate + '%';
-
-            const progressFill = document.getElementById('progressFill');
-            progressFill.style.width = passRate + '%';
-            progressFill.textContent = passRate + '%';
-
-            const details = document.getElementById('resultDetails');
-            details.innerHTML = `
-                <div class="alert alert-success">
-                    ✅ 评测完成！执行时间: ${result.executionTimeMs} ms
-                </div>
-                <button class="btn btn-primary" onclick="showResultDetails('${result.reportId}')" style="margin-top: 10px;">
-                    🔍 查看详情
-                </button>
-            `;
-        }
-        
-        async function showResultDetails(reportId) {
+        // 加载最近评测历史
+        async function loadRecentReports() {
             try {
-                const response = await fetch(`/api/reports/${reportId}`);
-                const data = await response.json();
-                if (!data.success) {
-                    showToast('获取详情失败', 'error');
-                    return;
-                }
-                
-                const evaluations = data.evaluations || [];
-                const modal = document.getElementById('result-detail-modal');
-                const modalContent = document.getElementById('result-detail-content');
-                
-                modalContent.innerHTML = `
-                    <div style="margin-bottom: 20px;">
-                        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
-                            <div class="stat-box">
-                                <div class="stat-value">${data.totalTestCases}</div>
-                                <div class="stat-label">总用例数</div>
-                            </div>
-                            <div class="stat-box" style="background: linear-gradient(135deg, #28a745, #20c997);">
-                                <div class="stat-value">${data.passedTestCases}</div>
-                                <div class="stat-label">通过数</div>
-                            </div>
-                            <div class="stat-box" style="background: linear-gradient(135deg, #dc3545, #c82333);">
-                                <div class="stat-value">${data.failedTestCases}</div>
-                                <div class="stat-label">失败数</div>
-                            </div>
-                        </div>
-                    </div>
-                    <h4 style="margin-bottom: 10px;">📋 各用例评测结果</h4>
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        ${evaluations.map((ev, i) => {
-                            const _input = utils.escapeHtml(ev.testCase?.input || ev.testCaseId || '');
-                            const _expected = utils.escapeHtml(ev.testCase?.expected || '');
-                            const _output = utils.escapeHtml(ev.agentOutput || '');
-                            return `
-                            <div style="background: var(--bg-checkbox-item); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <strong>#${i + 1} 测试用例</strong>
-                                    <span class="badge ${ev.passed ? 'badge-success' : 'badge-danger'}">
-                                        ${ev.passed ? '✅ 通过' : '❌ 失败'}
-                                    </span>
-                                </div>
-                                <div style="font-size: 13px; color: var(--text-secondary);">
-                                    <p><strong>输入:</strong> ${_input || '-'}</p>
-                                    <p><strong>期望:</strong> ${_expected || '-'}</p>
-                                    <p><strong>Agent 输出:</strong> ${_output || '-'}</p>
-                                    <p><strong>评分:</strong> ${((ev.overallScore || 0) * 100).toFixed(0)}%</p>
-                                    ${ev.scorerResults ? Object.entries(ev.scorerResults).map(([name, sr]) => {
-                                        const _rationale = utils.escapeHtml(sr.rationale || '');
-                                        return `
-                                        <div style="margin-left: 15px; margin-top: 5px; padding: 5px 10px; background: var(--bg-card); border-radius: 4px;">
-                                            <span>${utils.escapeHtml(name)}: ${((sr.score || 0) * 100).toFixed(0)}%</span>
-                                            <span style="margin-left: 10px; color: ${sr.passed ? '#28a745' : '#dc3545'};">${sr.passed ? '✓' : '✗'}</span>
-                                            ${_rationale ? `<p style="margin: 3px 0 0 0; font-size: 12px;">${_rationale}</p>` : ''}
-                                        </div>
-                                    `}).join('') : ''}
-                                </div>
-                            </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-                
-                modal.style.display = 'flex';
-            } catch (error) {
-showToast('获取详情失败', 'error');
-            }
-        }
-        
-        function closeResultDetailModal() {
-            document.getElementById('result-detail-modal').style.display = 'none';
-        }
-
-        async function loadHistory() {
-            try {
-                const response = await fetch('/api/reports');
-                const data = await response.json();
+                const data = await utils.api.get('/api/reports?size=5&sort=desc');
                 const reports = data.reports || [];
 
-                const historyList = document.getElementById('historyList');
+                const container = document.getElementById('recentReportsContent');
 
                 if (reports.length === 0) {
-                    historyList.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">暂无历史记录</p>';
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>暂无评测记录</p>
+                        </div>
+                    `;
                     return;
                 }
 
-                historyList.innerHTML = `
-                    <table class="history-table">
+                container.innerHTML = `
+                    <table class="report-table">
                         <thead>
                             <tr>
-                                <th>报告 ID</th>
-                                <th>测试用例数</th>
-                                <th>通过数</th>
+                                <th>报告ID</th>
+                                <th>评测时间</th>
                                 <th>通过率</th>
-                                <th>执行时间</th>
+                                <th>分组</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${reports.map(r => `
                                 <tr>
-                                    <td><code>${r.id}</code></td>
-                                    <td>${r.totalTestCases}</td>
-                                    <td>${r.passedTestCases}</td>
+                                    <td><code>${utils.escapeHtml(r.id)}</code></td>
+                                    <td>${r.timestamp ? new Date(r.timestamp).toLocaleString() : '-'}</td>
                                     <td>
-                                        <span class="badge ${r.summary.pass_rate >= 70 ? 'badge-success' : 'badge-danger'}">
-                                            ${r.summary.pass_rate.toFixed(1)}%
+                                        <span class="badge ${(r.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
+                                            ${(r.summary?.pass_rate || 0).toFixed(1)}%
                                         </span>
                                     </td>
-                                    <td>${r.executionTimeMs} ms</td>
+                                    <td>${r.group ? utils.escapeHtml(r.group) : '-'}</td>
+                                    <td>
+                                        <a href="/manage#history-tab" class="view-all-link">查看详情</a>
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                 `;
-            } catch (error) {
-historyList.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">加载历史记录失败</p>';
-                showToast('加载历史记录失败', 'error');
+            } catch (err) {
+                utils.logError('加载评测历史失败:', err);
             }
         }
 
-        // Load theme and history on page load
-        loadTheme();
-        loadHistory();
-    </script>
+        // 加载系统状态
+        async function loadSystemStatus() {
+            try {
+                const health = await utils.api.get('/api/health');
 
-    <!-- 评测详情模态框 -->
-    <div id="result-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: var(--bg-card); border-radius: 12px; padding: 30px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="color: var(--text-primary);">📊 评测详情</h2>
-                <button onclick="closeResultDetailModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--text-secondary);">×</button>
-            </div>
-            <div id="result-detail-content"></div>
-        </div>
-    </div>
+                const container = document.getElementById('systemStatusContent');
+                container.innerHTML = `
+                    <div class="status-item">
+                        <span class="status-label">服务状态</span>
+                        <span class="status-value">
+                            <span class="status-indicator ${health.status === 'UP' ? 'healthy' : 'error'}"></span>
+                            ${health.status === 'UP' ? '运行正常' : '异常'}
+                        </span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">版本</span>
+                        <span class="status-value">${health.version || '-'}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">运行时长</span>
+                        <span class="status-value">${formatUptime(health.uptimeSeconds || 0)}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">分组数量</span>
+                        <span class="status-value">${health.groups || 0}</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">已配置 Agent</span>
+                        <span class="status-value">${health.agents || 0}</span>
+                    </div>
+                `;
+            } catch (err) {
+                utils.logError('加载系统状态失败:', err);
+            }
+        }
+
+        // 格式化运行时长
+        function formatUptime(seconds) {
+            if (seconds < 60) return `${seconds}秒`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时`;
+            return `${Math.floor(seconds / 86400)}天`;
+        }
+
+        // 页面加载
+        window.onload = async function() {
+            loadTheme();
+            await Promise.all([
+                loadStats(),
+                loadRecentReports(),
+                loadSystemStatus()
+            ]);
+        };
+    </script>
 </body>
 </html>
