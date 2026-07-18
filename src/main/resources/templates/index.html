@@ -348,7 +348,8 @@ showToast('获取详情失败', 'error');
         async function loadHistory() {
             try {
                 const response = await fetch('/api/reports');
-                const reports = await response.json();
+                const data = await response.json();
+                const reports = data.reports || [];
 
                 const historyList = document.getElementById('historyList');
 
