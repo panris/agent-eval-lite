@@ -7,6 +7,7 @@ import io.github.panris.agenteval.Evaluator;
 import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.web.Constants;
@@ -38,14 +39,17 @@ public class EvalController {
     private final ReportService reportService;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     private final TestCaseRepository testCaseRepository;
+    private final AgentConfigRepository agentConfigRepository;
     private final AsyncEvalService asyncEvalService;
     private final AgentFactory agentFactory;
 
     public EvalController(TestCaseRepository testCaseRepository,
+                           AgentConfigRepository agentConfigRepository,
                            AsyncEvalService asyncEvalService,
                            ReportService reportService,
                            AgentFactory agentFactory) {
         this.testCaseRepository = testCaseRepository;
+        this.agentConfigRepository = agentConfigRepository;
         this.asyncEvalService = asyncEvalService;
         this.reportService = reportService;
         this.agentFactory = agentFactory;
@@ -69,26 +73,31 @@ public class EvalController {
     @Operation(summary = "执行同步评测，返回完整报告")
     @PostMapping("/api/evaluate")
     @ResponseBody
-    public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
+    public Map<String, Object> evaluate(@RequestBody EvalRequest request,
+                                        @RequestParam(required = false) String agentConfigId) {
         if (request == null) {
             return ApiResponse.error("请求体不能为空");
         }
         if (request.getTestCases() == null || request.getTestCases().isEmpty()) {
             return ApiResponse.error("测试用例列表不能为空");
         }
+
         String agentType = request.getAgentType();
         if (agentType == null || agentType.trim().isEmpty()) {
             agentType = "demo";
         }
+
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
             return metricsError;
         }
+
         CaseResolution cr = resolveFromDtos(request.getTestCases());
         if (cr.hasError()) {
             return ApiResponse.error(cr.errorMessage());
         }
-        return runEvaluation(cr.testCases(), request.getMetrics(), agentType, null, null, null, null);
+
+        return runEvaluation(cr.testCases(), request.getMetrics(), agentType, request.getAgentConfig(), agentConfigId, null, null, null, null);
     }
 
     /**
@@ -112,7 +121,7 @@ public class EvalController {
         if (cr.hasError()) {
             return ApiResponse.error(cr.errorMessage());
         }
-        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, null, null);
+        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, null, null, null, null);
     }
 
     /**
@@ -145,7 +154,7 @@ public class EvalController {
                     return ApiResponse.error("该分组没有测试用例");
                 }
 
-                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), group.getName(), null, null, null);
+                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), null, null, group.getName(), null, null, null);
             })
             .orElse(ApiResponse.error("分组不存在"));
     }
@@ -168,7 +177,7 @@ public class EvalController {
         String groupLabel = request.getFunction() != null ? request.getFunction()
             : request.getModule() != null ? request.getModule()
             : request.getProject();
-        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), groupLabel,
+        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, groupLabel,
             request.getProject(), request.getModule(), request.getFunction());
     }
 
@@ -271,13 +280,28 @@ public class EvalController {
         List<TestCase> testCases,
         List<String> metrics,
         String agentType,
+        Map<String, Object> agentConfig,
+        String agentConfigId,
         String group,
         String project,
         String module,
         String function
     ) {
-        // Create agent
-        Agent agent = createAgent(agentType, Map.of());
+        // Create agent from config ID or type
+        Agent agent;
+        if (agentConfigId != null && !agentConfigId.isEmpty()) {
+            // Load from AgentConfigRepository
+            io.github.panris.agenteval.model.AgentConfig config =
+                agentConfigRepository.findById(agentConfigId).orElse(null);
+            if (config == null) {
+                return ApiResponse.error("Agent 配置不存在: " + agentConfigId);
+            }
+            agent = agentFactory.createAgent(config);
+            log.info("Created agent from config: {}", config.getName());
+        } else {
+            agent = createAgent(agentType, agentConfig != null ? agentConfig : Map.of());
+            log.info("Created agent by type: {}", agentType);
+        }
 
         // Build evaluator
         Evaluator.Builder builder = Evaluator.builder();

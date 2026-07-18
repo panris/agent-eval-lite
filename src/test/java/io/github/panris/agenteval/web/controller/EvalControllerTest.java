@@ -1,6 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.agent.AgentFactory;
@@ -26,6 +27,7 @@ class EvalControllerTest {
     private AsyncEvalService mockAsyncEvalService;
     private ReportService mockReportService;
     private TestCaseRepository mockTestCaseRepository;
+    private AgentConfigRepository mockAgentConfigRepository;
     private AgentFactory mockAgentFactory;
 
     @BeforeEach
@@ -34,8 +36,9 @@ class EvalControllerTest {
         mockReportService = mock(ReportService.class);
         mockTestCaseRepository = mock(TestCaseRepository.class);
         mockAgentFactory = mock(AgentFactory.class);
+        mockAgentConfigRepository = mock(AgentConfigRepository.class);
         controller = new EvalController(
-                mockTestCaseRepository, mockAsyncEvalService, mockReportService, mockAgentFactory);
+                mockTestCaseRepository, mockAgentConfigRepository, mockAsyncEvalService, mockReportService, mockAgentFactory);
     }
 
     // ============ Page routes ============
@@ -61,7 +64,7 @@ class EvalControllerTest {
     @Test
     @DisplayName("POST /api/evaluate with null request → BAD_REQUEST")
     void testEvaluateWithNullRequest() {
-        Map<String, Object> resp = controller.evaluate(null);
+        Map<String, Object> resp = controller.evaluate(null, null);
         assertFalse((Boolean) resp.get("success"));
         assertNotNull(resp.get("error"));
     }
@@ -72,7 +75,7 @@ class EvalControllerTest {
         EvalRequest req = new EvalRequest();
         req.setTestCases(List.of());
 
-        Map<String, Object> resp = controller.evaluate(req);
+        Map<String, Object> resp = controller.evaluate(req, null);
 
         assertFalse((Boolean) resp.get("success"));
         assertNotNull(resp.get("error"));
@@ -92,7 +95,7 @@ class EvalControllerTest {
         req.setTestCases(cases);
         req.setMetrics(List.of("correctness"));
 
-        Map<String, Object> resp = controller.evaluate(req);
+        Map<String, Object> resp = controller.evaluate(req, null);
 
         assertFalse((Boolean) resp.get("success"));
         assertTrue(((String) resp.get("error")).contains("100"));
@@ -108,7 +111,7 @@ class EvalControllerTest {
         req.setTestCases(List.of(dto));
         req.setMetrics(List.of("not_a_real_metric"));
 
-        Map<String, Object> resp = controller.evaluate(req);
+        Map<String, Object> resp = controller.evaluate(req, null);
 
         assertFalse((Boolean) resp.get("success"));
         assertNotNull(resp.get("error"));
