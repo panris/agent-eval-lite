@@ -9,6 +9,7 @@ import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.web.Constants;
 import io.github.panris.agenteval.web.dto.ApiResponse;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
@@ -37,10 +38,6 @@ public class EvalController {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     private final TestCaseRepository testCaseRepository;
     private final AsyncEvalService asyncEvalService;
-    private static final List<String> VALID_METRICS =
-            List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity");
-    private static final int MAX_CASES = 100;
-    private static final int MAX_INPUT_LEN = 10000;
 
     public EvalController(TestCaseRepository testCaseRepository,
                            AsyncEvalService asyncEvalService,
@@ -259,7 +256,7 @@ public class EvalController {
             return ApiResponse.error("评测指标不能为空");
         }
         for (String metric : metrics) {
-            if (metric == null || !VALID_METRICS.contains(metric)) {
+            if (metric == null || !Constants.VALID_METRICS.contains(metric)) {
                 return ApiResponse.error("不支持的评测指标: " + metric);
             }
         }
@@ -658,19 +655,19 @@ public class EvalController {
 
     /** Resolve test cases from DTO list (used by sync evaluate + async). */
     private CaseResolution resolveFromDtos(List<TestCaseDto> dtos) {
-        if (dtos.size() > MAX_CASES) {
-            return new CaseResolution("测试用例数量不能超过 " + MAX_CASES + " 个");
+        if (dtos.size() > Constants.MAX_CASES_PER_EVAL) {
+            return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个");
         }
         for (int i = 0; i < dtos.size(); i++) {
             TestCaseDto dto = dtos.get(i);
             if (dto.getInput() == null || dto.getInput().trim().isEmpty()) {
                 return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入不能为空");
             }
-            if (dto.getInput().length() > MAX_INPUT_LEN) {
-                return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入过长（最大 " + MAX_INPUT_LEN + " 字符）");
+            if (dto.getInput().length() > Constants.MAX_INPUT_LENGTH) {
+                return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入过长（最大 " + Constants.MAX_INPUT_LENGTH + " 字符）");
             }
-            if (dto.getExpected() != null && dto.getExpected().length() > MAX_INPUT_LEN) {
-                return new CaseResolution("第 " + (i + 1) + " 个测试用例的期望输出过长（最大 " + MAX_INPUT_LEN + " 字符）");
+            if (dto.getExpected() != null && dto.getExpected().length() > Constants.MAX_INPUT_LENGTH) {
+                return new CaseResolution("第 " + (i + 1) + " 个测试用例的期望输出过长（最大 " + Constants.MAX_INPUT_LENGTH + " 字符）");
             }
         }
         List<TestCase> cases = dtos.stream()
@@ -681,8 +678,8 @@ public class EvalController {
 
     /** Resolve test cases from repository by IDs (used by evaluateByCaseIds + async). */
     private CaseResolution resolveFromCaseIds(List<String> caseIds) {
-        if (caseIds.size() > MAX_CASES) {
-            return new CaseResolution("测试用例数量不能超过 " + MAX_CASES + " 个");
+        if (caseIds.size() > Constants.MAX_CASES_PER_EVAL) {
+            return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个");
         }
         List<TestCase> cases = caseIds.stream()
             .map(id -> testCaseRepository.findTestCaseById(id))
@@ -704,8 +701,8 @@ public class EvalController {
         if (byDims.isEmpty()) {
             return new CaseResolution("没有符合所选维度的测试用例");
         }
-        if (byDims.size() > MAX_CASES) {
-            return new CaseResolution("测试用例数量不能超过 " + MAX_CASES + " 个（当前 " + byDims.size() + "）");
+        if (byDims.size() > Constants.MAX_CASES_PER_EVAL) {
+            return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个（当前 " + byDims.size() + "）");
         }
         List<TestCase> cases = byDims.stream()
             .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null))

@@ -1,6 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
 
+import io.github.panris.agenteval.web.Constants;
 import io.github.panris.agenteval.web.dto.ApiResponse;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
@@ -73,7 +74,7 @@ public class TestCaseController {
     ) {
         if (page < 1) page = 1;
         if (size < 1) size = 20;
-        if (size > 100) size = 100;
+        if (size > Constants.MAX_BATCH_SIZE) size = Constants.MAX_BATCH_SIZE;
 
         List<TestCaseEntity> testCases;
         int total;
@@ -272,9 +273,9 @@ public class TestCaseController {
             log.warn("batchImport: request list is empty");
             return ApiResponse.error("Request list is empty");
         }
-        if (requests.size() > 100) {
-            log.warn("batchImport: batch size {} exceeds 100 items", requests.size());
-            return ApiResponse.error("Batch size exceeds 100 items");
+        if (requests.size() > Constants.MAX_BATCH_SIZE) {
+            log.warn("batchImport: batch size {} exceeds {} items", requests.size(), Constants.MAX_BATCH_SIZE);
+            return ApiResponse.error("Batch size exceeds " + Constants.MAX_BATCH_SIZE + " items");
         }
         // Validate each item
         for (int i = 0; i < requests.size(); i++) {
@@ -395,8 +396,8 @@ public class TestCaseController {
         if (request.getExpected() == null || request.getExpected().isBlank()) {
             return ApiResponse.error("期望输出不能为空");
         }
-        if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
-            return ApiResponse.error("输入或期望输出不能超过 10000 字符");
+        if (request.getInput().length() > Constants.MAX_INPUT_LENGTH || request.getExpected().length() > Constants.MAX_INPUT_LENGTH) {
+            return ApiResponse.error("输入或期望输出不能超过 " + Constants.MAX_INPUT_LENGTH + " 字符");
         }
         return null;
     }
