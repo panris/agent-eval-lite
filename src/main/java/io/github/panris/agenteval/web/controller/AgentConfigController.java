@@ -1,0 +1,207 @@
+package io.github.panris.agenteval.web.controller;
+
+import io.github.panris.agenteval.agent.AgentTemplates;
+import io.github.panris.agenteval.model.AgentConfig;
+import io.github.panris.agenteval.repository.AgentConfigRepository;
+import io.github.panris.agenteval.web.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Controller for managing Agent configurations.
+ */
+@RestController
+@RequestMapping("/api/agents")
+@Tag(name = "Agent Configuration", description = "Agent配置管理接口")
+public class AgentConfigController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AgentConfigController.class);
+
+    private final AgentConfigRepository repository;
+
+    public AgentConfigController(AgentConfigRepository repository) {
+        this.repository = repository;
+    }
+
+    // ============ List & Get ============
+
+    @GetMapping
+    @Operation(summary = "获取所有 Agent 配置", description = "返回所有已保存的 Agent 配置列表")
+    public ResponseEntity<Map<String, Object>> getAllAgents() {
+        List<AgentConfig> agents = repository.findAll();
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "agents", agents,
+                "total", agents.size()
+        ));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "根据ID获取 Agent 配置")
+    public ResponseEntity<Map<String, Object>> getAgentById(@PathVariable String id) {
+        return repository.findById(id)
+                .map(config -> ResponseEntity.ok(Map.of("success", true, "agent", config)))
+                .orElse(ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在")));
+    }
+
+    // ============ Templates ============
+
+    @GetMapping("/templates")
+    @Operation(summary = "获取预设模板", description = "返回可用的 Agent 配置模板（OpenAI、Claude、自定义等）")
+    public ResponseEntity<Map<String, Object>> getTemplates() {
+        List<AgentConfig> templates = AgentTemplates.getTemplates();
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "templates", templates
+        ));
+    }
+
+    @GetMapping("/templates/{type}")
+    @Operation(summary = "获取指定类型的模板", description = "返回指定类型的 Agent 配置模板")
+    public ResponseEntity<Map<String, Object>> getTemplateByType(@PathVariable String type) {
+        AgentConfig template = AgentTemplates.getTemplateByType(type);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "template", template
+        ));
+    }
+
+    // ============ Create & Update ============
+
+    @PostMapping
+    @Operation(summary = "创建 Agent 配置")
+    public ResponseEntity<Map<String, Object>> createAgent(@RequestBody AgentConfig config) {
+        // Validate required fields
+        if (config.getName() == null || config.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Agent名称不能为空"));
+        }
+        if (config.getType() == null || config.getType().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Agent类型不能为空"));
+        }
+        if (config.getEndpoint() == null || config.getEndpoint().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Agent端点不能为空"));
+        }
+
+        // Set defaults
+        if (config.getTimeout() <= 0) {
+            config.setTimeout(30000);
+        }
+
+        AgentConfig saved = repository.save(config);
+        logger.info("Created agent config: {} ({})", saved.getName(), saved.getId());
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "agent", saved,
+                "message", "Agent配置创建成功"
+        ));
+    }
+
+    @PostMapping("/from-template/{type}")
+    @Operation(summary = "从模板创建 Agent 配置", description = "基于预设模板创建新的 Agent 配置")
+    public ResponseEntity<Map<String, Object>> createFromTemplate(
+            @PathVariable String type,
+            @RequestBody(required = false) Map<String, Object> overrides) {
+
+        AgentConfig template = AgentTemplates.getTemplateByType(type);
+        if (template == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("未知的模板类型: " + type));
+        }
+
+        // Apply overrides
+        if (overrides != null) {
+            if (overrides.containsKey("name")) {
+                template.setName((String) overrides.get("name"));
+            }
+            if (overrides.containsKey("description")) {
+                template.setDescription((String) overrides.get("description"));
+            }
+            if (overrides.containsKey("endpoint")) {
+                template.setEndpoint((String) overrides.get("endpoint"));
+            }
+            if (overrides.containsKey("config") && template.getConfig() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> configOverrides = (Map<String, Object>) overrides.get("config");
+                template.getConfig().putAll(configOverrides);
+            }
+        }
+
+        // Reset ID to create new
+        template.setId(null);
+
+        AgentConfig saved = repository.save(template);
+        logger.info("Created agent from template {}: {} ({})", type, saved.getName(), saved.getId());
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "agent", saved,
+                "message", "Agent配置创建成功"
+        ));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "更新 Agent 配置")
+    public ResponseEntity<Map<String, Object>> updateAgent(
+            @PathVariable String id,
+            @RequestBody AgentConfig config) {
+
+        if (!repository.existsById(id)) {
+            return ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在"));
+        }
+
+        config.setId(id);
+        AgentConfig saved = repository.save(config);
+        logger.info("Updated agent config: {} ({})", saved.getName(), saved.getId());
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "agent", saved,
+                "message", "Agent配置更新成功"
+        ));
+    }
+
+    // ============ Delete ============
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除 Agent 配置")
+    public ResponseEntity<Map<String, Object>> deleteAgent(@PathVariable String id) {
+        if (repository.deleteById(id)) {
+            logger.info("Deleted agent config: {}", id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Agent配置删除成功"
+            ));
+        } else {
+            return ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在"));
+        }
+    }
+
+    // ============ Test ============
+
+    @PostMapping("/{id}/test")
+    @Operation(summary = "测试 Agent 配置", description = "发送测试请求验证 Agent 配置是否正确")
+    public ResponseEntity<Map<String, Object>> testAgent(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+
+        return repository.findById(id)
+                .map(config -> {
+                    String testInput = body.getOrDefault("input", "测试输入");
+                    // TODO: Implement actual test using AgentFactory
+                    return ResponseEntity.ok(Map.of(
+                            "success", true,
+                            "message", "测试成功（待实现实际调用）",
+                            "input", testInput,
+                            "config", config
+                    ));
+                })
+                .orElse(ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在")));
+    }
+}

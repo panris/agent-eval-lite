@@ -1,6 +1,7 @@
 package io.github.panris.agenteval.agent;
 
 import io.github.panris.agenteval.Agent;
+import io.github.panris.agenteval.model.AgentConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +11,7 @@ import java.util.Map;
 
 /**
  * Factory for creating Agent instances.
- * Supports HTTP, OpenAI, and custom agents based on type and configuration.
+ * Supports HTTP, OpenAI, Claude, and custom agents based on type and configuration.
  */
 @Component
 public class AgentFactory {
@@ -41,7 +42,7 @@ public class AgentFactory {
     /**
      * Create agent by type with configuration.
      *
-     * @param type   agent type (http, openai, demo)
+     * @param type   agent type (http, openai, claude, custom, demo)
      * @param config agent configuration
      * @return the agent instance
      */
@@ -53,13 +54,40 @@ public class AgentFactory {
         logger.info("Creating agent: type={}, config={}", type, config);
 
         return switch (type.toLowerCase()) {
-            case "http" -> createHttpAgent(config);
+            case "http", "custom" -> createHttpAgent(config);
             case "openai" -> createOpenAIAgent(config);
+            case "claude" -> createClaudeAgent(config);
             case "demo" -> createDemoAgent();
             default -> {
                 logger.warn("Unknown agent type: {}, using demo agent", type);
                 yield createDemoAgent();
             }
+        };
+    }
+
+    /**
+     * Create agent from AgentConfig entity.
+     *
+     * @param agentConfig the agent configuration entity
+     * @return the agent instance
+     */
+    public Agent createAgent(AgentConfig agentConfig) {
+        if (agentConfig == null) {
+            logger.warn("AgentConfig is null, using demo agent");
+            return createDemoAgent();
+        }
+
+        logger.info("Creating agent from config: {}", agentConfig.getName());
+
+        String type = agentConfig.getType();
+        if (type == null || type.isEmpty()) {
+            type = "custom";
+        }
+
+        return switch (type.toLowerCase()) {
+            case "openai" -> createOpenAIAgentFromConfig(agentConfig);
+            case "claude" -> createClaudeAgentFromConfig(agentConfig);
+            default -> new ConfigurableHttpAgent(agentConfig);
         };
     }
 
@@ -156,6 +184,64 @@ public class AgentFactory {
             }
             return "I'm a demo agent. You asked: " + input;
         };
+    }
+
+    /**
+     * Create Claude agent from configuration.
+     */
+    private Agent createClaudeAgent(Map<String, Object> config) {
+        String apiKey = getStringConfig(config, "apiKey", "");
+        String model = getStringConfig(config, "model", "claude-3-sonnet-20240229");
+        String endpoint = getStringConfig(config, "endpoint", "https://api.anthropic.com/v1/messages");
+        int maxTokens = getIntConfig(config, "maxTokens", 1024);
+        int timeout = getIntConfig(config, "timeout", 60000);
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            logger.warn("Claude API key not configured, using demo agent");
+            return createDemoAgent();
+        }
+
+        // Use ConfigurableHttpAgent with Claude template
+        AgentConfig claudeConfig = AgentTemplates.createClaudeTemplate();
+        claudeConfig.getConfig().put("apiKey", apiKey);
+        claudeConfig.getConfig().put("model", model);
+        claudeConfig.getConfig().put("maxTokens", maxTokens);
+        claudeConfig.setEndpoint(endpoint);
+        claudeConfig.setTimeout(timeout);
+
+        return new ConfigurableHttpAgent(claudeConfig);
+    }
+
+    /**
+     * Create OpenAI agent from AgentConfig entity.
+     */
+    private Agent createOpenAIAgentFromConfig(AgentConfig config) {
+        String apiKey = config.getConfig() != null
+                ? (String) config.getConfig().getOrDefault("apiKey", "")
+                : "";
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            logger.warn("OpenAI API key not configured, using demo agent");
+            return createDemoAgent();
+        }
+
+        return new ConfigurableHttpAgent(config);
+    }
+
+    /**
+     * Create Claude agent from AgentConfig entity.
+     */
+    private Agent createClaudeAgentFromConfig(AgentConfig config) {
+        String apiKey = config.getConfig() != null
+                ? (String) config.getConfig().getOrDefault("apiKey", "")
+                : "";
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            logger.warn("Claude API key not configured, using demo agent");
+            return createDemoAgent();
+        }
+
+        return new ConfigurableHttpAgent(config);
     }
 
     // Helper methods for configuration extraction
