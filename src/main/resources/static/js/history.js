@@ -308,7 +308,7 @@ function filterHistory(reports) {
                     ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
                 </span>
             </td>
-            <td>${report.summary ? report.summary.average_score.toFixed(2) : 0}</td>
+            <td>${report.summary?.average_score ? report.summary.average_score.toFixed(2) : '-'}</td>
             <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
             <td>
                 <div style="display: flex; gap: 4px; flex-wrap: wrap;">
