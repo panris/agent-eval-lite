@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
+
+import io.github.panris.agenteval.web.Constants;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import org.apache.poi.ss.usermodel.*;
@@ -106,8 +108,8 @@ public class ExcelController {
      * 导入测试用例从 Excel
      */
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-    private static final int MAX_ROWS = 1000;
-    private static final int MAX_FIELD_LENGTH = 10000;
+    // Use Constants.MAX_EXCEL_ROWS
+    // Use Constants.MAX_EXCEL_FIELD_LENGTH
 
     @Operation(summary = "导入 Excel 文件生成测试用例")
     @PostMapping("/import/excel")
@@ -130,9 +132,9 @@ public class ExcelController {
              Workbook workbook = new XSSFWorkbook(is)) {
             
             Sheet sheet = workbook.getSheetAt(0);
-            if (sheet.getLastRowNum() > MAX_ROWS) {
+            if (sheet.getLastRowNum() > Constants.MAX_EXCEL_ROWS) {
                 result.put("success", false);
-                result.put("message", "行数超过限制，最多导入 " + MAX_ROWS + " 行");
+                result.put("message", "行数超过限制，最多导入 " + Constants.MAX_EXCEL_ROWS + " 行");
                 return ResponseEntity.badRequest().body(result);
             }
             
@@ -160,8 +162,8 @@ public class ExcelController {
                         continue;
                     }
                     
-                    if (name.length() > MAX_FIELD_LENGTH || (input != null && input.length() > MAX_FIELD_LENGTH) || (expected != null && expected.length() > MAX_FIELD_LENGTH)) {
-                        errors.add("行 " + (i + 1) + ": 字段长度超过 " + MAX_FIELD_LENGTH + " 字符限制");
+                    if (name.length() > Constants.MAX_EXCEL_FIELD_LENGTH || (input != null && input.length() > Constants.MAX_EXCEL_FIELD_LENGTH) || (expected != null && expected.length() > Constants.MAX_EXCEL_FIELD_LENGTH)) {
+                        errors.add("行 " + (i + 1) + ": 字段长度超过 " + Constants.MAX_EXCEL_FIELD_LENGTH + " 字符限制");
                         skipped++;
                         continue;
                     }
@@ -241,9 +243,9 @@ public class ExcelController {
                     }
                 }
                 
-                if (lineNum > MAX_ROWS + 1) {
+                if (lineNum > Constants.MAX_EXCEL_ROWS + 1) {
                     result.put("success", false);
-                    result.put("message", "行数超过限制，最多导入 " + MAX_ROWS + " 行");
+                    result.put("message", "行数超过限制，最多导入 " + Constants.MAX_EXCEL_ROWS + " 行");
                     return ResponseEntity.badRequest().body(result);
                 }
                 
@@ -269,8 +271,8 @@ public class ExcelController {
                     continue;
                 }
                 
-                if (name.length() > MAX_FIELD_LENGTH || input.length() > MAX_FIELD_LENGTH || expected.length() > MAX_FIELD_LENGTH) {
-                    errors.add("行 " + lineNum + ": 字段长度超过 " + MAX_FIELD_LENGTH + " 字符限制");
+                if (name.length() > Constants.MAX_EXCEL_FIELD_LENGTH || input.length() > Constants.MAX_EXCEL_FIELD_LENGTH || expected.length() > Constants.MAX_EXCEL_FIELD_LENGTH) {
+                    errors.add("行 " + lineNum + ": 字段长度超过 " + Constants.MAX_EXCEL_FIELD_LENGTH + " 字符限制");
                     skipped++;
                     continue;
                 }

@@ -320,8 +320,8 @@ public class TestCaseController {
         if (text == null || text.isBlank()) {
             return ApiResponse.error("需求文档内容不能为空");
         }
-        if (text.length() > 50000) {
-            text = text.substring(0, 50000);
+        if (text.length() > Constants.MAX_REQUIREMENT_TEXT_LENGTH) {
+            text = text.substring(0, Constants.MAX_REQUIREMENT_TEXT_LENGTH);
         }
 
         String defaultGroup = body.getOrDefault("groupId", null);

@@ -24,4 +24,11 @@ public final class Constants {
     
     // 批量导入
     public static final int MAX_BATCH_SIZE = 100;
+    
+    // Excel 导入导出
+    public static final int MAX_EXCEL_ROWS = 1000;
+    public static final int MAX_EXCEL_FIELD_LENGTH = 10000;
+    
+    // 需求解析
+    public static final int MAX_REQUIREMENT_TEXT_LENGTH = 50000;
 }
