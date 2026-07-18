@@ -20,6 +20,23 @@ spring:
       max-file-size: 10MB
       max-request-size: 12MB
 
+# Agent Configuration
+agent:
+  default:
+    type: demo  # demo, http, openai
+  
+  # HTTP Agent Configuration
+  http:
+    endpoint: ""  # e.g., http://localhost:8000/api/chat
+    timeout: 30000
+  
+  # OpenAI Agent Configuration
+  openai:
+    api-key: ""  # Set via environment variable: OPENAI_API_KEY
+    model: "gpt-3.5-turbo"
+    endpoint: "https://api.openai.com/v1/chat/completions"
+    system-prompt: ""  # Optional system prompt
+
 logging:
   level:
     io.github.panris.agenteval: DEBUG

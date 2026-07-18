@@ -3,6 +3,7 @@ package io.github.panris.agenteval.web.controller;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.agent.AgentFactory;
 import org.junit.jupiter.api.*;
 import org.springframework.ui.Model;
 
@@ -25,14 +26,16 @@ class EvalControllerTest {
     private AsyncEvalService mockAsyncEvalService;
     private ReportService mockReportService;
     private TestCaseRepository mockTestCaseRepository;
+    private AgentFactory mockAgentFactory;
 
     @BeforeEach
     void setUp() {
         mockAsyncEvalService = mock(AsyncEvalService.class);
         mockReportService = mock(ReportService.class);
         mockTestCaseRepository = mock(TestCaseRepository.class);
+        mockAgentFactory = mock(AgentFactory.class);
         controller = new EvalController(
-                mockTestCaseRepository, mockAsyncEvalService, mockReportService);
+                mockTestCaseRepository, mockAsyncEvalService, mockReportService, mockAgentFactory);
     }
 
     // ============ Page routes ============

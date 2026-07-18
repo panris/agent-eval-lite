@@ -11,6 +11,7 @@ import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.web.Constants;
 import io.github.panris.agenteval.web.dto.ApiResponse;
+import io.github.panris.agenteval.agent.AgentFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -38,13 +39,16 @@ public class EvalController {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     private final TestCaseRepository testCaseRepository;
     private final AsyncEvalService asyncEvalService;
+    private final AgentFactory agentFactory;
 
     public EvalController(TestCaseRepository testCaseRepository,
                            AsyncEvalService asyncEvalService,
-                           ReportService reportService) {
+                           ReportService reportService,
+                           AgentFactory agentFactory) {
         this.testCaseRepository = testCaseRepository;
         this.asyncEvalService = asyncEvalService;
         this.reportService = reportService;
+        this.agentFactory = agentFactory;
     }
 
     @GetMapping("/")
@@ -614,36 +618,11 @@ public class EvalController {
         return reportService.compareReports(idList);
     }
 
+    /**
+     * Create agent using AgentFactory.
+     */
     private Agent createAgent(String type, Map<String, Object> config) {
-        // For demo, create a simple echo agent
-        // In production, this would create real agents based on type
-        return input -> {
-            if (input.contains("+")) {
-                String[] parts = input.split("\\+");
-                if (parts.length == 2) {
-                    try {
-                        int a = Integer.parseInt(parts[0].trim().replaceAll("[^0-9]", ""));
-                        int b = Integer.parseInt(parts[1].trim().replaceAll("[^0-9]", ""));
-                        return String.valueOf(a + b);
-                    } catch (Exception e) {
-                        return "Calculation error";
-                    }
-                }
-            }
-            if (input.contains("*")) {
-                String[] parts = input.split("\\*");
-                if (parts.length == 2) {
-                    try {
-                        int a = Integer.parseInt(parts[0].trim().replaceAll("[^0-9]", ""));
-                        int b = Integer.parseInt(parts[1].trim().replaceAll("[^0-9]", ""));
-                        return String.valueOf(a * b);
-                    } catch (Exception e) {
-                        return "Calculation error";
-                    }
-                }
-            }
-            return "I'm a demo agent. You asked: " + input;
-        };
+        return agentFactory.createAgent(type, config);
     }
 
     /** Result holder for test-case resolution. */
