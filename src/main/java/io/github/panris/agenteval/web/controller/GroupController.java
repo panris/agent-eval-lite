@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
+
+import io.github.panris.agenteval.web.dto.ApiResponse;
 import io.github.panris.agenteval.model.TestCaseGroup;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import org.slf4j.Logger;
@@ -33,11 +35,11 @@ public class GroupController {
     public Map<String, Object> createGroup(@RequestBody GroupRequest request) {
         if (request == null || request.getName() == null || request.getName().isBlank()) {
             log.warn("createGroup: name is required");
-            return Map.of("success", false, "error", "分组名称不能为空");
+            return ApiResponse.error("分组名称不能为空");
         }
         if (request.getName().length() > 200) {
             log.warn("createGroup: name too long, length={}", request.getName().length());
-            return Map.of("success", false, "error", "分组名称不能超过 200 字符");
+            return ApiResponse.error("分组名称不能超过 200 字符");
         }
         TestCaseGroup group = new TestCaseGroup(
             request.getName().trim(),
@@ -45,7 +47,7 @@ public class GroupController {
         );
         TestCaseGroup saved = repository.saveGroup(group);
         log.info("Created group: id={}, name={}", saved.getId(), saved.getName());
-        return Map.of("success", true, "group", saved);
+        return ApiResponse.success("group", saved);
     }
 
     /**
@@ -105,11 +107,11 @@ public class GroupController {
     ) {
         if (request == null || request.getName() == null || request.getName().isBlank()) {
             log.warn("updateGroup: name is required, id={}", id);
-            return Map.of("success", false, "error", "分组名称不能为空");
+            return ApiResponse.error("分组名称不能为空");
         }
         if (request.getName().length() > 200) {
             log.warn("updateGroup: name too long, id={}, length={}", id, request.getName().length());
-            return Map.of("success", false, "error", "分组名称不能超过 200 字符");
+            return ApiResponse.error("分组名称不能超过 200 字符");
         }
         return repository.findGroupById(id)
             .map(group -> {
@@ -119,7 +121,7 @@ public class GroupController {
                 log.info("Updated group: id={}, name={}", saved.getId(), saved.getName());
                 return Map.<String, Object>of("success", true, "group", saved);
             })
-            .orElse(Map.of("success", false, "error", "分组不存在"));
+            .orElse(ApiResponse.error("分组不存在"));
     }
 
     /**
@@ -131,9 +133,9 @@ public class GroupController {
         if (repository.findGroupById(id).isPresent()) {
             repository.deleteGroup(id);
             log.info("Deleted group: id={}", id);
-            return Map.of("success", true, "message", "Group deleted");
+            return ApiResponse.success("message", "Group deleted");
         }
-        return Map.of("success", false, "error", "分组不存在");
+        return ApiResponse.error("分组不存在");
     }
 
     /**
@@ -147,18 +149,18 @@ public class GroupController {
     ) {
         String testCaseId = request != null ? request.get("testCaseId") : null;
         if (testCaseId == null || testCaseId.isBlank()) {
-            return Map.of("success", false, "error", "testCaseId 不能为空");
+            return ApiResponse.error("testCaseId 不能为空");
         }
 
         if (repository.findGroupById(id).isEmpty()) {
-            return Map.of("success", false, "error", "分组不存在");
+            return ApiResponse.error("分组不存在");
         }
         if (repository.findTestCaseById(testCaseId).isEmpty()) {
-            return Map.of("success", false, "error", "测试用例不存在");
+            return ApiResponse.error("测试用例不存在");
         }
 
         TestCaseGroup group = repository.addTestCaseToGroup(id, testCaseId);
-        return Map.of("success", true, "group", group);
+        return ApiResponse.success("group", group);
     }
 
     /**
@@ -171,10 +173,10 @@ public class GroupController {
         @PathVariable String testCaseId
     ) {
         if (repository.findGroupById(id).isEmpty()) {
-            return Map.of("success", false, "error", "分组不存在");
+            return ApiResponse.error("分组不存在");
         }
         TestCaseGroup group = repository.removeTestCaseFromGroup(id, testCaseId);
-        return Map.of("success", true, "group", group);
+        return ApiResponse.success("group", group);
     }
 }
 

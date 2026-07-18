@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
+
+import io.github.panris.agenteval.web.dto.ApiResponse;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.RequirementParser;
@@ -240,15 +242,15 @@ public class TestCaseController {
             @PathVariable String id,
             @RequestBody Map<String, Object> body) {
         if (body == null || !body.containsKey("tags")) {
-            return Map.of("success", false, "error", "tags 不能为空");
+            return ApiResponse.error("tags 不能为空");
         }
         Object tagsObj = body.get("tags");
         if (!(tagsObj instanceof List)) {
-            return Map.of("success", false, "error", "tags 必须是一个列表");
+            return ApiResponse.error("tags 必须是一个列表");
         }
         Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
         if (opt.isEmpty()) {
-            return Map.of("success", false, "error", "测试用例不存在");
+            return ApiResponse.error("测试用例不存在");
         }
         TestCaseEntity tc = opt.get();
         if (tc.getMetadata() == null) {
@@ -257,7 +259,7 @@ public class TestCaseController {
         tc.getMetadata().put("tags", tagsObj);
         tc.updateTimestamp();
         repository.saveTestCase(tc);
-        return Map.of("success", true, "tags", tc.getMetadata().get("tags"));
+        return ApiResponse.success("tags", tc.getMetadata().get("tags"));
     }
     
     /**
@@ -268,11 +270,11 @@ public class TestCaseController {
     public Map<String, Object> batchImport(@RequestBody List<TestCaseRequest> requests) {
         if (requests == null || requests.isEmpty()) {
             log.warn("batchImport: request list is empty");
-            return Map.of("success", false, "error", "Request list is empty");
+            return ApiResponse.error("Request list is empty");
         }
         if (requests.size() > 100) {
             log.warn("batchImport: batch size {} exceeds 100 items", requests.size());
-            return Map.of("success", false, "error", "Batch size exceeds 100 items");
+            return ApiResponse.error("Batch size exceeds 100 items");
         }
         // Validate each item
         for (int i = 0; i < requests.size(); i++) {
@@ -315,7 +317,7 @@ public class TestCaseController {
     public Map<String, Object> parseFromRequirements(@RequestBody Map<String, String> body) {
         String text = body.get("text");
         if (text == null || text.isBlank()) {
-            return Map.of("success", false, "error", "需求文档内容不能为空");
+            return ApiResponse.error("需求文档内容不能为空");
         }
         if (text.length() > 50000) {
             text = text.substring(0, 50000);
@@ -342,10 +344,10 @@ public class TestCaseController {
     @PostMapping("/save-parsed")
     public Map<String, Object> saveParsed(@RequestBody List<Map<String, Object>> cases) {
         if (cases == null || cases.isEmpty()) {
-            return Map.of("success", false, "error", "没有要保存的测试用例");
+            return ApiResponse.error("没有要保存的测试用例");
         }
         if (cases.size() > 200) {
-            return Map.of("success", false, "error", "一次最多保存 200 个测试用例");
+            return ApiResponse.error("一次最多保存 200 个测试用例");
         }
 
         int savedCount = 0;
@@ -388,13 +390,13 @@ public class TestCaseController {
 
     private Map<String, Object> validateInput(TestCaseRequest request) {
         if (request.getInput() == null || request.getInput().isBlank()) {
-            return Map.of("success", false, "error", "输入不能为空");
+            return ApiResponse.error("输入不能为空");
         }
         if (request.getExpected() == null || request.getExpected().isBlank()) {
-            return Map.of("success", false, "error", "期望输出不能为空");
+            return ApiResponse.error("期望输出不能为空");
         }
         if (request.getInput().length() > 10000 || request.getExpected().length() > 10000) {
-            return Map.of("success", false, "error", "输入或期望输出不能超过 10000 字符");
+            return ApiResponse.error("输入或期望输出不能超过 10000 字符");
         }
         return null;
     }

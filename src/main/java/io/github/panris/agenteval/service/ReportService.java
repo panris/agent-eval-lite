@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.service;
 
+
+import io.github.panris.agenteval.web.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -237,13 +239,13 @@ public class ReportService {
 
     public Map<String, Object> deleteReport(String reportId) {
         if (!reportHistory.containsKey(reportId)) {
-            return Map.of("success", false, "error", "报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         reportHistory.remove(reportId);
         removeShareByReportId(reportId);
         saveReportHistory();
         saveSharedReports();
-        return Map.of("success", true, "message", "报告已删除");
+        return ApiResponse.success("message", "报告已删除");
     }
 
     public Map<String, Object> clearAllReports() {
@@ -251,7 +253,7 @@ public class ReportService {
         sharedReports.clear();
         saveReportHistory();
         saveSharedReports();
-        return Map.of("success", true, "message", "所有报告已清除");
+        return ApiResponse.success("message", "所有报告已清除");
     }
 
     /**
@@ -266,33 +268,33 @@ public class ReportService {
     public Map<String, Object> copyReport(String reportId) {
         Map<String, Object> original = reportHistory.get(reportId);
         if (original == null) {
-            return Map.of("success", false, "error", "报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         String newId = "report_" + System.currentTimeMillis();
         reportHistory.put(newId, new LinkedHashMap<>(original));
         saveReportHistory();
-        return Map.of("success", true, "newId", newId, "message", "报告已复制");
+        return ApiResponse.success(Map.of("newId", newId, "message", "报告已复制"));
     }
 
     public Map<String, Object> toggleFavorite(String reportId) {
         Map<String, Object> report = reportHistory.get(reportId);
         if (report == null) {
-            return Map.of("success", false, "error", "报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         boolean current = (boolean) report.getOrDefault("favorite", false);
         report.put("favorite", !current);
         saveReportHistory();
-        return Map.of("success", true, "favorite", !current);
+        return ApiResponse.success("favorite", !current);
     }
 
     public Map<String, Object> createShareLink(String reportId) {
         if (!reportHistory.containsKey(reportId)) {
-            return Map.of("success", false, "error", "报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         String shareId = UUID.randomUUID().toString().substring(0, 8);
         sharedReports.put(shareId, reportId);
         saveSharedReports();
-        return Map.of("success", true, "shareId", shareId, "url", "/share/" + shareId);
+        return ApiResponse.success(Map.of("shareId", shareId, "url", "/share/" + shareId));
     }
 
     public String resolveShareId(String shareId) {
@@ -306,27 +308,27 @@ public class ReportService {
                 favorites.put(reportId, report);
             }
         });
-        return Map.of("success", true, "favorites", favorites, "total", favorites.size());
+        return ApiResponse.success(Map.of("favorites", favorites, "total", favorites.size()));
     }
 
     public Map<String, Object> updateTags(String reportId, List<String> tags) {
         Map<String, Object> report = reportHistory.get(reportId);
         if (report == null) {
-            return Map.of("success", false, "error", "报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         report.put("tags", tags);
         saveReportHistory();
-        return Map.of("success", true, "tags", tags);
+        return ApiResponse.success("tags", tags);
     }
 
     public Map<String, Object> updateNote(String reportId, String note) {
         Map<String, Object> report = reportHistory.get(reportId);
         if (report == null) {
-            return Map.of("success", false, "error", "报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         report.put("note", note != null ? note : "");
         saveReportHistory();
-        return Map.of("success", true, "note", report.get("note"));
+        return ApiResponse.success("note", report.get("note"));
     }
 
     // ============ 报告对比 ============
@@ -339,7 +341,7 @@ public class ReportService {
             .collect(Collectors.toList());
 
         if (reports.isEmpty()) {
-            return Map.of("success", false, "error", "未找到有效报告");
+            return ApiResponse.error("未找到有效报告");
         }
 
         Map<String, Object> comparison = new LinkedHashMap<>();
@@ -454,7 +456,7 @@ public class ReportService {
             comparison.put("scorerStats", scorerStats);
         }
 
-        return Map.of("success", true, "comparison", comparison);
+        return ApiResponse.success("comparison", comparison);
     }
 
     // ============ 工具方法 ============

@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.service;
 
+
+import io.github.panris.agenteval.web.dto.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -40,7 +42,7 @@ public class RequirementParser {
                                       String defaultProject, String defaultModule,
                                       String defaultFunction) {
         if (text == null || text.isBlank()) {
-            return Map.of("success", false, "error", "需求文档内容不能为空");
+            return ApiResponse.error("需求文档内容不能为空");
         }
 
         // Truncate if too long

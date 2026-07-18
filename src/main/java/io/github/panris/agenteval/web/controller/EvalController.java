@@ -9,6 +9,7 @@ import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.web.dto.ApiResponse;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -69,10 +70,10 @@ public class EvalController {
     @ResponseBody
     public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
         if (request == null) {
-            return error("请求体不能为空");
+            return ApiResponse.error("请求体不能为空");
         }
         if (request.getTestCases() == null || request.getTestCases().isEmpty()) {
-            return error("测试用例列表不能为空");
+            return ApiResponse.error("测试用例列表不能为空");
         }
         String agentType = request.getAgentType();
         if (agentType == null || agentType.trim().isEmpty()) {
@@ -84,7 +85,7 @@ public class EvalController {
         }
         CaseResolution cr = resolveFromDtos(request.getTestCases());
         if (cr.hasError()) {
-            return error(cr.errorMessage());
+            return ApiResponse.error(cr.errorMessage());
         }
         return runEvaluation(cr.testCases(), request.getMetrics(), agentType, null, null, null, null);
     }
@@ -97,10 +98,10 @@ public class EvalController {
     @ResponseBody
     public Map<String, Object> evaluateByCaseIds(@RequestBody EvaluateByCaseIdsRequest request) {
         if (request == null) {
-            return error("请求体不能为空");
+            return ApiResponse.error("请求体不能为空");
         }
         if (request.getCaseIds() == null || request.getCaseIds().isEmpty()) {
-            return error("测试用例 ID 列表不能为空");
+            return ApiResponse.error("测试用例 ID 列表不能为空");
         }
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
@@ -108,7 +109,7 @@ public class EvalController {
         }
         CaseResolution cr = resolveFromCaseIds(request.getCaseIds());
         if (cr.hasError()) {
-            return error(cr.errorMessage());
+            return ApiResponse.error(cr.errorMessage());
         }
         return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, null, null);
     }
@@ -140,12 +141,12 @@ public class EvalController {
                     .toList();
 
                 if (testCases.isEmpty()) {
-                    return error("该分组没有测试用例");
+                    return ApiResponse.error("该分组没有测试用例");
                 }
 
                 return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), group.getName(), null, null, null);
             })
-            .orElse(error("分组不存在"));
+            .orElse(ApiResponse.error("分组不存在"));
     }
 
     /**
@@ -161,7 +162,7 @@ public class EvalController {
         }
         CaseResolution cr = resolveFromDimensions(request.getProject(), request.getModule(), request.getFunction());
         if (cr.hasError()) {
-            return error(cr.errorMessage());
+            return ApiResponse.error(cr.errorMessage());
         }
         String groupLabel = request.getFunction() != null ? request.getFunction()
             : request.getModule() != null ? request.getModule()
@@ -178,7 +179,7 @@ public class EvalController {
     @ResponseBody
     public Map<String, Object> evaluateAsync(@RequestBody EvalRequest request) {
         if (request == null) {
-            return error("请求不能为空");
+            return ApiResponse.error("请求不能为空");
         }
         Map<String, Object> metricsError = validateMetrics(request.getMetrics());
         if (metricsError != null) {
@@ -195,7 +196,7 @@ public class EvalController {
             cr = resolveFromDimensions(request.getProject(), request.getModule(), request.getFunction());
         }
         if (cr.hasError()) {
-            return error(cr.errorMessage());
+            return ApiResponse.error(cr.errorMessage());
         }
         String taskId = asyncEvalService.submitTask(cr.testCases(), request.getMetrics(), agentType,
                 300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction());
@@ -211,7 +212,7 @@ public class EvalController {
     public Map<String, Object> getTaskStatus(@PathVariable String taskId) {
         AsyncEvalService.TaskStatus status = asyncEvalService.getStatus(taskId);
         if (status == null) {
-            return error("任务不存在");
+            return ApiResponse.error("任务不存在");
         }
         return Map.of(
             "success", true,
@@ -255,11 +256,11 @@ public class EvalController {
      */
     private Map<String, Object> validateMetrics(List<String> metrics) {
         if (metrics == null || metrics.isEmpty()) {
-            return error("评测指标不能为空");
+            return ApiResponse.error("评测指标不能为空");
         }
         for (String metric : metrics) {
             if (metric == null || !VALID_METRICS.contains(metric)) {
-                return error("不支持的评测指标: " + metric);
+                return ApiResponse.error("不支持的评测指标: " + metric);
             }
         }
         return null;
@@ -332,11 +333,6 @@ public class EvalController {
         }
     }
 
-    /** Shorthand: return an error result map. */
-    private static Map<String, Object> error(String message) {
-        return Map.of("success", false, "error", message);
-    }
-
     @GetMapping("/api/reports")
     @ResponseBody
     public Map<String, Object> getReports(
@@ -364,7 +360,7 @@ public class EvalController {
     public Map<String, Object> getReport(@PathVariable String id) {
         Map<String, Object> report = reportService.getReport(id);
         if (report == null) {
-            return error("报告不存在");
+            return ApiResponse.error("报告不存在");
         }
         Map<String, Object> detail = new LinkedHashMap<>();
         detail.put("success", true);
@@ -395,7 +391,7 @@ public class EvalController {
         if (body != null && "clearAll".equals(body.get("action"))) {
             return reportService.clearAllReports();
         }
-        return error("无效的操作");
+        return ApiResponse.error("无效的操作");
     }
 
     @GetMapping("/api/reports/{id}/export")
@@ -587,7 +583,7 @@ public class EvalController {
             @RequestBody Map<String, Object> body) {
         Object tags = body.get("tags");
         if (!(tags instanceof List)) {
-            return error("tags 必须是一个列表");
+            return ApiResponse.error("tags 必须是一个列表");
         }
         @SuppressWarnings("unchecked")
         List<String> tagList = (List<String>) tags;
@@ -616,7 +612,7 @@ public class EvalController {
             .distinct()
             .collect(java.util.stream.Collectors.toList());
         if (idList.size() < 2) {
-            return error("至少需要 2 个报告进行对比");
+            return ApiResponse.error("至少需要 2 个报告进行对比");
         }
         return reportService.compareReports(idList);
     }
