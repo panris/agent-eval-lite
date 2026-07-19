@@ -1,6 +1,7 @@
 package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.*;
+import io.github.panris.agenteval.agent.AgentFactory;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.scorer.ScorerResult;
@@ -30,17 +31,23 @@ public class AsyncEvalService {
     private final Map<String, TaskStatus> tasks = new ConcurrentHashMap<>();
     private final Deque<String> taskOrder = new ConcurrentLinkedDeque<>();
     private final Executor executor;
+    private final ExecutorService evalExecutorService;
     private final ReportService reportService;
     private final TestCaseRepository testCaseRepository;
     private final ObjectMapper objectMapper;
+    private final AgentFactory agentFactory;
     private static final int MAX_TASKS = 1000;
 
     public AsyncEvalService(ReportService reportService, TestCaseRepository testCaseRepository, ObjectMapper objectMapper,
-                            @Qualifier("evalTaskExecutor") Executor evalTaskExecutor) {
+                            @Qualifier("evalTaskExecutor") Executor evalTaskExecutor,
+                            @Qualifier("evalExecutorService") ExecutorService evalExecutorService,
+                            AgentFactory agentFactory) {
         this.reportService = reportService;
         this.testCaseRepository = testCaseRepository;
         this.objectMapper = objectMapper;
         this.executor = evalTaskExecutor;
+        this.evalExecutorService = evalExecutorService;
+        this.agentFactory = agentFactory;
     }
 
     public static class TaskStatus {
@@ -111,7 +118,7 @@ public class AsyncEvalService {
                 for (String metric : metrics) {
                     builder.metrics(metric);
                 }
-                Evaluator evaluator = builder.build();
+                Evaluator evaluator = builder.executorService(evalExecutorService).build();
 
                 EvaluationReport report = evaluator.evaluate(agent, testCases);
 
@@ -188,12 +195,7 @@ public class AsyncEvalService {
     }
 
     private Agent buildAgent(String agentType) {
-        return switch (agentType.toLowerCase()) {
-            case "echo" -> Agent.from(input -> input);
-            case "upper" -> Agent.from(String::toUpperCase);
-            case "reverse" -> Agent.from(input -> new StringBuilder(input).reverse().toString());
-            default -> input -> "Demo response for: " + input;
-        };
+        return agentFactory.createAgent(agentType);
     }
 
     public List<Map<String, Object>> serializeEvaluations(List<Evaluation> evals, List<TestCase> testCases) {

@@ -1,9 +1,9 @@
 package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.service.ReportService;
 import org.junit.jupiter.api.*;
-import org.springframework.ui.Model;
 
 import java.util.*;
 
@@ -19,12 +19,14 @@ class HealthControllerTest {
     private HealthController controller;
     private TestCaseRepository mockRepository;
     private ReportService mockReportService;
+    private AgentConfigRepository mockAgentRepository;
 
     @BeforeEach
     void setUp() {
         mockRepository = mock(TestCaseRepository.class);
         mockReportService = mock(ReportService.class);
-        controller = new HealthController(mockRepository, mockReportService);
+        mockAgentRepository = mock(AgentConfigRepository.class);
+        controller = new HealthController(mockRepository, mockReportService, mockAgentRepository);
     }
 
     // ============ GET /api/health ============

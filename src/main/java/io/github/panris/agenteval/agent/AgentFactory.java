@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
@@ -17,6 +18,12 @@ import java.util.Map;
 public class AgentFactory {
 
     private static final Logger logger = LoggerFactory.getLogger(AgentFactory.class);
+
+    private final RestTemplate restTemplate;
+
+    public AgentFactory(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Value("${agent.default.type:http}")
     private String defaultAgentType;
@@ -58,6 +65,9 @@ public class AgentFactory {
             case "openai" -> createOpenAIAgent(config);
             case "claude" -> createClaudeAgent(config);
             case "demo" -> createDemoAgent();
+            case "echo" -> input -> input;
+            case "upper" -> String::toUpperCase;
+            case "reverse" -> input -> new StringBuilder(input).reverse().toString();
             default -> {
                 logger.warn("Unknown agent type: {}, using demo agent", type);
                 yield createDemoAgent();
@@ -87,7 +97,7 @@ public class AgentFactory {
         return switch (type.toLowerCase()) {
             case "openai" -> createOpenAIAgentFromConfig(agentConfig);
             case "claude" -> createClaudeAgentFromConfig(agentConfig);
-            default -> new ConfigurableHttpAgent(agentConfig);
+            default -> new ConfigurableHttpAgent(restTemplate, agentConfig);
         };
     }
 
@@ -129,9 +139,19 @@ public class AgentFactory {
         }
 
         if (formatter != null && parser != null) {
-            return new HttpAgent(endpoint, headers, formatter, parser, timeout);
+            return new HttpAgent(restTemplate, endpoint, headers, formatter, parser, timeout);
         } else {
-            return new HttpAgent(endpoint, headers, timeout);
+            return new HttpAgent(restTemplate, endpoint, headers,
+                    (input) -> Map.of("input", input),
+                    response -> {
+                        if (response instanceof Map) {
+                            Map<?, ?> map = (Map<?, ?>) response;
+                            Object output = map.get("output");
+                            return output != null ? output.toString() : null;
+                        }
+                        return response.toString();
+                    },
+                    timeout);
         }
     }
 
@@ -150,7 +170,7 @@ public class AgentFactory {
             return createDemoAgent();
         }
 
-        return new OpenAIAgent(endpoint, apiKey, model, timeout, systemPrompt);
+        return new OpenAIAgent(restTemplate, endpoint, apiKey, model, timeout, systemPrompt);
     }
 
     /**
@@ -209,7 +229,7 @@ public class AgentFactory {
         claudeConfig.setEndpoint(endpoint);
         claudeConfig.setTimeout(timeout);
 
-        return new ConfigurableHttpAgent(claudeConfig);
+        return new ConfigurableHttpAgent(restTemplate, claudeConfig);
     }
 
     /**
@@ -225,7 +245,7 @@ public class AgentFactory {
             return createDemoAgent();
         }
 
-        return new ConfigurableHttpAgent(config);
+        return new ConfigurableHttpAgent(restTemplate, config);
     }
 
     /**
@@ -241,7 +261,7 @@ public class AgentFactory {
             return createDemoAgent();
         }
 
-        return new ConfigurableHttpAgent(config);
+        return new ConfigurableHttpAgent(restTemplate, config);
     }
 
     // Helper methods for configuration extraction

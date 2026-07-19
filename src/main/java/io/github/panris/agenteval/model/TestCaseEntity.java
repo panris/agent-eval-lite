@@ -1,5 +1,8 @@
 package io.github.panris.agenteval.model;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,8 +14,15 @@ import java.util.UUID;
 public class TestCaseEntity {
 
     private String id;
+
+    @Size(max = 100, message = "用例名称长度不能超过100字符")
     private String name;
+
+    @NotBlank(message = "测试输入不能为空")
+    @Size(max = 10000, message = "测试输入长度不能超过10000字符")
     private String input;
+
+    @Size(max = 10000, message = "期望输出长度不能超过10000字符")
     private String expected;
     private String groupId;
     /** 三维分组：项目 */

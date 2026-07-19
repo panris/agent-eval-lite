@@ -5,6 +5,7 @@ import io.github.panris.agenteval.web.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -21,15 +23,19 @@ import java.util.stream.Collectors;
 @Service
 public class ReportService {
     private static final Logger log = LoggerFactory.getLogger(ReportService.class);
-    private static String dataDir() {
-        return System.getProperty("agenteval.data.dir", "data");
-    }
-    private static Path reportsFile() {
-        return Paths.get(dataDir(), "reports.json");
+
+    private final String dataDir;
+
+    public ReportService(@Value("${data.dir:data}") String dataDir) {
+        this.dataDir = dataDir;
     }
 
-    private final Map<String, Map<String, Object>> reportHistory = new LinkedHashMap<>();
-    private final Map<String, String> sharedReports = new LinkedHashMap<>(); // shareId -> reportId
+    private Path reportsFile() {
+        return Paths.get(dataDir, "reports.json");
+    }
+
+    private final Map<String, Map<String, Object>> reportHistory = new ConcurrentHashMap<>();
+    private final Map<String, String> sharedReports = new ConcurrentHashMap<>(); // shareId -> reportId
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -65,7 +71,7 @@ public class ReportService {
     }
 
     private void loadSharedReports() {
-        Path sharesFile = Paths.get(dataDir(), "shares.json");
+        Path sharesFile = Paths.get(dataDir, "shares.json");
         if (!Files.exists(sharesFile)) return;
         try {
             @SuppressWarnings("unchecked")
@@ -79,7 +85,7 @@ public class ReportService {
 
     public void saveSharedReports() {
         try {
-            Path sharesFile = Paths.get(dataDir(), "shares.json");
+            Path sharesFile = Paths.get(dataDir, "shares.json");
             Files.createDirectories(sharesFile.getParent());
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(sharedReports);
             Files.writeString(sharesFile, json);

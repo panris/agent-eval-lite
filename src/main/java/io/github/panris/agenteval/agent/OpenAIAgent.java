@@ -26,16 +26,17 @@ public class OpenAIAgent implements Agent {
     private final String systemPrompt;
 
     /**
-     * Create OpenAI agent.
+     * Create OpenAI agent with external RestTemplate.
      *
+     * @param restTemplate the rest template (can be null, will create new if null)
      * @param endpoint     the API endpoint (e.g., "https://api.openai.com/v1/chat/completions")
      * @param apiKey       the API key
      * @param model        the model name (e.g., "gpt-4", "gpt-3.5-turbo")
      * @param timeoutMs    request timeout in milliseconds
      * @param systemPrompt optional system prompt (can be null)
      */
-    public OpenAIAgent(String endpoint, String apiKey, String model, int timeoutMs, String systemPrompt) {
-        this.restTemplate = new RestTemplate();
+    public OpenAIAgent(RestTemplate restTemplate, String endpoint, String apiKey, String model, int timeoutMs, String systemPrompt) {
+        this.restTemplate = restTemplate != null ? restTemplate : new RestTemplate();
         this.endpoint = endpoint;
         this.apiKey = apiKey;
         this.model = model;
@@ -50,7 +51,7 @@ public class OpenAIAgent implements Agent {
      * @param model  the model name
      */
     public OpenAIAgent(String apiKey, String model) {
-        this("https://api.openai.com/v1/chat/completions", apiKey, model, 30000, null);
+        this(null, "https://api.openai.com/v1/chat/completions", apiKey, model, 30000, null);
     }
 
     /**
@@ -61,7 +62,7 @@ public class OpenAIAgent implements Agent {
      * @param systemPrompt the system prompt
      */
     public OpenAIAgent(String apiKey, String model, String systemPrompt) {
-        this("https://api.openai.com/v1/chat/completions", apiKey, model, 30000, systemPrompt);
+        this(null, "https://api.openai.com/v1/chat/completions", apiKey, model, 30000, systemPrompt);
     }
 
     @Override

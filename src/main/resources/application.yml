@@ -20,6 +20,10 @@ spring:
       max-file-size: 10MB
       max-request-size: 12MB
 
+# Data Storage Configuration
+data:
+  dir: data  # Data directory for JSON file storage
+
 # Agent Configuration
 agent:
   default:

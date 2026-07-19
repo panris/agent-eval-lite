@@ -26,11 +26,21 @@ public class ConfigurableHttpAgent implements Agent {
     /**
      * Create configurable HTTP agent from AgentConfig.
      *
+     * @param restTemplate the rest template (can be null, will create new if null)
+     * @param config       the agent configuration
+     */
+    public ConfigurableHttpAgent(RestTemplate restTemplate, AgentConfig config) {
+        this.restTemplate = restTemplate != null ? restTemplate : new RestTemplate();
+        this.config = config;
+    }
+
+    /**
+     * Create configurable HTTP agent from AgentConfig with default RestTemplate.
+     *
      * @param config the agent configuration
      */
     public ConfigurableHttpAgent(AgentConfig config) {
-        this.restTemplate = new RestTemplate();
-        this.config = config;
+        this(null, config);
     }
 
     @Override

@@ -9,6 +9,8 @@ import org.junit.jupiter.api.*;
 import org.springframework.ui.Model;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -37,8 +39,10 @@ class EvalControllerTest {
         mockTestCaseRepository = mock(TestCaseRepository.class);
         mockAgentFactory = mock(AgentFactory.class);
         mockAgentConfigRepository = mock(AgentConfigRepository.class);
+        ExecutorService mockExecutor = Executors.newSingleThreadExecutor();
         controller = new EvalController(
-                mockTestCaseRepository, mockAgentConfigRepository, mockAsyncEvalService, mockReportService, mockAgentFactory);
+                mockTestCaseRepository, mockAgentConfigRepository, mockAsyncEvalService, 
+                mockReportService, mockAgentFactory, mockExecutor);
     }
 
     // ============ Page routes ============

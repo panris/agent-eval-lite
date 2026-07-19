@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.panris.agenteval.model.AgentConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
@@ -20,12 +21,13 @@ import java.util.stream.Collectors;
 public class AgentConfigRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(AgentConfigRepository.class);
-    private static final String DATA_FILE = "data/agents.json";
 
     private final Map<String, AgentConfig> configs = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final String dataFile;
 
-    public AgentConfigRepository() {
+    public AgentConfigRepository(@Value("${data.dir:data}") String dataDir) {
+        this.dataFile = new File(dataDir, "agents.json").getPath();
         loadFromFile();
     }
 
@@ -96,7 +98,7 @@ public class AgentConfigRepository {
      */
     private void loadFromFile() {
         try {
-            File file = new File(DATA_FILE);
+            File file = new File(dataFile);
             if (file.exists()) {
                 Map<String, AgentConfig> loaded = objectMapper.readValue(file,
                         objectMapper.getTypeFactory().constructMapType(
@@ -106,12 +108,12 @@ public class AgentConfigRepository {
                         ));
                 configs.clear();
                 configs.putAll(loaded);
-                logger.info("Loaded {} agent configs from {}", configs.size(), DATA_FILE);
+                logger.info("Loaded {} agent configs from {}", configs.size(), dataFile);
             } else {
                 logger.info("No existing agent config file, starting with empty collection");
             }
         } catch (IOException e) {
-            logger.error("Failed to load agent configs from {}: {}", DATA_FILE, e.getMessage());
+            logger.error("Failed to load agent configs from {}: {}", dataFile, e.getMessage());
         }
     }
 
@@ -120,12 +122,12 @@ public class AgentConfigRepository {
      */
     private void saveToFile() {
         try {
-            File file = new File(DATA_FILE);
+            File file = new File(dataFile);
             file.getParentFile().mkdirs();
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, configs);
-            logger.debug("Saved {} agent configs to {}", configs.size(), DATA_FILE);
+            logger.debug("Saved {} agent configs to {}", configs.size(), dataFile);
         } catch (IOException e) {
-            logger.error("Failed to save agent configs to {}: {}", DATA_FILE, e.getMessage());
+            logger.error("Failed to save agent configs to {}: {}", dataFile, e.getMessage());
         }
     }
 }

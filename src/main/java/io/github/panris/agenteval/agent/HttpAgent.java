@@ -25,19 +25,20 @@ public class HttpAgent implements Agent {
     private final int timeoutMs;
 
     /**
-     * Create HTTP agent with custom formatters.
+     * Create HTTP agent with custom formatters and external RestTemplate.
      *
+     * @param restTemplate     the rest template (can be null, will create new if null)
      * @param endpoint         the API endpoint URL
      * @param headers          additional HTTP headers
      * @param requestFormatter custom request body formatter
      * @param responseParser   custom response parser
      * @param timeoutMs        request timeout in milliseconds
      */
-    public HttpAgent(String endpoint, Map<String, String> headers,
+    public HttpAgent(RestTemplate restTemplate, String endpoint, Map<String, String> headers,
                       RequestFormatter requestFormatter,
                       ResponseParser responseParser,
                       int timeoutMs) {
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate != null ? restTemplate : new RestTemplate();
         this.endpoint = endpoint;
         this.headers = headers != null ? headers : Map.of();
         this.requestFormatter = requestFormatter;
@@ -55,7 +56,7 @@ public class HttpAgent implements Agent {
      * @param timeoutMs request timeout in milliseconds
      */
     public HttpAgent(String endpoint, Map<String, String> headers, int timeoutMs) {
-        this(endpoint, headers,
+        this(null, endpoint, headers,
             (input) -> Map.of("input", input),
             (response) -> {
                 if (response instanceof Map) {

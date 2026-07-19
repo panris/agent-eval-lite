@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
+import io.github.panris.agenteval.Agent;
+import io.github.panris.agenteval.agent.AgentFactory;
 import io.github.panris.agenteval.agent.AgentTemplates;
 import io.github.panris.agenteval.model.AgentConfig;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
@@ -25,9 +27,11 @@ public class AgentConfigController {
     private static final Logger logger = LoggerFactory.getLogger(AgentConfigController.class);
 
     private final AgentConfigRepository repository;
+    private final AgentFactory agentFactory;
 
-    public AgentConfigController(AgentConfigRepository repository) {
+    public AgentConfigController(AgentConfigRepository repository, AgentFactory agentFactory) {
         this.repository = repository;
+        this.agentFactory = agentFactory;
     }
 
     // ============ List & Get ============
@@ -194,14 +198,32 @@ public class AgentConfigController {
         return repository.findById(id)
                 .map(config -> {
                     String testInput = body.getOrDefault("input", "测试输入");
-                    // TODO: Implement actual test using AgentFactory
-                    return ResponseEntity.ok(Map.of(
-                            "success", true,
-                            "message", "测试成功（待实现实际调用）",
-                            "input", testInput,
-                            "config", config
-                    ));
+                    try {
+                        Agent agent = agentFactory.createAgent(config);
+                        long startTime = System.currentTimeMillis();
+                        String response = agent.execute(testInput);
+                        long responseTime = System.currentTimeMillis() - startTime;
+
+                        boolean success = !response.startsWith("ERROR");
+                        Map<String, Object> result = Map.of(
+                                "success", success,
+                                "input", testInput,
+                                "output", response,
+                                "responseTimeMs", responseTime,
+                                "message", success ? "测试成功" : "测试失败：" + response
+                        );
+                        return ResponseEntity.ok(result);
+                    } catch (Exception e) {
+                        logger.error("Failed to test agent config {}: {}", id, e.getMessage(), e);
+                        Map<String, Object> result = Map.of(
+                                "success", false,
+                                "input", testInput,
+                                "error", e.getMessage(),
+                                "message", "测试失败：" + e.getMessage()
+                        );
+                        return ResponseEntity.ok(result);
+                    }
                 })
-                .orElse(ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在")));
+                .orElseGet(() -> ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在")));
     }
 }

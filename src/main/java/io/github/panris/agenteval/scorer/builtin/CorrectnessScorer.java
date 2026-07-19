@@ -5,6 +5,9 @@ import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.scorer.EvaluationScorer;
 import io.github.panris.agenteval.scorer.ScorerResult;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Evaluates if the output matches the expected result.
  */
@@ -61,27 +64,30 @@ public class CorrectnessScorer implements EvaluationScorer {
         String exp = expected.trim().toLowerCase();
         String act = actual.trim().toLowerCase();
 
-        // Exact match
         if (exp.equals(act)) {
             return 1.0;
         }
 
-        // Contains check
         if (act.contains(exp) || exp.contains(act)) {
             return 0.9;
         }
 
-        // Calculate Jaccard similarity
         String[] expWords = exp.split("\\s+");
         String[] actWords = act.split("\\s+");
 
+        if (expWords.length == 0 || actWords.length == 0) {
+            return 0.0;
+        }
+
+        Set<String> actWordSet = new HashSet<>();
+        for (String word : actWords) {
+            actWordSet.add(word);
+        }
+
         int matches = 0;
         for (String expWord : expWords) {
-            for (String actWord : actWords) {
-                if (expWord.equals(actWord)) {
-                    matches++;
-                    break;
-                }
+            if (actWordSet.contains(expWord)) {
+                matches++;
             }
         }
 

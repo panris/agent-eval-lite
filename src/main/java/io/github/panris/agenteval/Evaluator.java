@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
-/**
- * Main evaluator for running agent evaluations.
- */
 public class Evaluator {
 
     private static final Logger logger = LoggerFactory.getLogger(Evaluator.class);
@@ -24,11 +21,13 @@ public class Evaluator {
     private final List<EvaluationScorer> scorers;
     private final int maxWorkers;
     private final int timeoutMs;
+    private final ExecutorService executorService;
 
     private Evaluator(Builder builder) {
         this.scorers = builder.scorers;
         this.maxWorkers = builder.maxWorkers;
         this.timeoutMs = builder.timeoutMs;
+        this.executorService = builder.executorService;
     }
 
     /**
@@ -51,8 +50,8 @@ public class Evaluator {
 
         List<Evaluation> evaluations = new ArrayList<>();
 
-        // Execute with thread pool for concurrency
-        ExecutorService executor = Executors.newFixedThreadPool(maxWorkers);
+        boolean useExternalExecutor = executorService != null;
+        ExecutorService executor = useExternalExecutor ? executorService : Executors.newFixedThreadPool(maxWorkers);
         List<Future<Evaluation>> futures = new ArrayList<>();
 
         for (TestCase testCase : testCases) {
@@ -74,7 +73,9 @@ public class Evaluator {
             }
         }
 
-        executor.shutdown();
+        if (!useExternalExecutor) {
+            executor.shutdown();
+        }
 
         long executionTime = System.currentTimeMillis() - startTime;
         logger.info("Evaluation completed in {} ms", executionTime);
@@ -131,6 +132,7 @@ public class Evaluator {
         private List<EvaluationScorer> scorers = new ArrayList<>();
         private int maxWorkers = 4;
         private int timeoutMs = 30000;
+        private ExecutorService executorService;
 
         /**
          * Add metrics by name.
@@ -180,6 +182,18 @@ public class Evaluator {
          */
         public Builder timeoutMs(int timeoutMs) {
             this.timeoutMs = timeoutMs;
+            return this;
+        }
+
+        /**
+         * Set external executor service for thread pool reuse.
+         * If not set, a new fixed thread pool will be created.
+         *
+         * @param executorService the executor service to use
+         * @return this builder
+         */
+        public Builder executorService(ExecutorService executorService) {
+            this.executorService = executorService;
             return this;
         }
 

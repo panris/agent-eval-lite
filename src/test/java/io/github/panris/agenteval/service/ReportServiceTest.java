@@ -50,7 +50,7 @@ class ReportServiceTest {
                 }
             }
         } catch (Exception ignored) {}
-        reportService = new ReportService();
+        reportService = new ReportService("data");
 
         // Reset the in-memory maps via reflection (ignore already-loaded data from other tests)
         Field historyField = ReportService.class.getDeclaredField("reportHistory");

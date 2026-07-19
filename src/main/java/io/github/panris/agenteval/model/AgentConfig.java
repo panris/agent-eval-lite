@@ -1,6 +1,9 @@
 package io.github.panris.agenteval.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 
 import java.time.Instant;
 import java.util.Map;
@@ -13,13 +16,23 @@ import java.util.UUID;
 public class AgentConfig {
 
     private String id;
+
+    @NotBlank(message = "Agent名称不能为空")
     private String name;
+
+    @NotBlank(message = "Agent类型不能为空")
+    @Pattern(regexp = "^(http|openai|claude|custom)$", message = "不支持的Agent类型")
     private String type;  // http, openai, claude, custom
+
     private String description;
 
     // Endpoint configuration
+    @NotBlank(message = "Agent端点不能为空")
     private String endpoint;
+
     private Map<String, String> headers;
+
+    @Positive(message = "超时时间必须为正数")
     private int timeout;
 
     // Request mapping configuration

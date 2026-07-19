@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 @Controller
 public class EvalController {
@@ -42,17 +43,20 @@ public class EvalController {
     private final AgentConfigRepository agentConfigRepository;
     private final AsyncEvalService asyncEvalService;
     private final AgentFactory agentFactory;
+    private final ExecutorService executorService;
 
     public EvalController(TestCaseRepository testCaseRepository,
                            AgentConfigRepository agentConfigRepository,
                            AsyncEvalService asyncEvalService,
                            ReportService reportService,
-                           AgentFactory agentFactory) {
+                           AgentFactory agentFactory,
+                           @org.springframework.beans.factory.annotation.Qualifier("evalExecutorService") ExecutorService executorService) {
         this.testCaseRepository = testCaseRepository;
         this.agentConfigRepository = agentConfigRepository;
         this.asyncEvalService = asyncEvalService;
         this.reportService = reportService;
         this.agentFactory = agentFactory;
+        this.executorService = executorService;
     }
 
     @GetMapping("/")
@@ -308,7 +312,7 @@ public class EvalController {
         for (String metric : metrics) {
             builder.metrics(metric);
         }
-        Evaluator evaluator = builder.build();
+        Evaluator evaluator = builder.executorService(executorService).build();
 
         // Run evaluation
         EvaluationReport report = evaluator.evaluate(agent, testCases);

@@ -1,7 +1,9 @@
 package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.TestCase;
+import io.github.panris.agenteval.Agent;
 import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.agent.AgentFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -11,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for AsyncEvalService — task lifecycle, timeout, eviction, error handling.
@@ -24,17 +27,20 @@ class AsyncEvalServiceTest {
     private ReportService reportService;
     private TestCaseRepository mockRepo;
     private ObjectMapper objectMapper;
+    private AgentFactory mockAgentFactory;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         System.setProperty("agenteval.data.dir", tempDir.toString());
 
         objectMapper = new ObjectMapper();
-        mockRepo = new TestCaseRepository(); // uses default empty data dir
-        reportService = new ReportService();
+        mockRepo = mock(TestCaseRepository.class);
+        reportService = new ReportService(tempDir.toString());
         Executor executor = Executors.newSingleThreadExecutor();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        mockAgentFactory = mock(AgentFactory.class);
 
-        service = new AsyncEvalService(reportService, mockRepo, objectMapper, executor);
+        service = new AsyncEvalService(reportService, mockRepo, objectMapper, executor, executorService, mockAgentFactory);
     }
 
     @AfterEach
@@ -142,8 +148,9 @@ class AsyncEvalServiceTest {
         awaitCompletion(taskId, 200);
 
         // Now submit with 0 timeout using a separate executor
-        Executor singleExec = Executors.newSingleThreadExecutor();
-        var timeoutService = new AsyncEvalService(reportService, mockRepo, objectMapper, singleExec);
+        ExecutorService singleExec = Executors.newSingleThreadExecutor();
+        Executor singleTaskExec = Executors.newSingleThreadExecutor();
+        var timeoutService = new AsyncEvalService(reportService, mockRepo, objectMapper, singleTaskExec, singleExec, mockAgentFactory);
 
         String slowTaskId = timeoutService.submitTask(List.of(new TestCase("2+2", "4")), metrics, "demo", 0, null, null, null, null);
 
@@ -175,11 +182,41 @@ class AsyncEvalServiceTest {
     @Test
     @DisplayName("Task with multiple test cases produces report with correct counts")
     void testMultiCaseTask() throws Exception {
-        // Demo agent returns "Demo response for: " + input, so expected output must match that pattern
+        // Demo agent handles math expressions: "2+2" -> "4", "3*3" -> "9"
+        // Configure mock to return real demo agent
+        Agent demoAgent = input -> {
+            if (input.contains("+")) {
+                String[] parts = input.split("\\+");
+                if (parts.length == 2) {
+                    try {
+                        int a = Integer.parseInt(parts[0].trim().replaceAll("[^0-9]", ""));
+                        int b = Integer.parseInt(parts[1].trim().replaceAll("[^0-9]", ""));
+                        return String.valueOf(a + b);
+                    } catch (Exception e) {
+                        return "Calculation error";
+                    }
+                }
+            }
+            if (input.contains("*")) {
+                String[] parts = input.split("\\*");
+                if (parts.length == 2) {
+                    try {
+                        int a = Integer.parseInt(parts[0].trim().replaceAll("[^0-9]", ""));
+                        int b = Integer.parseInt(parts[1].trim().replaceAll("[^0-9]", ""));
+                        return String.valueOf(a * b);
+                    } catch (Exception e) {
+                        return "Calculation error";
+                    }
+                }
+            }
+            return "I'm a demo agent. You asked: " + input;
+        };
+        when(mockAgentFactory.createAgent(eq("demo"), any())).thenReturn(demoAgent);
+        when(mockAgentFactory.createAgent("demo")).thenReturn(demoAgent);
         List<TestCase> cases = List.of(
-            new TestCase("hello", "Demo response for: hello"),  // exact match → pass
-            new TestCase("world", "WRONG_ANSWER"),                // no overlap → fail
-            new TestCase("test", "Demo response for: test")       // exact match → pass
+            new TestCase("2+2", "4"),   // exact match -> pass
+            new TestCase("3*3", "9"),   // exact match -> pass
+            new TestCase("5+5", "12")   // wrong answer -> fail
         );
         List<String> metrics = List.of("correctness");
 

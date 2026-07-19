@@ -7,10 +7,13 @@ import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.model.TestCaseGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -30,21 +33,19 @@ public class TestCaseRepository {
     private final Map<String, TestCaseEntity> testCases = new ConcurrentHashMap<>();
     private final Map<String, TestCaseGroup> groups = new ConcurrentHashMap<>();
 
-    public TestCaseRepository() {
+    public TestCaseRepository(@Value("${data.dir:data}") String dataDir) {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-        // Create data directory
-        File dataDir = new File("data");
-        if (!dataDir.exists()) {
-            dataDir.mkdirs();
+        File dataDirFile = new File(dataDir);
+        if (!dataDirFile.exists()) {
+            dataDirFile.mkdirs();
         }
 
-        this.testCasesFile = new File("data/testcases.json");
-        this.groupsFile = new File("data/groups.json");
+        this.testCasesFile = new File(dataDir, "testcases.json");
+        this.groupsFile = new File(dataDir, "groups.json");
 
-        // Load existing data
         loadData();
     }
 
@@ -168,8 +169,15 @@ public class TestCaseRepository {
     public List<TestCaseEntity> saveAllTestCases(List<TestCaseEntity> testCaseList) {
         List<TestCaseEntity> saved = new ArrayList<>();
         for (TestCaseEntity testCase : testCaseList) {
-            saved.add(saveTestCase(testCase));
+            if (testCase.getId() == null || testCase.getId().isEmpty()) {
+                testCase.setId(UUID.randomUUID().toString());
+            }
+            testCase.updateTimestamp();
+            testCases.put(testCase.getId(), testCase);
+            saved.add(testCase);
         }
+        saveData();
+        logger.info("Saved {} test cases in batch", saved.size());
         return saved;
     }
 
