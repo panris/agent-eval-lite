@@ -401,3 +401,107 @@
                 grid-template-columns: 1fr;
             }
         }
+
+/* ============ Agent 配置页样式 ============ */
+
+/* Agent 卡片 */
+.agent-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: box-shadow 0.3s;
+}
+.agent-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.agent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.agent-name { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+.agent-type {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.type-openai { background: #10a37f20; color: #10a37f; }
+.type-claude { background: #d9770620; color: #d97706; }
+.type-custom { background: #3b82f620; color: #3b82f6; }
+.type-http { background: #8b5cf620; color: #8b5cf6; }
+.agent-info { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+.agent-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+/* 模板卡片 */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.template-card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--hover-bg) 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.template-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.template-icon { font-size: 48px; margin-bottom: 12px; }
+.template-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+.template-desc { font-size: 14px; color: var(--text-secondary); }
+
+/* 状态徽章 */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+.status-success { background: #10b98120; color: #10b981; }
+.status-error { background: #ef444420; color: #ef4444; }
+.status-pending { background: #f59e0b20; color: #f59e0b; }
+
+/* JSON 预览 */
+.json-preview {
+    background: var(--input-bg);
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+/* Agent 表单 */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-primary); }
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    box-sizing: border-box;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+.form-textarea { min-height: 100px; font-family: 'Monaco', 'Consolas', monospace; font-size: 13px; }
+
+@media (max-width: 768px) {
+    .template-grid { grid-template-columns: 1fr; }
+}
