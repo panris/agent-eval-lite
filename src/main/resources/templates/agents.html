@@ -23,7 +23,7 @@
         <h1 class="page-title">Agent 管理</h1>
         <p class="page-subtitle">配置和管理评测 Agent，支持 OpenAI、Claude、自定义 HTTP 等多种类型</p>
 
-        <!-- 标签页切换 -->
+        <!-- 标签页 -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('templates')">📦 从模板创建</button>
             <button class="tab" onclick="switchTab('agents')">📋 我的 Agent</button>
@@ -32,25 +32,27 @@
         <!-- 从模板创建 -->
         <div id="templates-tab" class="tab-content active">
             <div class="template-grid" id="templates-grid">
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <div>加载模板中...</div>
-                </div>
+                <div class="loading-spinner"><div class="spinner"></div><div>加载模板中...</div></div>
             </div>
         </div>
 
         <!-- 我的 Agent -->
         <div id="agents-tab" class="tab-content" style="display:none;">
-            <div style="margin-bottom: 20px;">
-                <button class="btn btn-primary" onclick="openCreateModal()">
-                    ➕ 创建自定义 Agent
-                </button>
+            <!-- 工具栏：搜索 + 导入/导出 + 新建 -->
+            <div class="search-bar">
+                <input type="text" id="agent-search" class="form-input"
+                       placeholder="🔍 搜索名称、类型、端点..."
+                       oninput="applyFilter()">
+                <button class="btn btn-secondary" onclick="triggerImport()">📥 导入</button>
+                <button class="btn btn-secondary" onclick="exportAgents()">📤 导出</button>
+                <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建</button>
             </div>
+            <!-- 隐藏的文件导入入口 -->
+            <input type="file" id="import-file" accept=".json" style="display:none"
+                   onchange="handleImportFile(event)">
+            <!-- Agent 列表 -->
             <div id="agents-list">
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <div>加载 Agent 列表中...</div>
-                </div>
+                <div class="loading-spinner"><div class="spinner"></div><div>加载 Agent 列表中...</div></div>
             </div>
         </div>
     </div>
@@ -60,19 +62,19 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-title">创建 Agent</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button class="modal-close" onclick="closeModal()">×</button>
             </div>
             <div class="modal-body">
                 <form id="agent-form">
                     <input type="hidden" id="agent-id">
 
                     <div class="form-group">
-                        <label class="form-label">名称 *</label>
+                        <label class="form-label">名称 <span style="color:#ef4444">*</span></label>
                         <input type="text" id="agent-name" class="form-input" placeholder="例如：GPT-4 问答 Agent" required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">类型 *</label>
+                        <label class="form-label">类型</label>
                         <select id="agent-type" class="form-select" onchange="updateFormByType()">
                             <option value="openai">OpenAI (GPT-4/GPT-3.5)</option>
                             <option value="claude">Anthropic Claude</option>
@@ -87,22 +89,22 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">端点 URL *</label>
+                        <label class="form-label">端点 URL <span style="color:#ef4444">*</span></label>
                         <input type="text" id="agent-endpoint" class="form-input" placeholder="https://api.openai.com/v1/chat/completions" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">超时时间 (ms)</label>
-                        <input type="number" id="agent-timeout" class="form-input" value="30000" placeholder="30000">
+                        <input type="number" id="agent-timeout" class="form-input" value="30000" min="1000" max="300000">
                     </div>
 
-                    <!-- OpenAI/Claude 配置 -->
+                    <!-- OpenAI / Claude 配置 -->
                     <div id="simple-config">
                         <div class="form-group">
-                            <label class="form-label">API Key *</label>
+                            <label class="form-label">API Key <span style="color:#ef4444">*</span></label>
                             <input type="password" id="agent-api-key" class="form-input" placeholder="sk-...">
                         </div>
-                        <div class="form-group" id="model-field">
+                        <div class="form-group">
                             <label class="form-label">模型</label>
                             <input type="text" id="agent-model" class="form-input" placeholder="gpt-3.5-turbo">
                         </div>
@@ -110,30 +112,35 @@
 
                     <!-- 自定义 HTTP 配置 -->
                     <div id="custom-config" style="display:none;">
-                        <h4 style="margin-top: 20px; margin-bottom: 12px; color: var(--text-primary);">请求配置</h4>
+                        <h4 class="form-section-title">请求配置</h4>
 
                         <div class="form-group">
                             <label class="form-label">请求头 (JSON)</label>
-                            <textarea id="agent-headers" class="form-textarea" placeholder='{"Content-Type": "application/json", "Authorization": "Bearer ${apiKey}"}'></textarea>
+                            <textarea id="agent-headers" class="form-textarea"
+                                      placeholder='{"Content-Type": "application/json"}'></textarea>
+                            <div class="json-validate-hint">离开焦点时自动校验 JSON 格式</div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">请求模板</label>
-                            <textarea id="agent-request-template" class="form-textarea" placeholder='{"model":"${model}","messages":[{"role":"user","content":"${input}"}]}'></textarea>
-                            <small style="color: var(--text-secondary);">使用 ${input} 表示用户输入，${apiKey} 等表示配置变量</small>
+                            <textarea id="agent-request-template" class="form-textarea"
+                                      placeholder='{"model":"${model}","messages":[{"role":"user","content":"${input}"}]}'></textarea>
+                            <div class="json-validate-hint">使用 ${input} 表示用户输入，${apiKey} 等引用配置变量</div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">静态配置 (JSON)</label>
-                            <textarea id="agent-config" class="form-textarea" placeholder='{"model": "gpt-3.5-turbo", "temperature": 0.7}'></textarea>
+                            <textarea id="agent-config" class="form-textarea"
+                                      placeholder='{"model": "gpt-3.5-turbo", "temperature": 0.7}'></textarea>
+                            <div class="json-validate-hint">离开焦点时自动校验 JSON 格式</div>
                         </div>
 
-                        <h4 style="margin-top: 20px; margin-bottom: 12px; color: var(--text-primary);">响应配置</h4>
+                        <h4 class="form-section-title">响应配置</h4>
 
                         <div class="form-group">
                             <label class="form-label">输出路径</label>
                             <input type="text" id="agent-output-path" class="form-input" placeholder="choices[0].message.content">
-                            <small style="color: var(--text-secondary);">JSONPath 格式，如：<code>output</code>、<code>choices[0].message.content</code></small>
+                            <div class="json-validate-hint">JSONPath 格式，如 <code>choices[0].message.content</code></div>
                         </div>
 
                         <div class="form-group">
@@ -147,8 +154,8 @@
                         </div>
                     </div>
 
-                    <div style="margin-top: 24px; display: flex; gap: 12px;">
-                        <button type="submit" class="btn btn-primary">💾 保存</button>
+                    <div class="form-actions">
+                        <button type="submit" id="save-btn" class="btn btn-primary">💾 保存</button>
                         <button type="button" class="btn btn-secondary" onclick="testAgentConfig()">🧪 测试配置</button>
                         <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
                     </div>
@@ -162,14 +169,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>🧪 测试 Agent</h3>
-                <button class="modal-close" onclick="closeTestModal()">&times;</button>
+                <button class="modal-close" onclick="closeTestModal()">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">测试输入</label>
-                    <input type="text" id="test-input" class="form-input" placeholder="你好" value="你好">
+                    <input type="text" id="test-input" class="form-input" value="你好" placeholder="输入测试内容">
                 </div>
-                <button class="btn btn-primary" onclick="runTest()" style="margin-bottom: 16px;">运行测试</button>
+                <button class="btn btn-primary" onclick="runTest()">运行测试</button>
                 <div id="test-result"></div>
             </div>
         </div>
