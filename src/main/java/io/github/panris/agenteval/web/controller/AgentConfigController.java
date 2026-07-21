@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Controller for managing Agent configurations.
@@ -108,16 +109,18 @@ public class AgentConfigController {
         ));
     }
 
+    private static final Set<String> VALID_TEMPLATE_TYPES = Set.of("openai", "claude", "custom", "http");
+
     @PostMapping("/from-template/{type}")
     @Operation(summary = "从模板创建 Agent 配置", description = "基于预设模板创建新的 Agent 配置")
     public ResponseEntity<Map<String, Object>> createFromTemplate(
             @PathVariable String type,
             @RequestBody(required = false) Map<String, Object> overrides) {
 
-        AgentConfig template = AgentTemplates.getTemplateByType(type);
-        if (template == null) {
+        if (!VALID_TEMPLATE_TYPES.contains(type.toLowerCase())) {
             return ResponseEntity.badRequest().body(ApiResponse.error("未知的模板类型: " + type));
         }
+        AgentConfig template = AgentTemplates.getTemplateByType(type);
 
         // Apply overrides
         if (overrides != null) {
