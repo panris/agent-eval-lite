@@ -649,4 +649,79 @@ class AgentConfigControllerTest {
         verify(mockRepo, never()).findAll();
         verify(mockRepo, never()).deleteById(anyString());
     }
+
+    // ============================================================
+    // POST /api/agents/test-config — Test unsaved config
+    // ============================================================
+
+    @Test
+    @DisplayName("POST /api/agents/test-config returns success when agent executes")
+    void testTestConfigSuccess() {
+        Agent mockAgent = input -> "Demo response: " + input;
+        when(mockFactory.createAgent(any(AgentConfig.class))).thenReturn(mockAgent);
+
+        Map<String, Object> body = Map.of(
+            "config", Map.of(
+                "name", "Test Agent", "type", "http", "endpoint", "https://example.com"
+            ),
+            "input", "Hello"
+        );
+        ResponseEntity<Map<String, Object>> resp = controller.testConfig(body);
+
+        assertEquals(200, resp.getStatusCode().value());
+        Map<String, Object> result = resp.getBody();
+        assertEquals(true, result.get("success"));
+        assertEquals("Hello", result.get("input"));
+        assertEquals("Demo response: Hello", result.get("output"));
+        assertNotNull(result.get("responseTimeMs"));
+    }
+
+    @Test
+    @DisplayName("POST /api/agents/test-config returns error when agent throws")
+    void testTestConfigException() {
+        Agent mockAgent = input -> { throw new RuntimeException("Connection refused"); };
+        when(mockFactory.createAgent(any(AgentConfig.class))).thenReturn(mockAgent);
+
+        Map<String, Object> body = Map.of(
+            "config", Map.of(
+                "name", "Fail Agent", "type", "http", "endpoint", "https://bad.com"
+            ),
+            "input", "test"
+        );
+        ResponseEntity<Map<String, Object>> resp = controller.testConfig(body);
+
+        assertEquals(200, resp.getStatusCode().value());
+        Map<String, Object> result = resp.getBody();
+        assertEquals(false, result.get("success"));
+        assertTrue(result.get("error").toString().contains("Connection refused"));
+    }
+
+    @Test
+    @DisplayName("POST /api/agents/test-config returns 400 when config missing")
+    void testTestConfigMissingConfig() {
+        Map<String, Object> body = Map.of("input", "test");
+        ResponseEntity<Map<String, Object>> resp = controller.testConfig(body);
+
+        assertEquals(400, resp.getStatusCode().value());
+        Map<String, Object> result = resp.getBody();
+        assertEquals(false, result.get("success"));
+        assertTrue(result.get("error").toString().contains("config"));
+    }
+
+    @Test
+    @DisplayName("POST /api/agents/test-config uses default input when input missing")
+    void testTestConfigDefaultInput() {
+        Agent mockAgent = input -> "Got: " + input;
+        when(mockFactory.createAgent(any(AgentConfig.class))).thenReturn(mockAgent);
+
+        Map<String, Object> body = Map.of(
+            "config", Map.of("name", "T", "type", "http", "endpoint", "https://x.com")
+        );
+        ResponseEntity<Map<String, Object>> resp = controller.testConfig(body);
+
+        assertEquals(200, resp.getStatusCode().value());
+        Map<String, Object> result = resp.getBody();
+        assertEquals(true, result.get("success"));
+        assertEquals("测试输入", result.get("input"));
+    }
 }

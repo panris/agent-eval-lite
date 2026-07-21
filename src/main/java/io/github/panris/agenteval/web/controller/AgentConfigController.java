@@ -229,4 +229,76 @@ public class AgentConfigController {
                 })
                 .orElseGet(() -> ResponseEntity.status(404).body(ApiResponse.error("Agent配置不存在")));
     }
+
+    /**
+     * 测试未经保存的配置（从表单直接测试）
+     */
+    @PostMapping("/test-config")
+    @Operation(summary = "测试配置（不保存）", description = "测试表单中未经保存的 Agent 配置")
+    public ResponseEntity<Map<String, Object>> testConfig(@RequestBody Map<String, Object> body) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> configMap = (Map<String, Object>) body.get("config");
+            String input = (String) body.getOrDefault("input", "测试输入");
+            if (configMap == null) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("缺少 config 参数"));
+            }
+
+            AgentConfig config = mapToAgentConfig(configMap);
+            Agent agent = agentFactory.createAgent(config);
+            long startTime = System.currentTimeMillis();
+            String response = agent.execute(input);
+            long responseTime = System.currentTimeMillis() - startTime;
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "input", input,
+                    "output", response,
+                    "responseTimeMs", responseTime
+            ));
+        } catch (Exception e) {
+            logger.error("Failed to test config: {}", e.getMessage(), e);
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "error", e.getMessage(),
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    private AgentConfig mapToAgentConfig(Map<String, Object> m) {
+        AgentConfig c = new AgentConfig();
+        c.setName((String) m.getOrDefault("name", "临时测试"));
+        c.setType((String) m.getOrDefault("type", "http"));
+        c.setEndpoint((String) m.getOrDefault("endpoint", ""));
+        c.setTimeout(m.get("timeout") instanceof Number n ? n.intValue() : 30000);
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> headers = (Map<String, String>) m.get("headers");
+        c.setHeaders(headers);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> config = (Map<String, Object>) m.get("config");
+        c.setConfig(config);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> rm = (Map<String, Object>) m.get("responseMapping");
+        if (rm != null) {
+            AgentConfig.ResponseMapping responseMapping = new AgentConfig.ResponseMapping();
+            responseMapping.setOutputPath((String) rm.get("outputPath"));
+            responseMapping.setErrorPath((String) rm.get("errorPath"));
+            responseMapping.setErrorMessagePath((String) rm.get("errorMessagePath"));
+            c.setResponseMapping(responseMapping);
+        }
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> reqMap = (Map<String, Object>) m.get("requestMapping");
+        if (reqMap != null) {
+            AgentConfig.RequestMapping requestMapping = new AgentConfig.RequestMapping();
+            requestMapping.setTemplate((String) reqMap.get("template"));
+            c.setRequestMapping(requestMapping);
+        }
+
+        return c;
+    }
 }
