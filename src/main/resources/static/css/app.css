@@ -464,6 +464,71 @@
 .search-clear:hover { color: var(--text-primary); }
 .toolbar-right { display: flex; gap: 6px; }
 
+/* 筛选 + 排序工具条 */
+.list-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.filter-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.chip:hover { border-color: var(--primary-color); color: var(--text-primary); }
+.chip.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+.chip-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: rgba(128,128,128,0.18);
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 2px;
+}
+.chip.active .chip-count { background: rgba(255,255,255,0.25); }
+.sort-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.sort-label { font-size: 13px; color: var(--text-secondary); }
+.sort-select {
+    width: auto;
+    padding: 7px 10px;
+    font-size: 13px;
+    border-radius: 8px;
+    background: var(--bg-card);
+}
+
 /* 列表网格 */
 .agents-grid {
     display: grid;
@@ -628,6 +693,12 @@
 .empty-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
 .empty-desc { color: var(--text-secondary); margin-bottom: 20px; }
 .empty-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+    .list-toolbar { flex-direction: column; align-items: stretch; }
+    .sort-wrap { justify-content: space-between; }
+    .sort-select { flex: 1; }
+}
 
 /* ============================================================
    弹窗样式

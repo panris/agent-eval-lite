@@ -46,6 +46,19 @@
             </div>
         </div>
 
+        <!-- 筛选 + 排序工具条 -->
+        <div class="list-toolbar">
+            <div class="filter-chips" id="filter-chips"></div>
+            <div class="sort-wrap">
+                <span class="sort-label">排序</span>
+                <select id="agent-sort" class="form-select sort-select" onchange="applySort(this.value)">
+                    <option value="name">名称 A-Z</option>
+                    <option value="type">类型</option>
+                    <option value="endpoint">端点</option>
+                </select>
+            </div>
+        </div>
+
         <!-- Agent 列表 -->
         <div id="agents-list">
             <div class="list-loading">
@@ -199,7 +212,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">输入</label>
-                    <input type="text" id="test-input" class="form-input" placeholder="输入测试内容" value="你好，请介绍一下你自己">
+                    <input type="text" id="test-input" class="form-input" placeholder="输入测试内容" value="你好，请介绍一下你自己" onkeydown="if(event.key==='Enter')runTest()">
                 </div>
                 <div id="test-result" class="test-result-area"></div>
                 <div class="form-footer-right">

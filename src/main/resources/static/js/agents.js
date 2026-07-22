@@ -6,6 +6,9 @@
 // ============ 状态 ============
 let allAgents = [];
 let filteredAgents = [];
+let currentSearch = '';
+let currentFilter = 'all';
+let currentSort = 'name';
 let currentTestAgentId = null; // '' = 来自表单（未保存），id = 已保存的 Agent
 let searchTimer = null;
 
@@ -18,6 +21,7 @@ window.onload = async function () {
 // ============ 键盘 ============
 function onKeydown(e) {
     if (e.key === 'Escape') {
+        closeAllMenus();
         closeModal();
         closeTestModal();
         closeTemplateModal();
@@ -37,7 +41,8 @@ async function loadAgents() {
         const res = await utils.api.get('/api/agents');
         if (res.success) {
             allAgents = res.agents || [];
-            applySearch(document.getElementById('agent-search')?.value || '');
+            renderFilterChips();
+            applyFilters();
         } else {
             renderListError('加载失败');
         }
@@ -59,27 +64,75 @@ function renderListError(msg) {
 // ============ 搜索 ============
 function handleSearch(value) {
     clearTimeout(searchTimer);
+    currentSearch = value;
     document.getElementById('search-clear').style.display = value ? 'flex' : 'none';
-    searchTimer = setTimeout(() => applySearch(value), 200);
+    searchTimer = setTimeout(applyFilters, 200);
 }
 
 function clearSearch() {
     const input = document.getElementById('agent-search');
     if (input) input.value = '';
+    currentSearch = '';
     document.getElementById('search-clear').style.display = 'none';
-    applySearch('');
+    applyFilters();
 }
 
-function applySearch(keyword) {
-    const kw = keyword.toLowerCase().trim();
-    filteredAgents = kw
-        ? allAgents.filter(a =>
+// 综合筛选：搜索 + 类型 + 排序
+function applyFilters() {
+    const kw = currentSearch.toLowerCase().trim();
+    let list = allAgents.filter(a => {
+        const matchKw = !kw ||
             a.name?.toLowerCase().includes(kw) ||
             a.type?.toLowerCase().includes(kw) ||
             a.endpoint?.toLowerCase().includes(kw) ||
-            a.description?.toLowerCase().includes(kw))
-        : [...allAgents];
+            a.description?.toLowerCase().includes(kw);
+        const matchType = currentFilter === 'all' || a.type === currentFilter;
+        return matchKw && matchType;
+    });
+
+    list.sort((a, b) => {
+        if (currentSort === 'name') return (a.name || '').localeCompare(b.name || '', 'zh');
+        if (currentSort === 'type') return (a.type || '').localeCompare(b.type || '');
+        if (currentSort === 'endpoint') return (a.endpoint || '').localeCompare(b.endpoint || '');
+        return 0;
+    });
+
+    filteredAgents = list;
     renderList();
+}
+
+function applySort(value) {
+    currentSort = value;
+    applyFilters();
+}
+
+// 类型筛选 chips
+function renderFilterChips() {
+    const el = document.getElementById('filter-chips');
+    if (!el) return;
+    const countByType = allAgents.reduce((acc, a) => {
+        const t = a.type || 'unknown';
+        acc[t] = (acc[t] || 0) + 1;
+        return acc;
+    }, {});
+    const types = [...new Set(allAgents.map(a => a.type).filter(Boolean))];
+    const chips = [{ key: 'all', label: '全部', icon: '🗂️', count: allAgents.length },
+        ...types.map(t => ({
+            key: t,
+            label: TYPE_META[t]?.label || t,
+            icon: TYPE_META[t]?.icon || '⚪',
+            count: countByType[t] || 0,
+        }))];
+    el.innerHTML = chips.map(c => `
+        <button class="chip ${currentFilter === c.key ? 'active' : ''}" onclick="setFilter('${c.key}')">
+            <span>${c.icon}</span>${c.label}<span class="chip-count">${c.count}</span>
+        </button>`).join('');
+}
+
+function setFilter(type) {
+    currentFilter = type;
+    renderFilterChips();
+    applyFilters();
 }
 
 // ============ 渲染列表 ============
@@ -186,9 +239,12 @@ async function testCardAgent(id, inputEl) {
     if (!input) { inputEl.focus(); return; }
 
     const card = inputEl.closest('.agent-card');
+    const sendBtn = inputEl.nextElementSibling;
     const resultEl = card.querySelector('.card-test-result') || createCardResultEl(card);
     resultEl.style.display = 'flex';
+    resultEl.className = 'card-test-result pending';
     resultEl.innerHTML = '<div class="spinner-sm"></div><span>测试中...</span>';
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '...'; }
 
     try {
         const res = await utils.api.post(`/api/agents/${id}/test`, { input });
@@ -202,6 +258,8 @@ async function testCardAgent(id, inputEl) {
     } catch (e) {
         resultEl.className = 'card-test-result error';
         resultEl.innerHTML = `<span>❌ ${utils.escapeHtml(e.message)}</span><button class="text-btn" onclick="this.parentElement.style.display='none'">隐藏</button>`;
+    } finally {
+        if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送'; }
     }
 }
 
