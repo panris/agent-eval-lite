@@ -6,7 +6,7 @@
 // ============ 状态 ============
 let allAgents = [];
 let filteredAgents = [];
-let currentTestAgentId = null; // '' = from form, id = specific agent
+let currentTestAgentId = null; // '' = 来自表单（未保存），id = 已保存的 Agent
 let searchTimer = null;
 
 // ============ 生命周期 ============
@@ -21,7 +21,14 @@ function onKeydown(e) {
         closeModal();
         closeTestModal();
         closeTemplateModal();
+        return;
     }
+    // 快捷键：n 新建，/ 聚焦搜索（输入框内不触发）
+    const tag = (e.target.tagName || '').toLowerCase();
+    const inField = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+    if (inField) return;
+    if (e.key === 'n') { e.preventDefault(); openCreateModal(); }
+    else if (e.key === '/') { e.preventDefault(); document.getElementById('agent-search')?.focus(); }
 }
 
 // ============ 加载列表 ============
@@ -80,16 +87,26 @@ function renderList() {
     const el = document.getElementById('agents-list');
 
     if (filteredAgents.length === 0) {
-        el.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">🤖</div>
-                <div class="empty-title">还没有配置 Agent</div>
-                <div class="empty-desc">从模板快速创建，或自定义配置接口</div>
-                <div class="empty-actions">
-                    <button class="btn btn-outline" onclick="openTemplateModal()">📦 从模板创建</button>
-                    <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建空白配置</button>
-                </div>
-            </div>`;
+        if (allAgents.length === 0) {
+            el.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🤖</div>
+                    <div class="empty-title">还没有配置 Agent</div>
+                    <div class="empty-desc">从模板快速创建，或自定义配置接口</div>
+                    <div class="empty-actions">
+                        <button class="btn btn-outline" onclick="openTemplateModal()">📦 从模板创建</button>
+                        <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建空白配置</button>
+                    </div>
+                </div>`;
+        } else {
+            el.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <div class="empty-title">未找到匹配的 Agent</div>
+                    <div class="empty-desc">试试其他关键词，或清除搜索条件</div>
+                    <button class="btn btn-secondary" onclick="clearSearch()">清除搜索</button>
+                </div>`;
+        }
         return;
     }
 
@@ -97,33 +114,39 @@ function renderList() {
 }
 
 const TYPE_META = {
-    openai: { label: 'OpenAI',    cls: 'type-openai' },
-    claude: { label: 'Claude',    cls: 'type-claude' },
-    http:   { label: 'HTTP',      cls: 'type-http'   },
-    custom: { label: '自定义',    cls: 'type-custom' },
+    openai: { label: 'OpenAI', cls: 'type-openai', icon: '🟢' },
+    claude: { label: 'Claude',  cls: 'type-claude', icon: '🟠' },
+    http:   { label: 'HTTP',    cls: 'type-http',   icon: '🟣' },
+    custom: { label: '自定义',  cls: 'type-custom', icon: '⚪' },
 };
 
 function renderCard(a) {
-    const meta = TYPE_META[a.type] || { label: a.type || 'Agent', cls: 'type-custom' };
+    const meta = TYPE_META[a.type] || { label: a.type || 'Agent', cls: 'type-custom', icon: '⚪' };
+    const endpoint = a.endpoint || '';
     return `
         <div class="agent-card" data-id="${utils.escapeHtml(a.id)}">
             <div class="agent-card-top">
                 <div class="agent-card-title">
-                    <span class="agent-name">${utils.escapeHtml(a.name)}</span>
+                    <span class="agent-type-icon" title="${meta.label}">${meta.icon}</span>
+                    <span class="agent-name" title="${utils.escapeHtml(a.name)}">${utils.escapeHtml(a.name)}</span>
                     <span class="agent-type-badge ${meta.cls}">${meta.label}</span>
                 </div>
                 <div class="agent-card-menu" onclick="event.stopPropagation()">
-                    <button class="menu-btn" onclick="toggleMenu(this)">⋮</button>
+                    <button class="menu-btn" onclick="toggleMenu(this)" aria-label="更多操作">⋮</button>
                     <div class="menu-dropdown" style="display:none">
                         <div class="menu-item" onclick="editAgent('${a.id}')">✏️ 编辑</div>
+                        <div class="menu-item" onclick="testAgentModal('${a.id}')">🧪 测试</div>
                         <div class="menu-item" onclick="copyAgent('${a.id}')">📋 复制</div>
                         <div class="menu-divider"></div>
                         <div class="menu-item danger" onclick="deleteAgent('${a.id}')">🗑️ 删除</div>
                     </div>
                 </div>
             </div>
-            <div class="agent-card-endpoint">${utils.escapeHtml(a.endpoint)}</div>
-            ${a.description ? `<div class="agent-card-desc">${utils.escapeHtml(a.description)}</div>` : ''}
+            <div class="agent-card-endpoint" title="点击复制端点" onclick="copyEndpoint(this, '${utils.escapeHtml(endpoint)}')">
+                <span class="endpoint-text">${utils.escapeHtml(endpoint)}</span>
+                <span class="copy-hint">⧉</span>
+            </div>
+            ${a.description ? `<div class="agent-card-desc" title="${utils.escapeHtml(a.description)}">${utils.escapeHtml(a.description)}</div>` : ''}
             <div class="agent-card-test">
                 <input type="text" class="test-input" placeholder="🧪 输入内容测试..."
                        onkeydown="if(event.key==='Enter')testCardAgent('${a.id}', this)">
@@ -132,14 +155,29 @@ function renderCard(a) {
         </div>`;
 }
 
-function toggleMenu(btn) {
-    // Close all other menus first
-    document.querySelectorAll('.menu-dropdown').forEach(m => { if (m !== btn.nextElementSibling) m.style.display = 'none'; });
-    const dropdown = btn.nextElementSibling;
-    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+async function copyEndpoint(el, endpoint) {
+    try {
+        await navigator.clipboard.writeText(endpoint);
+        utils.toast.success('端点已复制');
+    } catch {
+        // 降级：临时 textarea
+        const ta = document.createElement('textarea');
+        ta.value = endpoint;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); utils.toast.success('端点已复制'); } catch {}
+        document.body.removeChild(ta);
+    }
 }
 
-// Close menus when clicking outside
+function toggleMenu(btn) {
+    const dropdown = btn.nextElementSibling;
+    const isOpen = dropdown.style.display !== 'none';
+    document.querySelectorAll('.menu-dropdown').forEach(m => m.style.display = 'none');
+    dropdown.style.display = isOpen ? 'none' : 'block';
+}
+
+// 点击页面其他位置关闭所有菜单
 document.addEventListener('click', () => document.querySelectorAll('.menu-dropdown').forEach(m => m.style.display = 'none'));
 
 // ============ 卡片内测试 ============
@@ -184,7 +222,6 @@ async function openTemplateModal() {
     try {
         const res = await utils.api.get('/api/agents/templates');
         if (res.success && res.templates?.length) {
-            const icons = { openai: '🟢', claude: '🟠', custom: '🔵', http: '🟣' };
             const descs = {
                 openai: '支持 GPT-4、GPT-3.5 等模型，填入 API Key 即可使用',
                 claude: '支持 Claude 3 系列模型，Anthropic API',
@@ -193,7 +230,7 @@ async function openTemplateModal() {
             };
             list.innerHTML = res.templates.map(t => `
                 <div class="template-item" onclick="selectTemplate('${t.type}')">
-                    <div class="template-item-icon">${icons[t.type] || '⚪'}</div>
+                    <div class="template-item-icon">${TYPE_META[t.type]?.icon || '⚪'}</div>
                     <div class="template-item-info">
                         <div class="template-item-name">${utils.escapeHtml(t.name)}</div>
                         <div class="template-item-desc">${descs[t.type] || utils.escapeHtml(t.description || '')}</div>
@@ -227,22 +264,7 @@ function openCreateModal(template = null) {
     document.getElementById('agent-form').reset();
     clearErrors();
     document.getElementById('agent-id').value = '';
-
-    if (template) {
-        document.getElementById('agent-name').value = template.name || '';
-        document.getElementById('agent-type').value = template.type || 'openai';
-        document.getElementById('agent-description').value = template.description || '';
-        document.getElementById('agent-endpoint').value = template.endpoint || '';
-        document.getElementById('agent-timeout').value = template.timeout || 30000;
-        document.getElementById('agent-api-key').value = template.config?.apiKey || '';
-        document.getElementById('agent-model').value = template.config?.model || '';
-        document.getElementById('agent-headers').value = template.headers ? JSON.stringify(template.headers, null, 2) : '';
-        document.getElementById('agent-config').value = template.config ? JSON.stringify(cleanConfig(template.config), null, 2) : '';
-        document.getElementById('agent-request-template').value = template.requestMapping?.template || '';
-        document.getElementById('agent-output-path').value = template.responseMapping?.outputPath || '';
-        document.getElementById('agent-error-path').value = template.responseMapping?.errorPath || '';
-        document.getElementById('agent-error-msg-path').value = template.responseMapping?.errorMessagePath || '';
-    }
+    if (template) populateForm(template);
     onTypeChange();
 }
 
@@ -254,6 +276,12 @@ async function editAgent(id) {
     document.getElementById('modal-title').textContent = '编辑 Agent';
     clearErrors();
     document.getElementById('agent-id').value = agent.id;
+    populateForm(agent);
+    onTypeChange();
+}
+
+// 填充表单（创建/编辑/模板共用）
+function populateForm(agent) {
     document.getElementById('agent-name').value = agent.name || '';
     document.getElementById('agent-type').value = agent.type || 'openai';
     document.getElementById('agent-description').value = agent.description || '';
@@ -267,11 +295,10 @@ async function editAgent(id) {
     document.getElementById('agent-output-path').value = agent.responseMapping?.outputPath || '';
     document.getElementById('agent-error-path').value = agent.responseMapping?.errorPath || '';
     document.getElementById('agent-error-msg-path').value = agent.responseMapping?.errorMessagePath || '';
-    onTypeChange();
 }
 
 function cleanConfig(cfg) {
-    // Remove apiKey from display config (security)
+    // 展示时移除 apiKey（安全考虑）
     const c = { ...cfg };
     delete c.apiKey;
     return c;
@@ -338,8 +365,9 @@ async function handleSubmit(e) {
 
     if (type === 'openai' || type === 'claude') {
         const apiKey = document.getElementById('agent-api-key').value.trim();
+        if (!apiKey) { showFieldError('agent-api-key', '请填写 API Key'); return; }
         agentData.config = {
-            ...(apiKey ? { apiKey } : {}),
+            apiKey,
             model: document.getElementById('agent-model').value.trim() ||
                 (type === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-sonnet-20240229'),
         };
@@ -355,9 +383,7 @@ async function handleSubmit(e) {
             catch { showFieldError('agent-config', 'JSON 格式错误'); return; }
         }
         if (document.getElementById('agent-request-template').value.trim()) {
-            agentData.requestMapping = {
-                template: document.getElementById('agent-request-template').value.trim(),
-            };
+            agentData.requestMapping = { template: document.getElementById('agent-request-template').value.trim() };
         }
         if (document.getElementById('agent-output-path').value.trim()) {
             agentData.responseMapping = {
@@ -400,13 +426,26 @@ function showFieldError(id, msg) {
     el.parentElement.appendChild(err);
 }
 
-// ============ 快速测试（表单内） ============
+// ============ 测试弹窗 ============
 function runQuickTest() {
-    document.getElementById('test-input').value = document.getElementById('agent-name').value ? '你好' : '你好，请介绍一下你自己';
-    document.getElementById('test-modal-title').textContent = '🧪 快速测试';
     currentTestAgentId = '';
+    openTestModal('🧪 快速测试', '你好，请简单介绍一下你自己');
+}
+
+function testAgentModal(id) {
+    closeAllMenus();
+    currentTestAgentId = id;
+    const agent = allAgents.find(a => a.id === id);
+    const name = agent?.name || 'Agent';
+    openTestModal(`🧪 测试：${name}`, '你好，请简单介绍一下你自己');
+}
+
+function openTestModal(title, defaultInput) {
+    document.getElementById('test-modal-title').textContent = title;
+    document.getElementById('test-input').value = defaultInput;
     document.getElementById('test-result').innerHTML = '';
     document.getElementById('test-modal').style.display = 'flex';
+    document.getElementById('test-input').focus();
 }
 
 async function runTest() {
@@ -421,35 +460,7 @@ async function runTest() {
         if (currentTestAgentId) {
             res = await utils.api.post(`/api/agents/${currentTestAgentId}/test`, { input });
         } else {
-            // Build agent config from form and test directly via test-config endpoint
-            const type = document.getElementById('agent-type').value;
-            const endpoint = document.getElementById('agent-endpoint').value.trim();
-            const headersText = document.getElementById('agent-headers').value.trim();
-            const configText = document.getElementById('agent-config').value.trim();
-            const payload = {
-                name: '临时测试',
-                type,
-                endpoint,
-                timeout: parseInt(document.getElementById('agent-timeout').value) || 30000,
-            };
-            if (type === 'openai' || type === 'claude') {
-                payload.config = {
-                    apiKey: document.getElementById('agent-api-key').value.trim(),
-                    model: document.getElementById('agent-model').value.trim() ||
-                        (type === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-sonnet-20240229'),
-                };
-            } else {
-                if (headersText) payload.headers = JSON.parse(headersText);
-                if (configText) payload.config = JSON.parse(configText);
-                if (document.getElementById('agent-request-template').value.trim()) {
-                    payload.requestMapping = { template: document.getElementById('agent-request-template').value.trim() };
-                }
-                if (document.getElementById('agent-output-path').value.trim()) {
-                    payload.responseMapping = {
-                        outputPath: document.getElementById('agent-output-path').value.trim(),
-                    };
-                }
-            }
+            const payload = buildConfigFromForm();
             res = await utils.api.post('/api/agents/test-config', { config: payload, input });
         }
 
@@ -471,6 +482,34 @@ async function runTest() {
     } catch (e) {
         resultEl.innerHTML = `<div class="test-msg error">❌ ${utils.escapeHtml(e.message)}</div>`;
     }
+}
+
+// 从表单构建 config（快速测试用）
+function buildConfigFromForm() {
+    const type = document.getElementById('agent-type').value;
+    const endpoint = document.getElementById('agent-endpoint').value.trim();
+    const headersText = document.getElementById('agent-headers').value.trim();
+    const configText = document.getElementById('agent-config').value.trim();
+    const timeout = parseInt(document.getElementById('agent-timeout').value) || 30000;
+    const payload = { name: '临时测试', type, endpoint, timeout };
+
+    if (type === 'openai' || type === 'claude') {
+        payload.config = {
+            apiKey: document.getElementById('agent-api-key').value.trim(),
+            model: document.getElementById('agent-model').value.trim() ||
+                (type === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-sonnet-20240229'),
+        };
+    } else {
+        if (headersText) payload.headers = JSON.parse(headersText);
+        if (configText) payload.config = JSON.parse(configText);
+        if (document.getElementById('agent-request-template').value.trim()) {
+            payload.requestMapping = { template: document.getElementById('agent-request-template').value.trim() };
+        }
+        if (document.getElementById('agent-output-path').value.trim()) {
+            payload.responseMapping = { outputPath: document.getElementById('agent-output-path').value.trim() };
+        }
+    }
+    return payload;
 }
 
 function closeTestModal() {
