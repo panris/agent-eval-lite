@@ -417,6 +417,20 @@
     margin-bottom: 24px;
 }
 .page-header-actions { display: flex; gap: 10px; flex-shrink: 0; }
+.page-title { font-size: 26px; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 10px; }
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 13px;
+    background: var(--primary-color);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
 
 /* 搜索栏 */
 .search-bar-row {
@@ -853,6 +867,34 @@
 .test-msg.success { background: #10b98120; color: #10b981; }
 .test-msg.error { background: #ef444420; color: #ef4444; }
 .test-msg.pending { background: #f59e0b20; color: #f59e0b; }
+.test-context {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    font-size: 12px;
+}
+.ctx-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 11px;
+    font-weight: 600;
+    color: #fff;
+}
+.ctx-type.type-openai { background: #10a37f; }
+.ctx-type.type-claude { background: #d97757; }
+.ctx-type.type-http { background: #8b5cf6; }
+.ctx-type.type-custom { background: #64748b; }
+.ctx-endpoint {
+    color: var(--text-secondary);
+    font-family: 'Monaco', 'Consolas', monospace;
+    word-break: break-all;
+}
 .test-block { margin-top: 12px; }
 .test-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 .test-val { padding: 10px 14px; background: var(--bg-input); border-radius: 8px; font-size: 14px; color: var(--text-primary); word-break: break-all; }

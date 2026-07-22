@@ -23,7 +23,7 @@
         <!-- 页面头部 -->
         <div class="page-header">
             <div>
-                <h1 class="page-title">Agent 配置</h1>
+                <h1 class="page-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
                 <p class="page-subtitle">连接外部 Agent，在评测中使用</p>
             </div>
             <div class="page-header-actions">
@@ -37,7 +37,8 @@
             <div class="search-wrap">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="agent-search" class="search-input" placeholder="搜索名称、类型、端点..."
-                       oninput="handleSearch(this.value)">
+                       oninput="handleSearch(this.value)"
+                       onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
                 <button class="search-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
             </div>
             <div class="toolbar-right">
@@ -210,6 +211,7 @@
                 <button class="modal-close-btn" onclick="closeTestModal()">✕</button>
             </div>
             <div class="modal-body">
+                <div class="test-context" id="test-context"></div>
                 <div class="form-group">
                     <label class="form-label">输入</label>
                     <input type="text" id="test-input" class="form-input" placeholder="输入测试内容" value="你好，请介绍一下你自己" onkeydown="if(event.key==='Enter')runTest()">

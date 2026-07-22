@@ -41,6 +41,7 @@ async function loadAgents() {
         const res = await utils.api.get('/api/agents');
         if (res.success) {
             allAgents = res.agents || [];
+            updateCount();
             renderFilterChips();
             applyFilters();
         } else {
@@ -59,6 +60,11 @@ function renderListError(msg) {
             <div>${utils.escapeHtml(msg)}</div>
             <button class="btn btn-secondary" onclick="loadAgents()">重试</button>
         </div>`;
+}
+
+function updateCount() {
+    const el = document.getElementById('agent-count');
+    if (el) el.textContent = allAgents.length;
 }
 
 // ============ 搜索 ============
@@ -324,6 +330,7 @@ function openCreateModal(template = null) {
     document.getElementById('agent-id').value = '';
     if (template) populateForm(template);
     onTypeChange();
+    setTimeout(() => document.getElementById('agent-name').focus(), 0);
 }
 
 async function editAgent(id) {
@@ -336,6 +343,7 @@ async function editAgent(id) {
     document.getElementById('agent-id').value = agent.id;
     populateForm(agent);
     onTypeChange();
+    setTimeout(() => document.getElementById('agent-name').focus(), 0);
 }
 
 // 填充表单（创建/编辑/模板共用）
@@ -500,6 +508,19 @@ function testAgentModal(id) {
 
 function openTestModal(title, defaultInput) {
     document.getElementById('test-modal-title').textContent = title;
+    const ctx = document.getElementById('test-context');
+    if (currentTestAgentId) {
+        const agent = allAgents.find(a => a.id === currentTestAgentId);
+        if (agent) {
+            const meta = TYPE_META[agent.type] || { label: agent.type, cls: '' };
+            ctx.innerHTML = `<span class="ctx-type ${meta.cls}">${meta.label}</span> <span class="ctx-endpoint">${utils.escapeHtml(agent.endpoint || '')}</span>`;
+        } else ctx.innerHTML = '';
+    } else {
+        const type = document.getElementById('agent-type').value;
+        const meta = TYPE_META[type] || { label: type, cls: '' };
+        const endpoint = document.getElementById('agent-endpoint').value.trim();
+        ctx.innerHTML = `<span class="ctx-type ${meta.cls}">未保存配置</span> <span class="ctx-endpoint">${utils.escapeHtml(endpoint)}</span>`;
+    }
     document.getElementById('test-input').value = defaultInput;
     document.getElementById('test-result').innerHTML = '';
     document.getElementById('test-modal').style.display = 'flex';
@@ -518,7 +539,13 @@ async function runTest() {
         if (currentTestAgentId) {
             res = await utils.api.post(`/api/agents/${currentTestAgentId}/test`, { input });
         } else {
-            const payload = buildConfigFromForm();
+            let payload;
+            try {
+                payload = buildConfigFromForm();
+            } catch {
+                resultEl.innerHTML = '<div class="test-msg error">❌ 配置 JSON 格式错误，请检查「请求头」或「配置(JSON)」字段</div>';
+                return;
+            }
             res = await utils.api.post('/api/agents/test-config', { config: payload, input });
         }
 
