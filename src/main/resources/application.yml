@@ -15,6 +15,10 @@ spring:
     name: agent-eval-lite
   thymeleaf:
     cache: false
+  web:
+    resources:
+      cache:
+        period: 0   # 开发期禁用静态资源缓存，避免浏览器复用旧 JS/CSS
   servlet:
     multipart:
       max-file-size: 10MB
