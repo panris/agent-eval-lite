@@ -832,3 +832,198 @@ async function viewGroupCases(groupId) {
         showToast('加载分组用例失败', 'error');
     }
 }
+
+// ===== 从需求文档生成测试用例 =====
+let parsedCases = [];
+
+function openRequirementModal() {
+    parsedCases = [];
+    document.getElementById('req-text').value = '';
+    document.getElementById('req-preview').style.display = 'none';
+    document.getElementById('req-preview-tbody').innerHTML = '';
+    document.getElementById('req-count').textContent = '';
+    document.getElementById('req-save-btn').disabled = true;
+    document.getElementById('req-parse-btn').disabled = false;
+    document.getElementById('req-loading').style.display = 'none';
+    // 重置维度默认值
+    document.getElementById('req-project').value = '';
+    document.getElementById('req-module').value = '';
+    document.getElementById('req-function').value = '';
+    document.getElementById('req-group').value = '';
+    document.getElementById('requirement-modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('req-text').focus(), 0);
+}
+
+function closeRequirementModal() {
+    document.getElementById('requirement-modal').style.display = 'none';
+}
+
+async function parseRequirement() {
+    const text = document.getElementById('req-text').value.trim();
+    if (!text) {
+        showToast('请粘贴需求文档内容', 'error');
+        return;
+    }
+
+    const project = document.getElementById('req-project').value.trim() || null;
+    const moduleDim = document.getElementById('req-module').value.trim() || null;
+    const functionDim = document.getElementById('req-function').value.trim() || null;
+    const group = document.getElementById('req-group').value.trim() || null;
+
+    document.getElementById('req-loading').style.display = 'block';
+    document.getElementById('req-parse-btn').disabled = true;
+    document.getElementById('req-save-btn').disabled = true;
+
+    try {
+        const response = await fetch('/api/testcases/parse-from-requirements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                text,
+                groupId: group,
+                project,
+                module: moduleDim,
+                function: functionDim
+            })
+        });
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(data.error || '解析失败', 'error');
+            return;
+        }
+
+        parsedCases = (data.cases || []).map((c, i) => ({
+            ...c,
+            selected: true,
+            _index: i
+        }));
+
+        renderParsedPreview();
+        document.getElementById('req-count').textContent = `已解析 ${parsedCases.length} 个测试用例`;
+        document.getElementById('req-save-btn').disabled = parsedCases.length === 0;
+        showToast(`成功解析 ${parsedCases.length} 个测试用例`, 'success');
+    } catch (error) {
+        logError('Parse failed:', error);
+        showToast('解析失败：请求错误', 'error');
+    } finally {
+        document.getElementById('req-loading').style.display = 'none';
+        document.getElementById('req-parse-btn').disabled = false;
+    }
+}
+
+function renderParsedPreview() {
+    const tbody = document.getElementById('req-preview-tbody');
+    const preview = document.getElementById('req-preview');
+
+    if (parsedCases.length === 0) {
+        tbody.innerHTML = '';
+        preview.style.display = 'none';
+        return;
+    }
+
+    tbody.innerHTML = parsedCases.map((tc, i) => {
+        const _name = utils.escapeHtml(tc.name || '');
+        const _input = utils.escapeHtml(tc.input || '');
+        const _expected = utils.escapeHtml(tc.expected || '');
+        const _desc = utils.escapeHtml(tc.description || '');
+        const checked = tc.selected ? 'checked' : '';
+        return `
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox" class="req-case-cb" data-index="${i}" ${checked} onchange="toggleReqCase(${i})"></td>
+                <td><input type="text" class="form-control" value="${_name}" onchange="updateParsedCase(${i}, 'name', this.value)" style="font-size: 13px; padding: 4px 8px; min-width: 80px;"></td>
+                <td><input type="text" class="form-control" value="${_input}" onchange="updateParsedCase(${i}, 'input', this.value)" style="font-size: 13px; padding: 4px 8px; min-width: 120px;"></td>
+                <td><input type="text" class="form-control" value="${_expected}" onchange="updateParsedCase(${i}, 'expected', this.value)" style="font-size: 13px; padding: 4px 8px; min-width: 120px;"></td>
+                <td><input type="text" class="form-control" value="${_desc}" onchange="updateParsedCase(${i}, 'description', this.value)" style="font-size: 13px; padding: 4px 8px; min-width: 100px;"></td>
+            </tr>
+        `;
+    }).join('');
+
+    preview.style.display = 'block';
+    updateReqSelectAll();
+}
+
+function toggleReqCase(index) {
+    const cb = document.querySelector(`.req-case-cb[data-index="${index}"]`);
+    if (cb) {
+        parsedCases[index].selected = cb.checked;
+    }
+    updateReqSelectAll();
+    updateReqSaveBtn();
+}
+
+function updateParsedCase(index, field, value) {
+    if (parsedCases[index]) {
+        parsedCases[index][field] = value;
+    }
+}
+
+function toggleReqSelectAll() {
+    const checked = document.getElementById('req-select-all').checked;
+    parsedCases.forEach((tc, i) => {
+        tc.selected = checked;
+        const cb = document.querySelector(`.req-case-cb[data-index="${i}"]`);
+        if (cb) cb.checked = checked;
+    });
+    updateReqSaveBtn();
+}
+
+function updateReqSelectAll() {
+    const allCbs = document.querySelectorAll('.req-case-cb');
+    const checkedCbs = document.querySelectorAll('.req-case-cb:checked');
+    const selectAll = document.getElementById('req-select-all');
+    if (selectAll) {
+        selectAll.checked = allCbs.length > 0 && allCbs.length === checkedCbs.length;
+    }
+}
+
+function updateReqSaveBtn() {
+    const selected = parsedCases.filter(tc => tc.selected);
+    document.getElementById('req-save-btn').disabled = selected.length === 0;
+}
+
+async function saveParsedCases() {
+    const selected = parsedCases
+        .filter(tc => tc.selected)
+        .map(tc => ({
+            name: tc.name || '',
+            input: tc.input || '',
+            expected: tc.expected || '',
+            description: tc.description || '',
+            groupId: tc.groupId || null,
+            project: tc.project || null,
+            module: tc.module || null,
+            function: tc.function || null
+        }))
+        .filter(tc => tc.input && tc.expected);
+
+    if (selected.length === 0) {
+        showToast('请至少选择一个包含输入和期望输出的测试用例', 'error');
+        return;
+    }
+
+    document.getElementById('req-save-btn').disabled = true;
+
+    try {
+        const response = await fetch('/api/testcases/save-parsed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(selected)
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`成功保存 ${data.saved} 个测试用例`, 'success');
+            closeRequirementModal();
+            loadTestCases();
+            if (typeof loadDimensions === 'function') loadDimensions();
+        } else {
+            showToast(data.error || '保存失败', 'error');
+        }
+    } catch (error) {
+        logError('Save failed:', error);
+        showToast('保存失败：请求错误', 'error');
+    } finally {
+        document.getElementById('req-save-btn').disabled = false;
+    }
+}
