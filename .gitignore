@@ -9,3 +9,4 @@ data/shares.json
 data/reports.json
 memory/
 .vscode/
+node_modules/
