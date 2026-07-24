@@ -5,8 +5,7 @@ target/
 *.log
 *.class
 out/
-data/shares.json
-data/reports.json
+data/
 memory/
 .vscode/
 node_modules/

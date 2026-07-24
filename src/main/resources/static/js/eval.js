@@ -476,7 +476,8 @@ async function runSelectedEvaluation() {
 
         if (data.success) {
             showToast(`评测完成!通过率: ${data.summary?.pass_rate?.toFixed(1) || 0}%`, 'success');
-            loadHistory();
+            // 先加载历史数据再切换 tab，避免时序竞态
+            await loadHistory();
             switchTab('history');
         } else {
             showToast(data.error || '评测失败', 'error');

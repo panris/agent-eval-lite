@@ -54,8 +54,9 @@ function loadTheme() {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.card').forEach(c => c.classList.remove('show'));
 
-            // 支持显式传入 event,或使用全局 event(onclick 调用时)
-            const target = evt?.target || (typeof event !== 'undefined' ? event.target : null);
+            // 支持显式传入 event、全局 event(onclick 调用时)、或 data-tab 属性降级
+            const target = evt?.target || (typeof event !== 'undefined' ? event.target : null)
+                || document.querySelector(`.tab[data-tab="${tab}"]`);
             if (target) target.classList.add('active');
             document.getElementById(`${tab}-card`).classList.add('show');
 
