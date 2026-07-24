@@ -5,6 +5,8 @@ import io.github.panris.agenteval.scorer.ScorerResult;
 import io.github.panris.agenteval.scorer.builtin.CorrectnessScorer;
 import io.github.panris.agenteval.scorer.builtin.ResponseTimeScorer;
 import io.github.panris.agenteval.scorer.builtin.SafetyScorer;
+import io.github.panris.agenteval.scorer.builtin.LlmScorer;
+import io.github.panris.agenteval.model.EvalLlmConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,6 +135,7 @@ public class Evaluator {
         private int maxWorkers = 4;
         private int timeoutMs = 30000;
         private ExecutorService executorService;
+        private EvalLlmConfig evalLlmConfig;
 
         /**
          * Add metrics by name.
@@ -197,6 +200,11 @@ public class Evaluator {
             return this;
         }
 
+        public Builder evalLlmConfig(EvalLlmConfig config) {
+            this.evalLlmConfig = config;
+            return this;
+        }
+
         /**
          * Build the evaluator.
          *
@@ -218,6 +226,7 @@ public class Evaluator {
                 case "bleu" -> new io.github.panris.agenteval.scorer.builtin.BleuScorer();
                 case "rouge" -> new io.github.panris.agenteval.scorer.builtin.RougeScorer();
                 case "similarity" -> new io.github.panris.agenteval.scorer.builtin.SimilarityScorer();
+                case "llm" -> evalLlmConfig != null ? new LlmScorer(evalLlmConfig) : null;
                 default -> null;
             };
         }

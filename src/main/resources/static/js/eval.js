@@ -332,8 +332,10 @@ async function runDimensionEvaluation() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
-                agentType: 'demo',
+                metrics: getSelectedEvalMetrics(),
+                agentType: 'custom',
+                agentConfigId: getSelectedAgentConfigId(),
+                evalConfigId: getSelectedEvalConfigId(),
                 project: project || null,
                 module: moduleDim || null,
                 function: functionDim || null
@@ -379,8 +381,10 @@ async function runEvaluation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 caseIds,
-                metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
-                agentType: 'demo'
+                metrics: getSelectedEvalMetrics(),
+                agentType: 'custom',
+                agentConfigId: getSelectedAgentConfigId(),
+                evalConfigId: getSelectedEvalConfigId()
             })
         });
 
@@ -418,8 +422,10 @@ async function runGroupEvaluation() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
-                agentType: 'demo'
+                metrics: getSelectedEvalMetrics(),
+                agentType: 'custom',
+                agentConfigId: getSelectedAgentConfigId(),
+                evalConfigId: getSelectedEvalConfigId()
             })
         });
 
@@ -458,8 +464,10 @@ async function runSelectedEvaluation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 caseIds: caseIds,
-                metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
-                agentType: 'demo'
+                metrics: getSelectedEvalMetrics(),
+                agentType: 'custom',
+                agentConfigId: getSelectedAgentConfigId(),
+                evalConfigId: getSelectedEvalConfigId()
             })
         });
 
@@ -517,4 +525,62 @@ function showEvalDetails() {
     }).join('');
 
     detailsDiv.style.display = 'block';
+}
+
+// ===== 动态加载 Agent 和评测模型配置 =====
+async function loadEvalConfigs() {
+    try {
+        const r = await fetch('/api/eval-llm-configs');
+        const d = await r.json();
+        if (d.success && d.configs) {
+            const sel = document.getElementById('eval-config');
+            if (sel) {
+                sel.innerHTML = '<option value="">评测模型(默认算法)</option>';
+                d.configs.forEach(c => {
+                    sel.innerHTML += `<option value="${c.id}">${c.name} (${c.model})</option>`;
+                });
+            }
+        }
+    } catch (e) { console.error('Failed to load eval LLM configs:', e); }
+}
+
+async function loadEvalAgents() {
+    try {
+        const r = await fetch('/api/agents');
+        const d = await r.json();
+        if (d.success && d.agents) {
+            const sel = document.getElementById('eval-agent');
+            if (sel) {
+                sel.innerHTML = '<option value="">Agent(演示)</option>';
+                d.agents.forEach(a => {
+                    sel.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+                });
+            }
+        }
+    } catch (e) { console.error('Failed to load agents:', e); }
+}
+
+function getSelectedEvalMetrics() {
+    const checks = document.querySelectorAll('.eval-metric:checked');
+    const list = [];
+    checks.forEach(c => list.push(c.value));
+    return list.length > 0 ? list : ['correctness'];
+}
+
+function getSelectedAgentConfigId() {
+    const sel = document.getElementById('eval-agent');
+    return sel ? sel.value || null : null;
+}
+
+function getSelectedEvalConfigId() {
+    const sel = document.getElementById('eval-config');
+    return sel ? sel.value || null : null;
+}
+
+// 页面初始化时加载
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { loadEvalConfigs(); loadEvalAgents(); });
+} else {
+    loadEvalConfigs();
+    loadEvalAgents();
 }

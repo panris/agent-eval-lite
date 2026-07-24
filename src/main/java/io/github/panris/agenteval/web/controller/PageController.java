@@ -13,4 +13,9 @@ public class PageController {
     public String agentsPage() {
         return "agents";
     }
+
+    @GetMapping("/eval-llm-config")
+    public String evalLlmConfigPage() {
+        return "eval-llm-config";
+    }
 }

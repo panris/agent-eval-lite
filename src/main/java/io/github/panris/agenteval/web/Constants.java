@@ -19,7 +19,8 @@ public final class Constants {
         "response_time",
         "bleu",
         "rouge",
-        "similarity"
+        "similarity",
+        "llm"
     );
     
     // 批量导入

@@ -169,16 +169,30 @@
             <h2 class="card-title">选择性评测</h2>
 
             <div class="action-bar">
+                <div class="metric-checkboxes" style="display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <label style="font-size: 12px; color: var(--text-secondary);">指标:</label>
+                <label><input type="checkbox" class="eval-metric" value="correctness" checked> 正确性</label>
+                <label><input type="checkbox" class="eval-metric" value="llm"> LLM</label>
+                <label><input type="checkbox" class="eval-metric" value="safety"> 安全</label>
+                <label><input type="checkbox" class="eval-metric" value="response_time"> 响应时间</label>
+                <label><input type="checkbox" class="eval-metric" value="bleu"> BLEU</label>
+                <label><input type="checkbox" class="eval-metric" value="rouge"> ROUGE</label>
+                <label><input type="checkbox" class="eval-metric" value="similarity"> 相似度</label>
+                </div>
                 <button class="btn btn-success" onclick="runEvaluation()">▶ 运行选中用例</button>
                 <select class="form-control" id="eval-group" style="width: auto;" onchange="loadGroupCases()">
                     <option value="">选择分组...</option>
                 </select>
                 <button class="btn btn-primary" onclick="runGroupEvaluation()">按分组评测</button>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
+                <select class="form-control" id="eval-agent" style="width: auto;"><option value="">Agent(演示)</option></select>
+                <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
                 <select class="form-control" id="eval-project" style="width: auto;"><option value="">项目(任意)</option></select>
                 <select class="form-control" id="eval-module" style="width: auto;"><option value="">模块(任意)</option></select>
                 <select class="form-control" id="eval-function" style="width: auto;"><option value="">功能(任意)</option></select>
                 <button class="btn btn-warning" onclick="runDimensionEvaluation()">按三维评测</button>
+                <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
+                <select class="form-control" id="eval-config" style="width: auto;"><option value="">评测模型(默认算法)</option></select>
             </div>
 
             <div class="loading" id="eval-loading">

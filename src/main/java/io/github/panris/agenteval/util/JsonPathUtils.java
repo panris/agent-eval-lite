@@ -9,6 +9,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,6 +23,26 @@ public class JsonPathUtils {
     private static final Logger logger = LoggerFactory.getLogger(JsonPathUtils.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
+
+    /**
+     * Convert a JSONPath result to a proper JSON string.
+     * For Strings returns as-is; for Maps/Lists serializes back to JSON.
+     * This avoids the Java Map.toString() format ({k=v, ...}).
+     */
+    private static String valueToJsonString(Object value) {
+        if (value instanceof String) {
+            return (String) value;
+        }
+        if (value instanceof Map || value instanceof List) {
+            try {
+                return objectMapper.writeValueAsString(value);
+            } catch (Exception e) {
+                logger.warn("Failed to serialize JSONPath result: {}", e.getMessage());
+                return value.toString();
+            }
+        }
+        return value.toString();
+    }
 
     /**
      * Extract value from JSON using path.
@@ -44,7 +65,8 @@ public class JsonPathUtils {
             if (path.startsWith("$")) {
                 try {
                     Object result = JsonPath.read(jsonStr, path);
-                    return result != null ? result.toString() : null;
+                    if (result == null) return null;
+                    return valueToJsonString(result);
                 } catch (PathNotFoundException e) {
                     logger.debug("JSONPath not found: {}", path);
                     return null;

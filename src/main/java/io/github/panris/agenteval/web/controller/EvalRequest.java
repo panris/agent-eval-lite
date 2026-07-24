@@ -18,6 +18,8 @@ public class EvalRequest {
     private String module;
     /** 三维分组：功能 */
     private String function;
+    /** 评测 LLM 配置 ID，用于 LLM 评分器 */
+    private String evalConfigId;
 
     // Getters and Setters
     public String getAgentType() {
@@ -90,6 +92,14 @@ public class EvalRequest {
 
     public void setFunction(String function) {
         this.function = function;
+    }
+
+    public String getEvalConfigId() {
+        return evalConfigId;
+    }
+
+    public void setEvalConfigId(String evalConfigId) {
+        this.evalConfigId = evalConfigId;
     }
 }
 

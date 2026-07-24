@@ -2,6 +2,8 @@ package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.*;
 import io.github.panris.agenteval.agent.AgentFactory;
+import io.github.panris.agenteval.model.EvalLlmConfig;
+import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.scorer.ScorerResult;
@@ -38,16 +40,20 @@ public class AsyncEvalService {
     private final AgentFactory agentFactory;
     private static final int MAX_TASKS = 1000;
 
+    private final EvalLlmConfigRepository evalLlmConfigRepository;
+
     public AsyncEvalService(ReportService reportService, TestCaseRepository testCaseRepository, ObjectMapper objectMapper,
                             @Qualifier("evalTaskExecutor") Executor evalTaskExecutor,
                             @Qualifier("evalExecutorService") ExecutorService evalExecutorService,
-                            AgentFactory agentFactory) {
+                            AgentFactory agentFactory,
+                            EvalLlmConfigRepository evalLlmConfigRepository) {
         this.reportService = reportService;
         this.testCaseRepository = testCaseRepository;
         this.objectMapper = objectMapper;
         this.executor = evalTaskExecutor;
         this.evalExecutorService = evalExecutorService;
         this.agentFactory = agentFactory;
+        this.evalLlmConfigRepository = evalLlmConfigRepository;
     }
 
     public static class TaskStatus {
@@ -82,11 +88,11 @@ public class AsyncEvalService {
      * 提交评测任务（使用默认超时 5 分钟）。
      */
     public String submitTask(List<TestCase> testCases, List<String> metrics, String agentType) {
-        return submitTask(testCases, metrics, agentType, DEFAULT_TIMEOUT_SECONDS, null, null, null, null);
+        return submitTask(testCases, metrics, agentType, DEFAULT_TIMEOUT_SECONDS, null, null, null, null, null);
     }
 
     public String submitTask(List<TestCase> testCases, List<String> metrics, String agentType, int timeoutSeconds) {
-        return submitTask(testCases, metrics, agentType, timeoutSeconds, null, null, null, null);
+        return submitTask(testCases, metrics, agentType, timeoutSeconds, null, null, null, null, null);
     }
 
     /**
@@ -96,10 +102,18 @@ public class AsyncEvalService {
      * @param project 三维分组：项目（可为 null）
      * @param module 三维分组：模块（可为 null）
      * @param function 三维分组：功能（可为 null）
+     * @param evalConfigId 评测 LLM 配置 ID（可为 null）
      */
     public String submitTask(List<TestCase> testCases, List<String> metrics,
                              String agentType, int timeoutSeconds, String group,
                              String project, String module, String function) {
+        return submitTask(testCases, metrics, agentType, timeoutSeconds, group, project, module, function, null);
+    }
+
+    public String submitTask(List<TestCase> testCases, List<String> metrics,
+                             String agentType, int timeoutSeconds, String group,
+                             String project, String module, String function,
+                             String evalConfigId) {
         String taskId = "task_" + System.currentTimeMillis();
         TaskStatus status = new TaskStatus(taskId);
         status.totalCases = testCases.size();
@@ -115,6 +129,12 @@ public class AsyncEvalService {
                 Agent agent = buildAgent(agentType);
 
                 Evaluator.Builder builder = Evaluator.builder();
+                if (evalConfigId != null && !evalConfigId.isEmpty()) {
+                    EvalLlmConfig llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
+                    if (llmConfig != null) {
+                        builder.evalLlmConfig(llmConfig);
+                    }
+                }
                 for (String metric : metrics) {
                     builder.metrics(metric);
                 }

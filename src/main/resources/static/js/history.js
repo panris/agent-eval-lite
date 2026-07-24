@@ -551,8 +551,10 @@ async function runAsyncSelectedEvaluation() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             caseIds,
-            metrics: ['correctness', 'safety', 'response_time', 'bleu', 'rouge', 'similarity'],
-            agentType: 'demo'
+            metrics: getSelectedEvalMetrics(),
+            agentType: 'custom',
+            agentConfigId: getSelectedAgentConfigId(),
+            evalConfigId: getSelectedEvalConfigId()
         })
     });
 

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
 
 /**
@@ -20,6 +21,7 @@ public class AgentFactory {
     private static final Logger logger = LoggerFactory.getLogger(AgentFactory.class);
 
     private final RestTemplate restTemplate;
+    private static final ObjectMapper AGENT_FACTORY_MAPPER = new ObjectMapper();
 
     public AgentFactory(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -309,6 +311,7 @@ public class AgentFactory {
             case "simple" -> input -> Map.of("input", input);
             case "prompt" -> input -> Map.of("prompt", input);
             case "query" -> input -> Map.of("query", input);
+            case "raw" -> input -> input;  // send input as-is without wrapping
             default -> input -> Map.of("input", input);
         };
     }
@@ -333,6 +336,13 @@ public class AgentFactory {
                     }
                 }
                 return response.toString();
+            };
+            case "json" -> response -> {
+                try {
+                    return AGENT_FACTORY_MAPPER.writeValueAsString(response);
+                } catch (Exception e) {
+                    return response != null ? response.toString() : "";
+                }
             };
             case "simple" -> response -> {
                 if (response instanceof Map) {

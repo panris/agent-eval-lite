@@ -8,6 +8,8 @@ import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
+import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
+import io.github.panris.agenteval.model.EvalLlmConfig;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.web.Constants;
@@ -41,11 +43,13 @@ public class EvalController {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     private final TestCaseRepository testCaseRepository;
     private final AgentConfigRepository agentConfigRepository;
+    private final EvalLlmConfigRepository evalLlmConfigRepository;
     private final AsyncEvalService asyncEvalService;
     private final AgentFactory agentFactory;
     private final ExecutorService executorService;
 
     public EvalController(TestCaseRepository testCaseRepository,
+                           EvalLlmConfigRepository evalLlmConfigRepository,
                            AgentConfigRepository agentConfigRepository,
                            AsyncEvalService asyncEvalService,
                            ReportService reportService,
@@ -53,6 +57,7 @@ public class EvalController {
                            @org.springframework.beans.factory.annotation.Qualifier("evalExecutorService") ExecutorService executorService) {
         this.testCaseRepository = testCaseRepository;
         this.agentConfigRepository = agentConfigRepository;
+        this.evalLlmConfigRepository = evalLlmConfigRepository;
         this.asyncEvalService = asyncEvalService;
         this.reportService = reportService;
         this.agentFactory = agentFactory;
@@ -65,7 +70,7 @@ public class EvalController {
             new TestCase("2+2=?", "4"),
             new TestCase("3*3=?", "9")
         ));
-        model.addAttribute("metrics", List.of("correctness", "safety", "response_time", "bleu", "rouge", "similarity"));
+        model.addAttribute("metrics", List.of("correctness", "llm", "safety", "response_time", "bleu", "rouge", "similarity"));
         return "index";
     }
 
@@ -101,7 +106,7 @@ public class EvalController {
             return ApiResponse.error(cr.errorMessage());
         }
 
-        return runEvaluation(cr.testCases(), request.getMetrics(), agentType, request.getAgentConfig(), agentConfigId, null, null, null, null);
+        return runEvaluation(cr.testCases(), request.getMetrics(), agentType, request.getAgentConfig(), agentConfigId, request.getEvalConfigId(), null, null, null, null);
     }
 
     /**
@@ -125,7 +130,7 @@ public class EvalController {
         if (cr.hasError()) {
             return ApiResponse.error(cr.errorMessage());
         }
-        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, null, null, null, null);
+        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), request.getAgentConfig(), request.getAgentConfigId(), request.getEvalConfigId(), null, null, null, null);
     }
 
     /**
@@ -158,7 +163,7 @@ public class EvalController {
                     return ApiResponse.error("该分组没有测试用例");
                 }
 
-                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), null, null, group.getName(), null, null, null);
+                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), request.getAgentConfig(), request.getAgentConfigId(), request.getEvalConfigId(), group.getName(), null, null, null);
             })
             .orElse(ApiResponse.error("分组不存在"));
     }
@@ -181,7 +186,7 @@ public class EvalController {
         String groupLabel = request.getFunction() != null ? request.getFunction()
             : request.getModule() != null ? request.getModule()
             : request.getProject();
-        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), null, null, groupLabel,
+        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), request.getAgentConfig(), null, request.getEvalConfigId(), groupLabel,
             request.getProject(), request.getModule(), request.getFunction());
     }
 
@@ -213,7 +218,8 @@ public class EvalController {
             return ApiResponse.error(cr.errorMessage());
         }
         String taskId = asyncEvalService.submitTask(cr.testCases(), request.getMetrics(), agentType,
-                300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction());
+                300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction(),
+                request.getEvalConfigId());
         return Map.of("success", true, "taskId", taskId, "status", "PENDING");
     }
 
@@ -286,6 +292,7 @@ public class EvalController {
         String agentType,
         Map<String, Object> agentConfig,
         String agentConfigId,
+        String evalConfigId,
         String group,
         String project,
         String module,
@@ -309,6 +316,13 @@ public class EvalController {
 
         // Build evaluator
         Evaluator.Builder builder = Evaluator.builder();
+        if (evalConfigId != null && !evalConfigId.isEmpty()) {
+            EvalLlmConfig llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
+            if (llmConfig != null) {
+                builder.evalLlmConfig(llmConfig);
+                log.info("Using LLM eval config: {}", llmConfig.getName());
+            }
+        }
         for (String metric : metrics) {
             builder.metrics(metric);
         }
@@ -722,50 +736,40 @@ class EvaluateByCaseIdsRequest {
     private List<String> caseIds;
     private List<String> metrics;
     private String agentType;
+    private Map<String, Object> agentConfig;
+    private String agentConfigId;
+    private String evalConfigId;
 
-    public List<String> getCaseIds() {
-        return caseIds;
-    }
-
-    public void setCaseIds(List<String> caseIds) {
-        this.caseIds = caseIds;
-    }
-
-    public List<String> getMetrics() {
-        return metrics;
-    }
-
-    public void setMetrics(List<String> metrics) {
-        this.metrics = metrics;
-    }
-
-    public String getAgentType() {
-        return agentType;
-    }
-
-    public void setAgentType(String agentType) {
-        this.agentType = agentType;
-    }
+    public List<String> getCaseIds() { return caseIds; }
+    public void setCaseIds(List<String> caseIds) { this.caseIds = caseIds; }
+    public List<String> getMetrics() { return metrics; }
+    public void setMetrics(List<String> metrics) { this.metrics = metrics; }
+    public String getAgentType() { return agentType; }
+    public void setAgentType(String agentType) { this.agentType = agentType; }
+    public Map<String, Object> getAgentConfig() { return agentConfig; }
+    public void setAgentConfig(Map<String, Object> agentConfig) { this.agentConfig = agentConfig; }
+    public String getAgentConfigId() { return agentConfigId; }
+    public void setAgentConfigId(String agentConfigId) { this.agentConfigId = agentConfigId; }
+    public String getEvalConfigId() { return evalConfigId; }
+    public void setEvalConfigId(String evalConfigId) { this.evalConfigId = evalConfigId; }
 }
 
 class EvaluateByGroupRequest {
     private List<String> metrics;
     private String agentType;
+    private Map<String, Object> agentConfig;
+    private String agentConfigId;
+    private String evalConfigId;
 
-    public List<String> getMetrics() {
-        return metrics;
-    }
-
-    public void setMetrics(List<String> metrics) {
-        this.metrics = metrics;
-    }
-
-    public String getAgentType() {
-        return agentType;
-    }
-
-    public void setAgentType(String agentType) {
-        this.agentType = agentType;
-    }
+    public List<String> getMetrics() { return metrics; }
+    public void setMetrics(List<String> metrics) { this.metrics = metrics; }
+    public String getAgentType() { return agentType; }
+    public void setAgentType(String agentType) { this.agentType = agentType; }
+    public Map<String, Object> getAgentConfig() { return agentConfig; }
+    public void setAgentConfig(Map<String, Object> agentConfig) { this.agentConfig = agentConfig; }
+    public String getAgentConfigId() { return agentConfigId; }
+    public void setAgentConfigId(String agentConfigId) { this.agentConfigId = agentConfigId; }
+    public String getEvalConfigId() { return evalConfigId; }
+    public void setEvalConfigId(String evalConfigId) { this.evalConfigId = evalConfigId; }
 }
 // TEST_MARKER_1234567890XYZ
