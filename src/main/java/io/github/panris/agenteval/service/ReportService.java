@@ -477,6 +477,7 @@ public class ReportService {
      * 清理过期报告，保留最新 maxReports 条。
      */
     public void cleanupOldReports(int maxReports) {
+        if (reportHistory.isEmpty()) return;
         if (reportHistory.size() <= maxReports) return;
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> sorted = (List<Map<String, Object>>) getAllReports("desc", null, null, null, null, null, null, null, null, null, "time", 1, 10000, false).get("reports");

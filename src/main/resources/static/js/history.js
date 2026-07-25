@@ -1,3 +1,6 @@
+function ensureGroups() {
+}
+
 function addTag() {
     const input = document.getElementById('tags-input');
     const tag = input.value.trim();
