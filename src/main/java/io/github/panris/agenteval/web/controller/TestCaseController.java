@@ -191,21 +191,90 @@ public class TestCaseController {
     }
 
     /**
-     * Delete a test case.
+     * Delete a test case (soft delete).
      */
-    @Operation(summary = "删除指定测试用例")
+    @Operation(summary = "删除指定测试用例（软删除）")
     @DeleteMapping("/{id}")
     public Map<String, Object> deleteTestCase(@PathVariable String id) {
-        if (repository.findTestCaseById(id).isPresent()) {
-            repository.deleteTestCase(id);
+        Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
+        if (opt.isEmpty()) {
             return Map.of(
-                "success", true,
-                "message", "Test case deleted"
+                "success", false,
+                "error", "测试用例不存在"
             );
         }
+        TestCaseEntity tc = opt.get();
+        if (tc.getDeleted() != null && tc.getDeleted()) {
+            return Map.of(
+                "success", false,
+                "error", "测试用例已被删除"
+            );
+        }
+        repository.deleteTestCase(id);
         return Map.of(
-            "success", false,
-            "error", "测试用例不存在"
+            "success", true,
+            "message", "测试用例已删除，可在回收站中恢复"
+        );
+    }
+
+    /**
+     * Restore a deleted test case.
+     */
+    @Operation(summary = "恢复已删除的测试用例")
+    @PostMapping("/{id}/restore")
+    public Map<String, Object> restoreTestCase(@PathVariable String id) {
+        Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
+        if (opt.isEmpty()) {
+            return Map.of(
+                "success", false,
+                "error", "测试用例不存在"
+            );
+        }
+        TestCaseEntity tc = opt.get();
+        if (tc.getDeleted() == null || !tc.getDeleted()) {
+            return Map.of(
+                "success", false,
+                "error", "测试用例未被删除"
+            );
+        }
+        repository.restoreTestCase(id);
+        return Map.of(
+            "success", true,
+            "message", "测试用例已恢复"
+        );
+    }
+
+    /**
+     * Force delete a test case (permanent).
+     */
+    @Operation(summary = "强制删除测试用例（永久删除，不可恢复）")
+    @DeleteMapping("/{id}/force")
+    public Map<String, Object> forceDeleteTestCase(@PathVariable String id) {
+        Optional<TestCaseEntity> opt = repository.findTestCaseById(id);
+        if (opt.isEmpty()) {
+            return Map.of(
+                "success", false,
+                "error", "测试用例不存在"
+            );
+        }
+        repository.forceDeleteTestCase(id);
+        return Map.of(
+            "success", true,
+            "message", "测试用例已永久删除"
+        );
+    }
+
+    /**
+     * List deleted test cases (recycle bin).
+     */
+    @Operation(summary = "获取已删除的测试用例（回收站）")
+    @GetMapping("/deleted")
+    public Map<String, Object> listDeletedTestCases() {
+        List<TestCaseEntity> deleted = repository.findDeletedTestCases();
+        return Map.of(
+            "success", true,
+            "testCases", deleted,
+            "total", deleted.size()
         );
     }
     
