@@ -475,6 +475,7 @@ async function runSelectedEvaluation() {
         document.getElementById('cases-loading').classList.remove('show');
 
         if (data.success) {
+            window.lastEvaluation = data;
             showToast(`评测完成!通过率: ${data.summary?.pass_rate?.toFixed(1) || 0}%`, 'success');
             // 先加载历史数据再切换 tab，避免时序竞态
             await loadHistory();
