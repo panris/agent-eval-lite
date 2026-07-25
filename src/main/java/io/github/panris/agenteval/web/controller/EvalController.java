@@ -354,6 +354,7 @@ public class EvalController {
         result.put("passedTestCases", report.getPassedTestCases());
         result.put("failedTestCases", report.getFailedTestCases());
         result.put("executionTimeMs", report.getExecutionTimeMs());
+        result.put("evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases));
         putDimensions(result, group, project, module, function);
         return result;
     }

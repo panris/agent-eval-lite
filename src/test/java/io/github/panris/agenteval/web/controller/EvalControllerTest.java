@@ -2,6 +2,7 @@ package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
+import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.agent.AgentFactory;
@@ -39,9 +40,10 @@ class EvalControllerTest {
         mockTestCaseRepository = mock(TestCaseRepository.class);
         mockAgentFactory = mock(AgentFactory.class);
         mockAgentConfigRepository = mock(AgentConfigRepository.class);
+        EvalLlmConfigRepository mockLlmRepo = mock(EvalLlmConfigRepository.class);
         ExecutorService mockExecutor = Executors.newSingleThreadExecutor();
         controller = new EvalController(
-                mockTestCaseRepository, mockAgentConfigRepository, mockAsyncEvalService, 
+                mockTestCaseRepository, mockLlmRepo, mockAgentConfigRepository, mockAsyncEvalService,
                 mockReportService, mockAgentFactory, mockExecutor);
     }
 
@@ -158,8 +160,10 @@ class EvalControllerTest {
     void testAsyncEvaluate() {
         when(mockAsyncEvalService.submitTask(
                 anyList(), anyList(), anyString(),
-                eq(300), any(), any(), any(), any()
+                eq(300), any(), any(), any(), any(), any()
         )).thenReturn("task-abc123");
+        when(mockAsyncEvalService.getStatus("task-abc123"))
+                .thenReturn(new AsyncEvalService.TaskStatus("task-abc123"));
 
         EvalRequest req = new EvalRequest();
         TestCaseDto dto = new TestCaseDto();
