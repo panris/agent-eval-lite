@@ -187,10 +187,10 @@
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
                 <select class="form-control" id="eval-agent" style="width: auto;"><option value="">Agent(演示)</option></select>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
-                <select class="form-control" id="eval-project" style="width: auto;"><option value="">项目(任意)</option></select>
-                <select class="form-control" id="eval-module" style="width: auto;"><option value="">模块(任意)</option></select>
-                <select class="form-control" id="eval-function" style="width: auto;"><option value="">功能(任意)</option></select>
-                <button class="btn btn-warning" onclick="runDimensionEvaluation()">按三维评测</button>
+                <select class="form-control" id="eval-project" style="width: auto;" onchange="loadDimensionCases()"><option value="">项目(任意)</option></select>
+                <select class="form-control" id="eval-module" style="width: auto;" onchange="loadDimensionCases()"><option value="">模块(任意)</option></select>
+                <select class="form-control" id="eval-function" style="width: auto;" onchange="loadDimensionCases()"><option value="">功能(任意)</option></select>
+                <button class="btn btn-warning" onclick="runDimensionEvaluation()">按维度评测</button>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
                 <select class="form-control" id="eval-config" style="width: auto;"><option value="">评测模型(默认算法)</option></select>
             </div>
@@ -252,6 +252,9 @@
                         <th>名称</th>
                         <th>输入</th>
                         <th>期望输出</th>
+                        <th>项目</th>
+                        <th>模块</th>
+                        <th>功能</th>
                     </tr>
                 </thead>
                 <tbody id="eval-tbody"></tbody>

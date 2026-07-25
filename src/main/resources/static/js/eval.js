@@ -78,6 +78,46 @@ function loadGroupCases() {
     }
 }
 
+function loadDimensionCases() {
+    const project = document.getElementById('eval-project').value;
+    const moduleDim = document.getElementById('eval-module').value;
+    const functionDim = document.getElementById('eval-function').value;
+
+    if (!project && !moduleDim && !functionDim) {
+        loadTestCases();
+        return;
+    }
+
+    document.getElementById('eval-group').value = '';
+
+    document.querySelectorAll('.eval-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+
+    const evalTbody = document.getElementById('eval-tbody');
+    if (!evalTbody) return;
+
+    const rows = evalTbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const checkbox = row.querySelector('.eval-checkbox');
+        const caseId = checkbox.value;
+        const caseData = window._testCases?.find(tc => tc.id === caseId);
+        
+        if (caseData) {
+            const matchProject = !project || caseData.project === project;
+            const matchModule = !moduleDim || caseData.module === moduleDim;
+            const matchFunction = !functionDim || caseData.function === functionDim;
+            
+            if (matchProject && matchModule && matchFunction) {
+                checkbox.checked = true;
+            }
+        }
+    });
+
+    const checkedCount = document.querySelectorAll('.eval-checkbox:checked').length;
+    showToast(`已选中 ${checkedCount} 个符合条件的测试用例`, 'success');
+}
+
 function renderCharts(evaluations) {
     // 防止重复渲染
     if (chartRenderPending) return;
