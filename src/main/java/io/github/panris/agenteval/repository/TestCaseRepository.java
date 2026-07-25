@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -61,11 +62,13 @@ public class TestCaseRepository {
     }
 
     public List<TestCaseEntity> findAllTestCases() {
-        return new ArrayList<>(testCases.values());
+        return testCases.values().stream()
+            .filter(tc -> tc.getDeleted() == null || !tc.getDeleted())
+            .collect(Collectors.toList());
     }
 
     public List<TestCaseEntity> findAllTestCasesPage(int page, int size) {
-        List<TestCaseEntity> all = new ArrayList<>(testCases.values());
+        List<TestCaseEntity> all = findAllTestCases();
         int from = (page - 1) * size;
         if (from >= all.size()) return List.of();
         int to = Math.min(from + size, all.size());
@@ -73,7 +76,9 @@ public class TestCaseRepository {
     }
 
     public int countAllTestCases() {
-        return testCases.size();
+        return (int) testCases.values().stream()
+            .filter(tc -> tc.getDeleted() == null || !tc.getDeleted())
+            .count();
     }
 
     /**
@@ -85,6 +90,7 @@ public class TestCaseRepository {
         final String m = (module != null && !module.isBlank()) ? module.trim() : null;
         final String f = (function != null && !function.isBlank()) ? function.trim() : null;
         return testCases.values().stream()
+            .filter(tc -> tc.getDeleted() == null || !tc.getDeleted())
             .filter(tc -> p == null || p.equalsIgnoreCase(nullToEmpty(tc.getProject())))
             .filter(tc -> m == null || m.equalsIgnoreCase(nullToEmpty(tc.getModule())))
             .filter(tc -> f == null || f.equalsIgnoreCase(nullToEmpty(tc.getFunction())))
@@ -129,10 +135,38 @@ public class TestCaseRepository {
     }
 
     public void deleteTestCase(String id) {
+        TestCaseEntity tc = testCases.get(id);
+        if (tc != null) {
+            tc.setDeleted(true);
+            tc.setDeletedAt(LocalDateTime.now());
+            tc.setUpdatedAt(LocalDateTime.now());
+            saveData();
+            logger.info("Soft deleted test case: {}", id);
+        }
+    }
+
+    public void restoreTestCase(String id) {
+        TestCaseEntity tc = testCases.get(id);
+        if (tc != null) {
+            tc.setDeleted(false);
+            tc.setDeletedAt(null);
+            tc.setUpdatedAt(LocalDateTime.now());
+            saveData();
+            logger.info("Restored test case: {}", id);
+        }
+    }
+
+    public List<TestCaseEntity> findDeletedTestCases() {
+        return testCases.values().stream()
+            .filter(tc -> tc.getDeleted() != null && tc.getDeleted())
+            .collect(Collectors.toList());
+    }
+
+    public void forceDeleteTestCase(String id) {
         TestCaseEntity removed = testCases.remove(id);
         if (removed != null) {
             saveData();
-            logger.info("Deleted test case: {}", id);
+            logger.info("Force deleted test case: {}", id);
         }
     }
 

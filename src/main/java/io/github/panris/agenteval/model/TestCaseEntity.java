@@ -36,12 +36,15 @@ public class TestCaseEntity {
     private Map<String, Object> metadata;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean deleted;
+    private LocalDateTime deletedAt;
 
     public TestCaseEntity() {
         this.id = UUID.randomUUID().toString();
         this.metadata = new HashMap<>();
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.deleted = false;
     }
 
     public TestCaseEntity(String name, String input, String expected) {
@@ -149,6 +152,22 @@ public class TestCaseEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 
     public void updateTimestamp() {
