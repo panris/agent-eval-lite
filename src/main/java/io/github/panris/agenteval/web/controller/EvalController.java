@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.UUID;
 
 @Controller
 public class EvalController {
@@ -310,7 +311,7 @@ public class EvalController {
         EvaluationReport report = evaluator.evaluate(agent, testCases);
 
         // Save to history (convert to serializable map)
-        String reportId = "report_" + System.currentTimeMillis();
+        String reportId = "report_" + UUID.randomUUID().toString().substring(0, 8);
         Map<String, Object> reportData = new LinkedHashMap<>();
         reportData.put("summary", report.getSummary());
         reportData.put("evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases));

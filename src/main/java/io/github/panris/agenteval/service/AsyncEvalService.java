@@ -152,7 +152,7 @@ public class AsyncEvalService {
 
                 EvaluationReport report = evaluator.evaluate(agent, testCases);
 
-                String reportId = "report_" + System.currentTimeMillis();
+                String reportId = "report_" + UUID.randomUUID().toString().substring(0, 8);
                 Map<String, Object> reportData = new LinkedHashMap<>();
                 reportData.put("summary", report.getSummary());
                 reportData.put("evaluations", serializeEvaluations(report.getEvaluations(), testCases));
