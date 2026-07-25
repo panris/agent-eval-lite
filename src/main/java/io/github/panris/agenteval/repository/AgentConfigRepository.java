@@ -1,133 +1,163 @@
 package io.github.panris.agenteval.repository;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.panris.agenteval.model.AgentConfig;
+import io.github.panris.agenteval.model.AgentConfigEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-/**
- * Repository for Agent configurations.
- * Persists to data/agents.json file.
- */
 @Repository
 public class AgentConfigRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(AgentConfigRepository.class);
-
-    private final Map<String, AgentConfig> configs = new ConcurrentHashMap<>();
+    private final AgentConfigJpaRepository jpaRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final String dataFile;
 
-    public AgentConfigRepository(@Value("${data.dir:data}") String dataDir) {
-        this.dataFile = new File(dataDir, "agents.json").getPath();
-        loadFromFile();
+    public AgentConfigRepository(AgentConfigJpaRepository jpaRepository) {
+        this.jpaRepository = jpaRepository;
     }
 
-    /**
-     * Find all agent configs.
-     */
     public List<AgentConfig> findAll() {
-        return new ArrayList<>(configs.values());
+        return jpaRepository.findAll().stream()
+            .map(this::entityToModel)
+            .collect(Collectors.toList());
     }
 
-    /**
-     * Find agent config by ID.
-     */
     public Optional<AgentConfig> findById(String id) {
-        return Optional.ofNullable(configs.get(id));
+        return jpaRepository.findById(id).map(this::entityToModel);
     }
 
-    /**
-     * Find agent configs by type.
-     */
     public List<AgentConfig> findByType(String type) {
-        return configs.values().stream()
-                .filter(config -> type.equals(config.getType()))
-                .collect(Collectors.toList());
+        return jpaRepository.findByType(type).stream()
+            .map(this::entityToModel)
+            .collect(Collectors.toList());
     }
 
-    /**
-     * Save agent config.
-     */
     public AgentConfig save(AgentConfig config) {
-        if (config.getId() == null || config.getId().isEmpty()) {
-            config.setId(UUID.randomUUID().toString());
+        AgentConfigEntity entity = modelToEntity(config);
+        if (entity.getId() == null || entity.getId().isEmpty()) {
+            entity.setId(UUID.randomUUID().toString());
         }
-        config.setUpdatedAt(new Date().toInstant());
-        configs.put(config.getId(), config);
-        saveToFile();
-        return config;
+        entity.setUpdatedAt(new Date().toInstant());
+        AgentConfigEntity saved = jpaRepository.save(entity);
+        logger.info("Saved agent config: {}", saved.getId());
+        return entityToModel(saved);
     }
 
-    /**
-     * Delete agent config by ID.
-     */
     public boolean deleteById(String id) {
-        AgentConfig removed = configs.remove(id);
-        if (removed != null) {
-            saveToFile();
+        if (jpaRepository.existsById(id)) {
+            jpaRepository.deleteById(id);
             return true;
         }
         return false;
     }
 
-    /**
-     * Check if agent config exists by ID.
-     */
     public boolean existsById(String id) {
-        return configs.containsKey(id);
+        return jpaRepository.existsById(id);
     }
 
-    /**
-     * Count all agent configs.
-     */
     public long count() {
-        return configs.size();
+        return jpaRepository.count();
     }
 
-    /**
-     * Load from JSON file.
-     */
-    private void loadFromFile() {
-        try {
-            File file = new File(dataFile);
-            if (file.exists()) {
-                Map<String, AgentConfig> loaded = objectMapper.readValue(file,
-                        objectMapper.getTypeFactory().constructMapType(
-                                ConcurrentHashMap.class,
-                                String.class,
-                                AgentConfig.class
-                        ));
-                configs.clear();
-                configs.putAll(loaded);
-                logger.info("Loaded {} agent configs from {}", configs.size(), dataFile);
-            } else {
-                logger.info("No existing agent config file, starting with empty collection");
+    private AgentConfig entityToModel(AgentConfigEntity entity) {
+        AgentConfig config = new AgentConfig();
+        config.setId(entity.getId());
+        config.setName(entity.getName());
+        config.setType(entity.getType());
+        config.setDescription(entity.getDescription());
+        config.setEndpoint(entity.getEndpoint());
+        config.setTimeout(entity.getTimeout());
+        config.setCreatedAt(entity.getCreatedAt());
+        config.setUpdatedAt(entity.getUpdatedAt());
+
+        if (entity.getHeadersJson() != null) {
+            try {
+                config.setHeaders(objectMapper.readValue(entity.getHeadersJson(),
+                    new TypeReference<Map<String, String>>() {}));
+            } catch (Exception e) {
+                logger.warn("Failed to parse headers: {}", e.getMessage());
             }
-        } catch (IOException e) {
-            logger.error("Failed to load agent configs from {}: {}", dataFile, e.getMessage());
         }
+
+        if (entity.getRequestMappingJson() != null) {
+            try {
+                config.setRequestMapping(objectMapper.readValue(entity.getRequestMappingJson(),
+                    AgentConfig.RequestMapping.class));
+            } catch (Exception e) {
+                logger.warn("Failed to parse request mapping: {}", e.getMessage());
+            }
+        }
+
+        if (entity.getResponseMappingJson() != null) {
+            try {
+                config.setResponseMapping(objectMapper.readValue(entity.getResponseMappingJson(),
+                    AgentConfig.ResponseMapping.class));
+            } catch (Exception e) {
+                logger.warn("Failed to parse response mapping: {}", e.getMessage());
+            }
+        }
+
+        if (entity.getConfigJson() != null) {
+            try {
+                config.setConfig(objectMapper.readValue(entity.getConfigJson(),
+                    new TypeReference<Map<String, Object>>() {}));
+            } catch (Exception e) {
+                logger.warn("Failed to parse config: {}", e.getMessage());
+            }
+        }
+
+        return config;
     }
 
-    /**
-     * Save to JSON file.
-     */
-    private void saveToFile() {
-        try {
-            File file = new File(dataFile);
-            file.getParentFile().mkdirs();
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, configs);
-            logger.debug("Saved {} agent configs to {}", configs.size(), dataFile);
-        } catch (IOException e) {
-            logger.error("Failed to save agent configs to {}: {}", dataFile, e.getMessage());
+    private AgentConfigEntity modelToEntity(AgentConfig config) {
+        AgentConfigEntity entity = new AgentConfigEntity();
+        entity.setId(config.getId());
+        entity.setName(config.getName());
+        entity.setType(config.getType());
+        entity.setDescription(config.getDescription());
+        entity.setEndpoint(config.getEndpoint());
+        entity.setTimeout(config.getTimeout());
+        entity.setCreatedAt(config.getCreatedAt());
+        entity.setUpdatedAt(config.getUpdatedAt());
+
+        if (config.getHeaders() != null) {
+            try {
+                entity.setHeadersJson(objectMapper.writeValueAsString(config.getHeaders()));
+            } catch (Exception e) {
+                logger.warn("Failed to serialize headers: {}", e.getMessage());
+            }
         }
+
+        if (config.getRequestMapping() != null) {
+            try {
+                entity.setRequestMappingJson(objectMapper.writeValueAsString(config.getRequestMapping()));
+            } catch (Exception e) {
+                logger.warn("Failed to serialize request mapping: {}", e.getMessage());
+            }
+        }
+
+        if (config.getResponseMapping() != null) {
+            try {
+                entity.setResponseMappingJson(objectMapper.writeValueAsString(config.getResponseMapping()));
+            } catch (Exception e) {
+                logger.warn("Failed to serialize response mapping: {}", e.getMessage());
+            }
+        }
+
+        if (config.getConfig() != null) {
+            try {
+                entity.setConfigJson(objectMapper.writeValueAsString(config.getConfig()));
+            } catch (Exception e) {
+                logger.warn("Failed to serialize config: {}", e.getMessage());
+            }
+        }
+
+        return entity;
     }
 }

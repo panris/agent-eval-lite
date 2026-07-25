@@ -1,7 +1,13 @@
 package io.github.panris.agenteval.service;
 
+import io.github.panris.agenteval.model.AgentConfig;
+import io.github.panris.agenteval.model.AgentConfigEntity;
+import io.github.panris.agenteval.model.EvalLlmConfig;
+import io.github.panris.agenteval.model.EvalLlmConfigEntity;
 import io.github.panris.agenteval.model.ReportEntity;
 import io.github.panris.agenteval.model.TestCaseEntity;
+import io.github.panris.agenteval.repository.AgentConfigJpaRepository;
+import io.github.panris.agenteval.repository.EvalLlmConfigJpaRepository;
 import io.github.panris.agenteval.repository.ReportJpaRepository;
 import io.github.panris.agenteval.repository.TestCaseJpaRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,14 +32,20 @@ public class DataMigrationService {
     private final String dataDir;
     private final TestCaseJpaRepository testCaseJpaRepository;
     private final ReportJpaRepository reportJpaRepository;
+    private final AgentConfigJpaRepository agentConfigJpaRepository;
+    private final EvalLlmConfigJpaRepository evalLlmConfigJpaRepository;
     private final ObjectMapper objectMapper;
 
     public DataMigrationService(@Value("${data.dir:data}") String dataDir,
                                 TestCaseJpaRepository testCaseJpaRepository,
-                                ReportJpaRepository reportJpaRepository) {
+                                ReportJpaRepository reportJpaRepository,
+                                AgentConfigJpaRepository agentConfigJpaRepository,
+                                EvalLlmConfigJpaRepository evalLlmConfigJpaRepository) {
         this.dataDir = dataDir;
         this.testCaseJpaRepository = testCaseJpaRepository;
         this.reportJpaRepository = reportJpaRepository;
+        this.agentConfigJpaRepository = agentConfigJpaRepository;
+        this.evalLlmConfigJpaRepository = evalLlmConfigJpaRepository;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
     }
@@ -42,6 +54,8 @@ public class DataMigrationService {
     public void migrateData() {
         migrateTestCases();
         migrateReports();
+        migrateAgentConfigs();
+        migrateEvalLlmConfigs();
     }
 
     private void migrateTestCases() {
