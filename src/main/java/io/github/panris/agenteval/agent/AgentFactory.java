@@ -122,8 +122,7 @@ public class AgentFactory {
         Map<String, String> headers = getMapConfig(config, "headers", Map.of());
 
         if (endpoint == null || endpoint.isEmpty()) {
-            logger.warn("HTTP agent endpoint not configured, using demo agent");
-            return createDemoAgent();
+            throw new IllegalArgumentException("HTTP agent endpoint is not configured. Please provide an endpoint in agent configuration.");
         }
 
         // Custom request/response format if provided

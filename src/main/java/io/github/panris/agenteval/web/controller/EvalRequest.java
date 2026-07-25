@@ -20,6 +20,8 @@ public class EvalRequest {
     private String function;
     /** 评测 LLM 配置 ID，用于 LLM 评分器 */
     private String evalConfigId;
+    /** Agent 配置 ID，用于从已保存的配置创建 Agent */
+    private String agentConfigId;
 
     // Getters and Setters
     public String getAgentType() {
@@ -100,6 +102,14 @@ public class EvalRequest {
 
     public void setEvalConfigId(String evalConfigId) {
         this.evalConfigId = evalConfigId;
+    }
+
+    public String getAgentConfigId() {
+        return agentConfigId;
+    }
+
+    public void setAgentConfigId(String agentConfigId) {
+        this.agentConfigId = agentConfigId;
     }
 }
 

@@ -219,7 +219,7 @@ public class EvalController {
         }
         String taskId = asyncEvalService.submitTask(cr.testCases(), request.getMetrics(), agentType,
                 300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction(),
-                request.getEvalConfigId());
+                request.getEvalConfigId(), request.getAgentConfigId());
         return Map.of("success", true, "taskId", taskId, "status", "PENDING");
     }
 
@@ -300,18 +300,31 @@ public class EvalController {
     ) {
         // Create agent from config ID or type
         Agent agent;
-        if (agentConfigId != null && !agentConfigId.isEmpty()) {
-            // Load from AgentConfigRepository
-            io.github.panris.agenteval.model.AgentConfig config =
-                agentConfigRepository.findById(agentConfigId).orElse(null);
-            if (config == null) {
-                return ApiResponse.error("Agent 配置不存在: " + agentConfigId);
+        try {
+            if (agentConfigId != null && !agentConfigId.isEmpty()) {
+                // Load from AgentConfigRepository
+                io.github.panris.agenteval.model.AgentConfig config =
+                    agentConfigRepository.findById(agentConfigId).orElse(null);
+                if (config == null) {
+                    return ApiResponse.error("Agent 配置不存在: " + agentConfigId);
+                }
+                agent = agentFactory.createAgent(config);
+                log.info("Created agent from config: {}", config.getName());
+            } else {
+                if ("custom".equals(agentType) || "http".equals(agentType)) {
+                    if (agentConfig == null || agentConfig.isEmpty()) {
+                        return ApiResponse.error("使用自定义/HTTP Agent 时必须提供 agentConfig 或选择已配置的 Agent");
+                    }
+                    if (!agentConfig.containsKey("endpoint")) {
+                        return ApiResponse.error("自定义/HTTP Agent 配置缺少 endpoint 参数");
+                    }
+                }
+                agent = createAgent(agentType, agentConfig != null ? agentConfig : Map.of());
+                log.info("Created agent by type: {}", agentType);
             }
-            agent = agentFactory.createAgent(config);
-            log.info("Created agent from config: {}", config.getName());
-        } else {
-            agent = createAgent(agentType, agentConfig != null ? agentConfig : Map.of());
-            log.info("Created agent by type: {}", agentType);
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to create agent: {}", e.getMessage());
+            return ApiResponse.error("Agent 配置错误: " + e.getMessage());
         }
 
         // Build evaluator

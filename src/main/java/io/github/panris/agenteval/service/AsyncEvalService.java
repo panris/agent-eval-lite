@@ -41,12 +41,14 @@ public class AsyncEvalService {
     private static final int MAX_TASKS = 1000;
 
     private final EvalLlmConfigRepository evalLlmConfigRepository;
+    private final io.github.panris.agenteval.repository.AgentConfigRepository agentConfigRepository;
 
     public AsyncEvalService(ReportService reportService, TestCaseRepository testCaseRepository, ObjectMapper objectMapper,
                             @Qualifier("evalTaskExecutor") Executor evalTaskExecutor,
                             @Qualifier("evalExecutorService") ExecutorService evalExecutorService,
                             AgentFactory agentFactory,
-                            EvalLlmConfigRepository evalLlmConfigRepository) {
+                            EvalLlmConfigRepository evalLlmConfigRepository,
+                            io.github.panris.agenteval.repository.AgentConfigRepository agentConfigRepository) {
         this.reportService = reportService;
         this.testCaseRepository = testCaseRepository;
         this.objectMapper = objectMapper;
@@ -54,6 +56,7 @@ public class AsyncEvalService {
         this.evalExecutorService = evalExecutorService;
         this.agentFactory = agentFactory;
         this.evalLlmConfigRepository = evalLlmConfigRepository;
+        this.agentConfigRepository = agentConfigRepository;
     }
 
     public static class TaskStatus {
@@ -88,11 +91,11 @@ public class AsyncEvalService {
      * 提交评测任务（使用默认超时 5 分钟）。
      */
     public String submitTask(List<TestCase> testCases, List<String> metrics, String agentType) {
-        return submitTask(testCases, metrics, agentType, DEFAULT_TIMEOUT_SECONDS, null, null, null, null, null);
+        return submitTask(testCases, metrics, agentType, DEFAULT_TIMEOUT_SECONDS, null, null, null, null, null, null);
     }
 
     public String submitTask(List<TestCase> testCases, List<String> metrics, String agentType, int timeoutSeconds) {
-        return submitTask(testCases, metrics, agentType, timeoutSeconds, null, null, null, null, null);
+        return submitTask(testCases, metrics, agentType, timeoutSeconds, null, null, null, null, null, null);
     }
 
     /**
@@ -107,13 +110,20 @@ public class AsyncEvalService {
     public String submitTask(List<TestCase> testCases, List<String> metrics,
                              String agentType, int timeoutSeconds, String group,
                              String project, String module, String function) {
-        return submitTask(testCases, metrics, agentType, timeoutSeconds, group, project, module, function, null);
+        return submitTask(testCases, metrics, agentType, timeoutSeconds, group, project, module, function, null, null);
     }
 
     public String submitTask(List<TestCase> testCases, List<String> metrics,
                              String agentType, int timeoutSeconds, String group,
                              String project, String module, String function,
                              String evalConfigId) {
+        return submitTask(testCases, metrics, agentType, timeoutSeconds, group, project, module, function, evalConfigId, null);
+    }
+
+    public String submitTask(List<TestCase> testCases, List<String> metrics,
+                             String agentType, int timeoutSeconds, String group,
+                             String project, String module, String function,
+                             String evalConfigId, String agentConfigId) {
         String taskId = "task_" + System.currentTimeMillis();
         TaskStatus status = new TaskStatus(taskId);
         status.totalCases = testCases.size();
@@ -126,7 +136,7 @@ public class AsyncEvalService {
             status.status = "RUNNING";
             status.submittedAt = System.currentTimeMillis();
             try {
-                Agent agent = buildAgent(agentType);
+                Agent agent = buildAgent(agentType, agentConfigId);
 
                 Evaluator.Builder builder = Evaluator.builder();
                 if (evalConfigId != null && !evalConfigId.isEmpty()) {
@@ -214,7 +224,16 @@ public class AsyncEvalService {
         }
     }
 
-    private Agent buildAgent(String agentType) {
+    private Agent buildAgent(String agentType, String agentConfigId) {
+        if (agentConfigId != null && !agentConfigId.isEmpty()) {
+            io.github.panris.agenteval.model.AgentConfig config =
+                    agentConfigRepository.findById(agentConfigId).orElse(null);
+            if (config != null) {
+                log.info("Created async agent from config: {}", config.getName());
+                return agentFactory.createAgent(config);
+            }
+            log.warn("Agent config not found: {}, using default agent type: {}", agentConfigId, agentType);
+        }
         return agentFactory.createAgent(agentType);
     }
 
