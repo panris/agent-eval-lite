@@ -503,10 +503,10 @@ function showEvalDetails() {
 
     const evaluations = window.lastEvaluation.evaluations;
     tbody.innerHTML = evaluations.map(ev => {
-        const testCase = testCases.find(tc => tc.id === ev.testCaseId) || {};
-        const _name = utils.escapeHtml(testCase.name || ev.testCaseId);
-        const _input = utils.escapeHtml(testCase.input);
-        const _expected = utils.escapeHtml(testCase.expected);
+        const testCase = (window._testCases || []).find(tc => tc.id === ev.testCaseId) || {};
+        const _name = utils.escapeHtml(testCase.name || ev.testCaseId || '');
+        const _input = utils.escapeHtml(testCase.input || ev.testCaseInput || '');
+        const _expected = utils.escapeHtml(testCase.expected || '');
         const scorerNames = Object.keys(ev.scorerResults || {}).join(', ');
         const scorerScores = Object.values(ev.scorerResults || {}).map(sr => sr.score.toFixed(2)).join(', ');
 
