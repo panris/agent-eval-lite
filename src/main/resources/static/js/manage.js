@@ -61,7 +61,6 @@ function loadTheme() {
             document.getElementById(`${tab}-card`).classList.add('show');
 
             if (tab === 'cases') loadTestCases();
-            else if (tab === 'groups') loadGroups();
             else if (tab === 'evaluate') loadTestCases();
             else if (tab === 'history') loadHistory();
         }
@@ -206,7 +205,6 @@ function loadTheme() {
             }
             loadTheme();
             loadTestCases();
-            loadGroups();
             loadDimensions();
         };
 

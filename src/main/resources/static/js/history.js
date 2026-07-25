@@ -14,8 +14,6 @@ function buildHistoryParams() {
     if (d.project) params.set('project', d.project);
     if (d.module) params.set('module', d.module);
     if (d.function) params.set('function', d.function);
-    const group = document.getElementById('history-group')?.value?.trim() || '';
-    if (group) params.set('group', group);
     const search = document.getElementById('history-search')?.value?.trim() || '';
     if (search) params.set('keyword', search);
     const filterValue = document.getElementById('history-filter')?.value || '';
@@ -28,8 +26,6 @@ function buildHistoryParams() {
 function clearDateFilter() {
     document.getElementById('history-date-start').value = '';
     document.getElementById('history-date-end').value = '';
-    const groupSel = document.getElementById('history-group');
-    if (groupSel) groupSel.value = '';
     const projSel = document.getElementById('history-project');
     if (projSel) projSel.value = '';
     const modSel = document.getElementById('history-module');
@@ -362,9 +358,6 @@ function goToPage(n) {
 async function loadHistory() {
     try {
         document.getElementById('history-loading').classList.add('show');
-
-        // 确保分组下拉框已初始化
-        await ensureGroups();
 
         _reportSize = parseInt(document.getElementById('page-size')?.value || '20');
 

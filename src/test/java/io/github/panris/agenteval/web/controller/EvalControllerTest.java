@@ -160,7 +160,7 @@ class EvalControllerTest {
     void testAsyncEvaluate() {
         when(mockAsyncEvalService.submitTask(
                 anyList(), anyList(), anyString(),
-                eq(300), any(), any(), any(), any(), any()
+                eq(300), any(), any(), any(), any(), any(), any()
         )).thenReturn("task-abc123");
         when(mockAsyncEvalService.getStatus("task-abc123"))
                 .thenReturn(new AsyncEvalService.TaskStatus("task-abc123"));

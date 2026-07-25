@@ -63,21 +63,6 @@ async function loadDimensions() {
     }
 }
 
-function loadGroupCases() {
-    const groupId = document.getElementById('eval-group').value;
-    if (!groupId) {
-        loadTestCases();
-        return;
-    }
-
-    const group = groups.find(g => g.id === groupId);
-    if (group && group.testCaseIds) {
-        document.querySelectorAll('.eval-checkbox').forEach(cb => {
-            cb.checked = group.testCaseIds.includes(cb.value);
-        });
-    }
-}
-
 function loadDimensionCases() {
     const project = document.getElementById('eval-project').value;
     const moduleDim = document.getElementById('eval-module').value;
@@ -87,8 +72,6 @@ function loadDimensionCases() {
         loadTestCases();
         return;
     }
-
-    document.getElementById('eval-group').value = '';
 
     document.querySelectorAll('.eval-checkbox').forEach(cb => {
         cb.checked = false;
@@ -421,47 +404,6 @@ async function runEvaluation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 caseIds,
-                metrics: getSelectedEvalMetrics(),
-                agentType: 'custom',
-                agentConfigId: getSelectedAgentConfigId(),
-                evalConfigId: getSelectedEvalConfigId()
-            })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            const passRate = data.summary.pass_rate.toFixed(1);
-            document.getElementById('pass-rate').textContent = passRate + '%';
-            document.getElementById('eval-result').style.display = 'block';
-            showToast(`评测完成!通过率: ${passRate}%`, 'success');
-
-            window.lastEvaluation = data;
-            window.lastReportId = data.reportId;
-        }
-    } catch (error) {
-        logError('Evaluation failed:', error);
-        showToast('评测失败', 'error');
-    } finally {
-        document.getElementById('eval-loading').classList.remove('show');
-    }
-}
-
-async function runGroupEvaluation() {
-    const groupId = document.getElementById('eval-group').value;
-    if (!groupId) {
-        showToast('请选择一个分组', 'info');
-        return;
-    }
-
-    document.getElementById('eval-loading').classList.add('show');
-    document.getElementById('eval-result').style.display = 'none';
-    document.getElementById('eval-details').style.display = 'none';
-
-    try {
-        const response = await fetch(`/api/evaluate/group/${groupId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
                 metrics: getSelectedEvalMetrics(),
                 agentType: 'custom',
                 agentConfigId: getSelectedAgentConfigId(),

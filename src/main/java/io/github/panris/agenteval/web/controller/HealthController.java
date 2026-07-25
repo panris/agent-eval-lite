@@ -41,12 +41,10 @@ public class HealthController {
 
         int testCaseCount = 0;
         int reportCount = 0;
-        int groupCount = 0;
         int agentCount = 0;
         try {
             testCaseCount = testCaseRepository.countAllTestCases();
             reportCount = (int) reportService.getAllReports("desc", null, null, null, null, null, null, null, null, null, "time", 1, 1, false).get("total");
-            groupCount = testCaseRepository.findAllGroups().size();
             agentCount = (int) agentConfigRepository.count();
         } catch (Exception e) {
             // 健康检查时数据访问失败不影响主状态，仅返回 0
@@ -54,7 +52,6 @@ public class HealthController {
 
         result.put("testCases", testCaseCount);
         result.put("reports", reportCount);
-        result.put("groups", groupCount);
         result.put("agents", agentCount);
         return result;
     }

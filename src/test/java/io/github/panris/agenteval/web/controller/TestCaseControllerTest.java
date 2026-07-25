@@ -97,7 +97,7 @@ class TestCaseControllerTest {
         when(mockRepository.findAllTestCasesPage(anyInt(), anyInt())).thenReturn(List.of());
         when(mockRepository.countAllTestCases()).thenReturn(0);
 
-        Map<String, Object> resp = controller.listTestCases(null, 1, 20, null);
+        Map<String, Object> resp = controller.listTestCases(1, 20, null);
 
         assertTrue((Boolean) resp.get("success"));
         @SuppressWarnings("unchecked")
@@ -114,7 +114,7 @@ class TestCaseControllerTest {
         when(mockRepository.findAllTestCasesPage(1, 20)).thenReturn(List.of(tc));
         when(mockRepository.countAllTestCases()).thenReturn(1);
 
-        Map<String, Object> resp = controller.listTestCases(null, 1, 20, null);
+        Map<String, Object> resp = controller.listTestCases(1, 20, null);
 
         assertTrue((Boolean) resp.get("success"));
         @SuppressWarnings("unchecked")
@@ -131,23 +131,7 @@ class TestCaseControllerTest {
         tc.setName("case-1");
         when(mockRepository.findAllTestCases()).thenReturn(List.of(tc));
 
-        Map<String, Object> resp = controller.listTestCases(null, 1, 20, "hello");
-
-        assertTrue((Boolean) resp.get("success"));
-        @SuppressWarnings("unchecked")
-        List<?> cases = (List<?>) resp.get("testCases");
-        assertEquals(1, cases.size());
-    }
-
-    @Test
-    @DisplayName("GET /api/testcases with groupId → filters by group")
-    void testListByGroupId() {
-        TestCaseEntity tc = new TestCaseEntity("case-name", "in", "out");
-        tc.setName("case-g");
-        tc.setGroupId("group-1");
-        when(mockRepository.findTestCasesByGroupId("group-1")).thenReturn(List.of(tc));
-
-        Map<String, Object> resp = controller.listTestCases("group-1", 1, 20, null);
+        Map<String, Object> resp = controller.listTestCases(1, 20, "hello");
 
         assertTrue((Boolean) resp.get("success"));
         @SuppressWarnings("unchecked")
@@ -161,7 +145,7 @@ class TestCaseControllerTest {
         when(mockRepository.findAllTestCasesPage(1, 20)).thenReturn(List.of());
         when(mockRepository.countAllTestCases()).thenReturn(0);
 
-        Map<String, Object> resp = controller.listTestCases(null, -5, 20, null);
+        Map<String, Object> resp = controller.listTestCases(-5, 20, null);
 
         assertEquals(1, resp.get("page"));
     }
@@ -172,7 +156,7 @@ class TestCaseControllerTest {
         when(mockRepository.findAllTestCasesPage(1, 100)).thenReturn(List.of());
         when(mockRepository.countAllTestCases()).thenReturn(0);
 
-        controller.listTestCases(null, 1, 500, null);
+        controller.listTestCases(1, 500, null);
 
         verify(mockRepository).findAllTestCasesPage(1, 100);
     }

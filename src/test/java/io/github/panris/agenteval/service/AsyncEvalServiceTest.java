@@ -4,6 +4,7 @@ import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.Agent;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
+import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.agent.AgentFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
@@ -41,8 +42,9 @@ class AsyncEvalServiceTest {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         mockAgentFactory = mock(AgentFactory.class);
         EvalLlmConfigRepository mockLlmRepo = mock(EvalLlmConfigRepository.class);
+        AgentConfigRepository mockAgentConfigRepo = mock(AgentConfigRepository.class);
 
-        service = new AsyncEvalService(reportService, mockRepo, objectMapper, executor, executorService, mockAgentFactory, mockLlmRepo);
+        service = new AsyncEvalService(reportService, mockRepo, objectMapper, executor, executorService, mockAgentFactory, mockLlmRepo, mockAgentConfigRepo);
     }
 
     @AfterEach
@@ -153,7 +155,8 @@ class AsyncEvalServiceTest {
         ExecutorService singleExec = Executors.newSingleThreadExecutor();
         Executor singleTaskExec = Executors.newSingleThreadExecutor();
         EvalLlmConfigRepository mockLlmRepo2 = mock(EvalLlmConfigRepository.class);
-        var timeoutService = new AsyncEvalService(reportService, mockRepo, objectMapper, singleTaskExec, singleExec, mockAgentFactory, mockLlmRepo2);
+        AgentConfigRepository mockAgentConfigRepo2 = mock(AgentConfigRepository.class);
+        var timeoutService = new AsyncEvalService(reportService, mockRepo, objectMapper, singleTaskExec, singleExec, mockAgentFactory, mockLlmRepo2, mockAgentConfigRepo2);
 
         String slowTaskId = timeoutService.submitTask(List.of(new TestCase("2+2", "4")), metrics, "demo", 0, null, null, null, null);
 

@@ -134,41 +134,6 @@ public class EvalController {
     }
 
     /**
-     * Evaluate by group ID.
-     */
-    @Operation(summary = "按分组执行同步评测")
-    @PostMapping("/api/evaluate/group/{groupId}")
-    @ResponseBody
-    public Map<String, Object> evaluateByGroup(
-        @PathVariable String groupId,
-        @RequestBody EvaluateByGroupRequest request
-    ) {
-        return testCaseRepository.findGroupById(groupId)
-            .map(group -> {
-                Map<String, Object> metricsError = validateMetrics(request.getMetrics());
-                if (metricsError != null) {
-                    return metricsError;
-                }
-                // Get test cases from group
-                List<TestCase> testCases = group.getTestCaseIds().stream()
-                    .map(caseId -> testCaseRepository.findTestCaseById(caseId))
-                    .filter(opt -> opt.isPresent())
-                    .map(opt -> {
-                        TestCaseEntity entity = opt.get();
-                        return new TestCase(entity.getId(), entity.getInput(), entity.getExpected(), null, null);
-                    })
-                    .toList();
-
-                if (testCases.isEmpty()) {
-                    return ApiResponse.error("该分组没有测试用例");
-                }
-
-                return runEvaluation(testCases, request.getMetrics(), request.getAgentType(), request.getAgentConfig(), request.getAgentConfigId(), request.getEvalConfigId(), group.getName(), null, null, null);
-            })
-            .orElse(ApiResponse.error("分组不存在"));
-    }
-
-    /**
      * 按三维分组（项目/模块/功能）同步评测。任一维度为空表示不限制该维度。
      */
     @Operation(summary = "按三维维度执行同步评测")
@@ -768,22 +733,4 @@ class EvaluateByCaseIdsRequest {
     public void setEvalConfigId(String evalConfigId) { this.evalConfigId = evalConfigId; }
 }
 
-class EvaluateByGroupRequest {
-    private List<String> metrics;
-    private String agentType;
-    private Map<String, Object> agentConfig;
-    private String agentConfigId;
-    private String evalConfigId;
-
-    public List<String> getMetrics() { return metrics; }
-    public void setMetrics(List<String> metrics) { this.metrics = metrics; }
-    public String getAgentType() { return agentType; }
-    public void setAgentType(String agentType) { this.agentType = agentType; }
-    public Map<String, Object> getAgentConfig() { return agentConfig; }
-    public void setAgentConfig(Map<String, Object> agentConfig) { this.agentConfig = agentConfig; }
-    public String getAgentConfigId() { return agentConfigId; }
-    public void setAgentConfigId(String agentConfigId) { this.agentConfigId = agentConfigId; }
-    public String getEvalConfigId() { return evalConfigId; }
-    public void setEvalConfigId(String evalConfigId) { this.evalConfigId = evalConfigId; }
-}
 // TEST_MARKER_1234567890XYZ

@@ -8,32 +8,6 @@ function addCaseTag() {
     }
 }
 
-async function addSelectedToGroup() {
-    const groupId = window.currentGroupId;
-    const checkboxes = document.querySelectorAll('#modal-cases-tbody input:checked');
-    const testCaseIds = Array.from(checkboxes).map(cb => cb.value);
-
-    if (testCaseIds.length === 0) {
-        showToast('请至少选择一个测试用例', 'error');
-        return;
-    }
-
-    try {
-        await fetch(`/api/groups/${groupId}/testcases`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ testCaseIds })
-        });
-
-        showToast(`成功添加 ${testCaseIds.length} 个用例到分组`, 'success');
-        closeAddToGroupModal();
-        loadGroups();
-    } catch (error) {
-        logError('Failed to add test cases to group:', error);
-        showToast('添加用例到分组失败', 'error');
-    }
-}
-
 async function applyBatchEdit() {
     const checked = document.querySelectorAll('#cases-tbody .case-checkbox:checked');
     const ids = Array.from(checked).map(cb => cb.value);
@@ -203,31 +177,6 @@ function closeImportModal() {
     document.getElementById('import-data').value = '';
 }
 
-async function createGroup() {
-    const name = document.getElementById('group-name').value;
-    const description = document.getElementById('group-desc').value;
-
-    if (!name) {
-        showToast('请填写分组名称', 'error');
-        return;
-    }
-
-    try {
-        await fetch('/api/groups', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description })
-        });
-        showToast('分组已创建', 'success');
-        loadGroups();
-        document.getElementById('group-name').value = '';
-        document.getElementById('group-desc').value = '';
-    } catch (error) {
-        logError('Failed to create group:', error);
-        showToast('创建失败', 'error');
-    }
-}
-
 async function createTestCase() {
     const name = document.getElementById('case-name').value;
     const input = document.getElementById('case-input').value;
@@ -265,19 +214,6 @@ async function createTestCase() {
     }
 }
 
-async function deleteGroup(id) {
-    showConfirm('删除分组', '确定要删除该分组吗?此操作不可恢复。', async () => {
-        try {
-            await fetch(`/api/groups/${id}`, { method: 'DELETE' });
-            showToast('分组已删除', 'success');
-            loadGroups();
-        } catch (error) {
-            logError('Failed to delete group:', error);
-            showToast('删除失败', 'error');
-        }
-    });
-}
-
 async function deleteTestCase(id) {
     showConfirm('删除测试用例', '确定要删除该测试用例吗?此操作不可恢复。', async () => {
         try {
@@ -295,29 +231,6 @@ function deselectAllCases() {
     document.querySelectorAll('#cases-tbody .case-checkbox').forEach(cb => cb.checked = false);
     document.getElementById('select-all-cases').checked = false;
     updateSelectedCaseCount();
-}
-
-async function ensureGroups() {
-    if (groups.length > 0) return;
-    try {
-        const response = await fetch('/api/groups');
-        const data = await response.json();
-        groups = data.groups || [];
-        // 更新评测分组选择器
-        const evalSelect = document.getElementById('eval-group');
-        if (evalSelect) {
-            evalSelect.innerHTML = '<option value="">选择分组...</option>' +
-                groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
-        }
-        // 更新历史记录分组下拉框
-        const histSelect = document.getElementById('history-group');
-        if (histSelect) {
-            histSelect.innerHTML = '<option value="">全部分组</option>' +
-                groups.map(g => `<option value="${utils.escapeHtml(g.name)}">${utils.escapeHtml(g.name)}</option>`).join('');
-        }
-    } catch (e) {
-        logError('Failed to load groups for filter:', e);
-    }
 }
 
 function exportAllTestCases(format) {
@@ -492,66 +405,6 @@ async function importTestCases() {
 
     } catch (e) {
         showToast(`解析失败: ${e.message}`, 'error');
-    }
-}
-
-async function loadGroups() {
-    document.getElementById('groups-loading').classList.add('show');
-    try {
-        const response = await fetch('/api/groups');
-        const data = await response.json();
-        groups = data.groups || [];
-
-        const tbody = document.getElementById('groups-tbody');
-        if (groups.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">暂无分组</td></tr>';
-        } else {
-            tbody.innerHTML = groups.map(g => `
-                <tr>
-                    <td>${utils.escapeHtml(g.name)}</td>
-                    <td>${utils.escapeHtml(g.description) || '-'}</td>
-                    <td>${g.testCaseIds ? g.testCaseIds.length : 0}</td>
-                    <td class="actions">
-                        <button class="btn btn-primary btn-sm" onclick="viewGroupCases('${utils.escapeHtml(g.id)}')">查看用例</button>
-                        <button class="btn btn-success btn-sm" onclick="showAddToGroupModal('${utils.escapeHtml(g.id)}')">批量添加</button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteGroup('${utils.escapeHtml(g.id)}')">删除</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // 更新评测分组选择器
-        const evalSelect = document.getElementById('eval-group');
-        if (evalSelect) {
-            evalSelect.innerHTML = '<option value="">选择分组...</option>' +
-                groups.map(g => `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`).join('');
-        }
-        // 同时更新历史记录分组下拉框
-        const histSelect = document.getElementById('history-group');
-        if (histSelect) {
-            histSelect.innerHTML = '<option value="">全部分组</option>' +
-                groups.map(g => `<option value="${utils.escapeHtml(g.name)}">${utils.escapeHtml(g.name)}</option>`).join('');
-        }
-    } catch (error) {
-        logError('Failed to load groups:', error);
-    } finally {
-        document.getElementById('groups-loading').classList.remove('show');
-    }
-}
-
-async function loadGroupsForBatchEdit() {
-    try {
-        const response = await fetch('/api/groups');
-        const data = await response.json();
-        const groups = data.groups || [];
-
-        const select = document.getElementById('batch-edit-group');
-        select.innerHTML = '<option value="">移除分组</option>';
-        groups.forEach(g => {
-            select.innerHTML += `<option value="${utils.escapeHtml(g.id)}">${utils.escapeHtml(g.name)}</option>`;
-        });
-    } catch (e) {
-        logError('Failed to load groups:', e);
     }
 }
 

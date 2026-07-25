@@ -44,7 +44,7 @@
 
         <div class="tabs">
             <button class="tab active" data-tab="cases" onclick="switchTab('cases')">📋 测试用例</button>
-            <button class="tab" data-tab="groups" onclick="switchTab('groups')">📁 分组管理</button>
+
             <button class="tab" data-tab="evaluate" onclick="switchTab('evaluate')">🚀 选择性评测</button>
             <button class="tab" data-tab="history" onclick="switchTab('history')">📈 评测历史</button>
         </div>
@@ -136,34 +136,6 @@
             </div>
         </div>
 
-        <!-- 分组管理 -->
-        <div id="groups-card" class="card">
-            <h2 class="card-title">分组管理</h2>
-
-            <div class="form-row">
-                <input type="text" class="form-control" id="group-name" placeholder="分组名称">
-                <input type="text" class="form-control" id="group-desc" placeholder="分组描述">
-                <button class="btn btn-primary" onclick="createGroup()">创建分组</button>
-            </div>
-
-            <div class="loading" id="groups-loading">
-                <div class="spinner"></div>
-                <p>加载中...</p>
-            </div>
-
-            <table class="table" id="groups-table">
-                <thead>
-                    <tr>
-                        <th>名称</th>
-                        <th>描述</th>
-                        <th>用例数量</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="groups-tbody"></tbody>
-            </table>
-        </div>
-
         <!-- 选择性评测 -->
         <div id="evaluate-card" class="card">
             <h2 class="card-title">选择性评测</h2>
@@ -180,11 +152,6 @@
                 <label><input type="checkbox" class="eval-metric" value="similarity"> 相似度</label>
                 </div>
                 <button class="btn btn-success" onclick="runEvaluation()">▶ 运行选中用例</button>
-                <select class="form-control" id="eval-group" style="width: auto;" onchange="loadGroupCases()">
-                    <option value="">选择分组...</option>
-                </select>
-                <button class="btn btn-primary" onclick="runGroupEvaluation()">按分组评测</button>
-                <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
                 <select class="form-control" id="eval-agent" style="width: auto;"><option value="">Agent(演示)</option></select>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
                 <select class="form-control" id="eval-project" style="width: auto;" onchange="loadDimensionCases()"><option value="">项目(任意)</option></select>
@@ -297,9 +264,6 @@
                         <span>至</span>
                         <input type="date" id="history-date-end" class="form-control" style="width: 140px;" onchange="filterHistory()">
                     </div>
-                    <select id="history-group" class="form-control" style="width: 130px;" onchange="_reportPage=1;loadHistory()">
-                        <option value="">全部分组</option>
-                    </select>
                     <select id="history-project" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
                         <option value="">全部项目</option>
                     </select>
@@ -344,7 +308,6 @@
                         <th>时间</th>
                         <th>通过率</th>
                         <th>平均分</th>
-                        <th>分组</th>
                         <th>三维分组</th>
                         <th>标签</th>
                         <th>备注</th>
