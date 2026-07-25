@@ -356,7 +356,7 @@ async function runDimensionEvaluation() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 metrics: getSelectedEvalMetrics(),
-                agentType: 'custom',
+                agentType: getSelectedAgentType(),
                 agentConfigId: getSelectedAgentConfigId(),
                 evalConfigId: getSelectedEvalConfigId(),
                 project: project || null,
@@ -405,7 +405,7 @@ async function runEvaluation() {
             body: JSON.stringify({
                 caseIds,
                 metrics: getSelectedEvalMetrics(),
-                agentType: 'custom',
+                agentType: getSelectedAgentType(),
                 agentConfigId: getSelectedAgentConfigId(),
                 evalConfigId: getSelectedEvalConfigId()
             })
@@ -447,7 +447,7 @@ async function runSelectedEvaluation() {
             body: JSON.stringify({
                 caseIds: caseIds,
                 metrics: getSelectedEvalMetrics(),
-                agentType: 'custom',
+                agentType: getSelectedAgentType(),
                 agentConfigId: getSelectedAgentConfigId(),
                 evalConfigId: getSelectedEvalConfigId()
             })
@@ -554,6 +554,11 @@ function getSelectedEvalMetrics() {
 function getSelectedAgentConfigId() {
     const sel = document.getElementById('eval-agent');
     return sel ? sel.value || null : null;
+}
+
+function getSelectedAgentType() {
+    const configId = getSelectedAgentConfigId();
+    return configId ? 'custom' : 'demo';
 }
 
 function getSelectedEvalConfigId() {
