@@ -1,70 +1,44 @@
 package io.github.panris.agenteval.repository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
-import java.io.File;
-import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Repository for managing test cases using JSON file storage.
- */
 @Repository
 public class TestCaseRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(TestCaseRepository.class);
 
-    private final ObjectMapper objectMapper;
-    private final File testCasesFile;
+    private final TestCaseJpaRepository jpaRepository;
 
-    private final Map<String, TestCaseEntity> testCases = new ConcurrentHashMap<>();
-
-    public TestCaseRepository(@Value("${data.dir:data}") String dataDir) {
-        this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-        File dataDirFile = new File(dataDir);
-        if (!dataDirFile.exists()) {
-            dataDirFile.mkdirs();
-        }
-
-        this.testCasesFile = new File(dataDir, "testcases.json");
-
-        loadData();
+    public TestCaseRepository(TestCaseJpaRepository jpaRepository) {
+        this.jpaRepository = jpaRepository;
     }
-
-    // ============ Test Case Operations ============
 
     public TestCaseEntity saveTestCase(TestCaseEntity testCase) {
         if (testCase.getId() == null || testCase.getId().isEmpty()) {
             testCase.setId(UUID.randomUUID().toString());
         }
         testCase.updateTimestamp();
-        testCases.put(testCase.getId(), testCase);
-        saveData();
-        logger.info("Saved test case: {}", testCase.getId());
-        return testCase;
+        TestCaseEntity saved = jpaRepository.save(testCase);
+        logger.info("Saved test case: {}", saved.getId());
+        return saved;
     }
 
     public Optional<TestCaseEntity> findTestCaseById(String id) {
-        return Optional.ofNullable(testCases.get(id));
+        return jpaRepository.findById(id);
     }
 
     public List<TestCaseEntity> findAllTestCases() {
-        return testCases.values().stream()
-            .filter(tc -> tc.getDeleted() == null || !tc.getDeleted())
-            .collect(Collectors.toList());
+        return jpaRepository.findByDeletedFalse();
     }
 
     public List<TestCaseEntity> findAllTestCasesPage(int page, int size) {
@@ -76,25 +50,23 @@ public class TestCaseRepository {
     }
 
     public int countAllTestCases() {
-        return (int) testCases.values().stream()
-            .filter(tc -> tc.getDeleted() == null || !tc.getDeleted())
-            .count();
+        return (int) jpaRepository.count();
     }
 
-    /**
-     * 按三维分组筛选测试用例。任一维度为 null 或空表示不限制该维度。
-     * 三个维度之间是 AND 关系。
-     */
     public List<TestCaseEntity> findTestCasesByDimensions(String project, String module, String function) {
         final String p = (project != null && !project.isBlank()) ? project.trim() : null;
         final String m = (module != null && !module.isBlank()) ? module.trim() : null;
         final String f = (function != null && !function.isBlank()) ? function.trim() : null;
-        return testCases.values().stream()
-            .filter(tc -> tc.getDeleted() == null || !tc.getDeleted())
-            .filter(tc -> p == null || p.equalsIgnoreCase(nullToEmpty(tc.getProject())))
-            .filter(tc -> m == null || m.equalsIgnoreCase(nullToEmpty(tc.getModule())))
-            .filter(tc -> f == null || f.equalsIgnoreCase(nullToEmpty(tc.getFunction())))
-            .collect(Collectors.toList());
+        
+        if (p != null && m != null && f != null) {
+            return jpaRepository.findByProjectAndModuleAndFunctionAndDeletedFalse(p, m, f);
+        } else if (p != null && m != null) {
+            return jpaRepository.findByProjectAndModuleAndDeletedFalse(p, m);
+        } else if (p != null) {
+            return jpaRepository.findByProjectAndDeletedFalse(p);
+        } else {
+            return jpaRepository.findByDeletedFalse();
+        }
     }
 
     public List<TestCaseEntity> findTestCasesByDimensionsPage(String project, String module, String function, int page, int size) {
@@ -110,64 +82,58 @@ public class TestCaseRepository {
     }
 
     public List<String> findDistinctProjects() {
-        return distinctValues(TestCaseEntity::getProject);
+        return jpaRepository.findDistinctProjects();
     }
 
     public List<String> findDistinctModules() {
-        return distinctValues(TestCaseEntity::getModule);
-    }
-
-    public List<String> findDistinctFunctions() {
-        return distinctValues(TestCaseEntity::getFunction);
-    }
-
-    private List<String> distinctValues(java.util.function.Function<TestCaseEntity, String> getter) {
-        return testCases.values().stream()
-            .map(getter)
+        return jpaRepository.findAll().stream()
+            .map(TestCaseEntity::getModule)
             .filter(v -> v != null && !v.isBlank())
             .distinct()
             .sorted()
             .collect(Collectors.toList());
     }
 
-    private String nullToEmpty(String s) {
-        return s == null ? "" : s;
+    public List<String> findDistinctFunctions() {
+        return jpaRepository.findAll().stream()
+            .map(TestCaseEntity::getFunction)
+            .filter(v -> v != null && !v.isBlank())
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
     }
 
     public void deleteTestCase(String id) {
-        TestCaseEntity tc = testCases.get(id);
-        if (tc != null) {
+        Optional<TestCaseEntity> opt = jpaRepository.findById(id);
+        if (opt.isPresent()) {
+            TestCaseEntity tc = opt.get();
             tc.setDeleted(true);
             tc.setDeletedAt(LocalDateTime.now());
             tc.setUpdatedAt(LocalDateTime.now());
-            saveData();
+            jpaRepository.save(tc);
             logger.info("Soft deleted test case: {}", id);
         }
     }
 
     public void restoreTestCase(String id) {
-        TestCaseEntity tc = testCases.get(id);
-        if (tc != null) {
+        Optional<TestCaseEntity> opt = jpaRepository.findById(id);
+        if (opt.isPresent()) {
+            TestCaseEntity tc = opt.get();
             tc.setDeleted(false);
             tc.setDeletedAt(null);
             tc.setUpdatedAt(LocalDateTime.now());
-            saveData();
+            jpaRepository.save(tc);
             logger.info("Restored test case: {}", id);
         }
     }
 
     public List<TestCaseEntity> findDeletedTestCases() {
-        return testCases.values().stream()
-            .filter(tc -> tc.getDeleted() != null && tc.getDeleted())
-            .collect(Collectors.toList());
+        return jpaRepository.findByDeletedTrue();
     }
 
     public void forceDeleteTestCase(String id) {
-        TestCaseEntity removed = testCases.remove(id);
-        if (removed != null) {
-            saveData();
-            logger.info("Force deleted test case: {}", id);
-        }
+        jpaRepository.deleteById(id);
+        logger.info("Force deleted test case: {}", id);
     }
 
     public List<TestCaseEntity> saveAllTestCases(List<TestCaseEntity> testCaseList) {
@@ -177,36 +143,9 @@ public class TestCaseRepository {
                 testCase.setId(UUID.randomUUID().toString());
             }
             testCase.updateTimestamp();
-            testCases.put(testCase.getId(), testCase);
-            saved.add(testCase);
+            saved.add(jpaRepository.save(testCase));
         }
-        saveData();
         logger.info("Saved {} test cases in batch", saved.size());
         return saved;
-    }
-
-    // ============ Data Persistence ============
-
-    private void loadData() {
-        try {
-            if (testCasesFile.exists()) {
-                TestCaseEntity[] casesArray = objectMapper.readValue(testCasesFile, TestCaseEntity[].class);
-                for (TestCaseEntity testCase : casesArray) {
-                    testCases.put(testCase.getId(), testCase);
-                }
-                logger.info("Loaded {} test cases", testCases.size());
-            }
-        } catch (IOException e) {
-            logger.error("Failed to load data", e);
-        }
-    }
-
-    private void saveData() {
-        try {
-            objectMapper.writeValue(testCasesFile, testCases.values());
-            logger.debug("Data saved successfully");
-        } catch (IOException e) {
-            logger.error("Failed to save data", e);
-        }
     }
 }

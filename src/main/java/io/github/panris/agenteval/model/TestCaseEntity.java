@@ -1,43 +1,78 @@
 package io.github.panris.agenteval.model;
 
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Test case entity with metadata.
  */
+@Entity
+@Table(name = "test_cases")
 public class TestCaseEntity {
 
+    @Id
+    @Column(length = 36)
     private String id;
 
     @Size(max = 100, message = "用例名称长度不能超过100字符")
+    @Column(length = 100)
     private String name;
 
     @NotBlank(message = "测试输入不能为空")
     @Size(max = 10000, message = "测试输入长度不能超过10000字符")
+    @Column(columnDefinition = "TEXT")
     private String input;
 
     @Size(max = 10000, message = "期望输出长度不能超过10000字符")
+    @Column(columnDefinition = "TEXT")
     private String expected;
+    
+    @Column(length = 36)
     private String groupId;
-    /** 三维分组：项目 */
+    
+    @Column(length = 100)
     private String project;
-    /** 三维分组：模块 */
+    
+    @Column(length = 100)
     private String module;
-    /** 三维分组：功能 */
+    
+    @Column(length = 100)
     private String function;
-    /** 用例说明 */
+    
+    @Column(length = 500)
     private String description;
-    private Map<String, Object> metadata;
+    
+    @Column(columnDefinition = "TEXT")
+    private String metadataJson;
+    
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean deleted;
+    
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    @Transient
+    private Map<String, Object> metadata;
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public TestCaseEntity() {
         this.id = UUID.randomUUID().toString();
@@ -54,7 +89,6 @@ public class TestCaseEntity {
         this.expected = expected;
     }
 
-    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -127,15 +161,37 @@ public class TestCaseEntity {
         this.description = description;
     }
 
+    public String getMetadataJson() {
+        return metadataJson;
+    }
+
+    public void setMetadataJson(String metadataJson) {
+        this.metadataJson = metadataJson;
+        this.metadata = null;
+    }
+
     public Map<String, Object> getMetadata() {
         if (metadata == null) {
-            metadata = new HashMap<>();
+            if (metadataJson != null && !metadataJson.isEmpty()) {
+                try {
+                    metadata = objectMapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {});
+                } catch (JsonProcessingException e) {
+                    metadata = new HashMap<>();
+                }
+            } else {
+                metadata = new HashMap<>();
+            }
         }
         return metadata;
     }
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata != null ? metadata : new HashMap<>();
+        try {
+            this.metadataJson = objectMapper.writeValueAsString(this.metadata);
+        } catch (JsonProcessingException e) {
+            this.metadataJson = "{}";
+        }
     }
 
     public LocalDateTime getCreatedAt() {
@@ -175,22 +231,17 @@ public class TestCaseEntity {
     }
     
     @SuppressWarnings("unchecked")
-    public java.util.List<String> getTags() {
-        if (metadata == null) {
-            return new java.util.ArrayList<>();
+    public List<String> getTags() {
+        Object tags = getMetadata().get("tags");
+        if (tags instanceof List) {
+            return (List<String>) tags;
         }
-        Object tags = metadata.get("tags");
-        if (tags instanceof java.util.List) {
-            return (java.util.List<String>) tags;
-        }
-        return new java.util.ArrayList<>();
+        return new ArrayList<>();
     }
     
-    @SuppressWarnings("unchecked")
-    public void setTags(java.util.List<String> tags) {
-        if (metadata == null) {
-            metadata = new HashMap<>();
-        }
-        metadata.put("tags", tags != null ? tags : new java.util.ArrayList<>());
+    public void setTags(List<String> tags) {
+        Map<String, Object> meta = getMetadata();
+        meta.put("tags", tags != null ? tags : new ArrayList<>());
+        setMetadata(meta);
     }
 }

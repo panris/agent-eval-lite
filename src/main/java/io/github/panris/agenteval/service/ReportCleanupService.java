@@ -28,10 +28,14 @@ public class ReportCleanupService {
     @PostConstruct
     public void onStartup() {
         // 启动时执行一次保守清理（仅限制总数，不按时间删除）
+        // 使用延迟执行，等待 Hibernate 创建表
         try {
+            Thread.sleep(2000);
             reportService.cleanupOldReports(MAX_REPORTS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
-            log.warn("启动时清理报告失败: {}", e.getMessage());
+            log.warn("启动时清理报告失败（可能表尚未创建）: {}", e.getMessage());
         }
     }
 
