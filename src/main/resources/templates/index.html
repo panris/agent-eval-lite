@@ -353,8 +353,8 @@
         // 加载统计数据
         async function loadStats() {
             try {
-                const health = await utils.api.get('/api/health');
-                const reports = await utils.api.get('/api/reports?size=100');
+                const health = await utils.api.get('/api/health?_=' + Date.now());
+                const reports = await utils.api.get('/api/reports?size=100&_=' + Date.now());
 
                 document.getElementById('totalTestCases').textContent = health.testCases || 0;
                 document.getElementById('totalReports').textContent = health.reports || 0;
@@ -386,7 +386,7 @@
         // 加载最近评测历史
         async function loadRecentReports() {
             try {
-                const data = await utils.api.get('/api/reports?size=5&sort=desc');
+                const data = await utils.api.get('/api/reports?size=5&sort=desc&_=' + Date.now());
                 const reports = data.reports || [];
 
                 const container = document.getElementById('recentReportsContent');

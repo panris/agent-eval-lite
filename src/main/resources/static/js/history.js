@@ -386,8 +386,8 @@ async function loadHistory() {
 
         // 并行获取:分页数据 + 全量数据(趋势图用)
         const [pagedRes, allRes] = await Promise.all([
-            fetch(`/api/reports?${params}`),
-            fetch(`/api/reports?${allParams}`)
+            fetch(`/api/reports?${params}`, { cache: 'no-cache' }),
+            fetch(`/api/reports?${allParams}`, { cache: 'no-cache' })
         ]);
     const [data, allData] = await Promise.all([pagedRes.json(), allRes.json()]);
 
