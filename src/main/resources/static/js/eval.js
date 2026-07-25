@@ -99,6 +99,8 @@ function loadDimensionCases() {
 
     const checkedCount = document.querySelectorAll('.eval-checkbox:checked').length;
     showToast(`已选中 ${checkedCount} 个符合条件的测试用例`, 'success');
+    updateEvalSelectedCount();
+    updateSelectAllState();
 }
 
 function renderCharts(evaluations) {
@@ -568,8 +570,47 @@ function getSelectedEvalConfigId() {
 
 // 页面初始化时加载
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { loadEvalConfigs(); loadEvalAgents(); });
+    document.addEventListener('DOMContentLoaded', () => {
+        loadEvalConfigs();
+        loadEvalAgents();
+        bindEvalCheckboxEvents();
+    });
 } else {
     loadEvalConfigs();
     loadEvalAgents();
+    bindEvalCheckboxEvents();
+}
+
+function updateEvalSelectedCount() {
+    const count = document.querySelectorAll('.eval-checkbox:checked').length;
+    const countEl = document.getElementById('eval-selected-count');
+    if (countEl) countEl.textContent = count;
+}
+
+function bindEvalCheckboxEvents() {
+    const selectAll = document.getElementById('select-all-eval');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.eval-checkbox').forEach(cb => {
+                cb.checked = this.checked;
+            });
+            updateEvalSelectedCount();
+        });
+    }
+
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('eval-checkbox')) {
+            updateEvalSelectedCount();
+            updateSelectAllState();
+        }
+    });
+}
+
+function updateSelectAllState() {
+    const selectAll = document.getElementById('select-all-eval');
+    if (!selectAll) return;
+    const all = document.querySelectorAll('.eval-checkbox');
+    const checked = document.querySelectorAll('.eval-checkbox:checked');
+    selectAll.checked = all.length > 0 && all.length === checked.length;
+    selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
 }

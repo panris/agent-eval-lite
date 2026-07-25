@@ -150,6 +150,9 @@
                 <label><input type="checkbox" class="eval-metric" value="rouge"> ROUGE</label>
                 <label><input type="checkbox" class="eval-metric" value="similarity"> 相似度</label>
                 </div>
+                <span style="color: var(--text-secondary); font-size: 13px; margin-right: 10px;">
+                    已选中 <span id="eval-selected-count" style="color: var(--text-primary); font-weight: 600;">0</span> 个用例
+                </span>
                 <button class="btn btn-success" onclick="runEvaluation()">▶ 运行选中用例</button>
                 <select class="form-control" id="eval-agent" style="width: auto;"><option value="">Agent(演示)</option></select>
                 <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>

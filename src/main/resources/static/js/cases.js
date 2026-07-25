@@ -487,6 +487,8 @@ async function loadTestCases() {
         }).join('');
 
         renderTcPagination();
+        if (typeof updateEvalSelectedCount === 'function') updateEvalSelectedCount();
+        if (typeof updateSelectAllState === 'function') updateSelectAllState();
     } catch (error) {
         logError('Failed to load test cases:', error);
         showToast('加载测试用例失败', 'error');

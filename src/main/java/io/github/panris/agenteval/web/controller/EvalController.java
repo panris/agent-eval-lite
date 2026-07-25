@@ -679,6 +679,7 @@ public class EvalController {
 
     /** Resolve test cases from repository by IDs (used by evaluateByCaseIds + async). */
     private CaseResolution resolveFromCaseIds(List<String> caseIds) {
+        log.info("Resolving {} case IDs", caseIds != null ? caseIds.size() : 0);
         if (caseIds.size() > Constants.MAX_CASES_PER_EVAL) {
             return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个");
         }
@@ -690,6 +691,7 @@ public class EvalController {
                 return new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null);
             })
             .toList();
+        log.info("Resolved {} test cases from {} IDs", cases.size(), caseIds.size());
         if (cases.isEmpty()) {
             return new CaseResolution("未找到有效的测试用例");
         }

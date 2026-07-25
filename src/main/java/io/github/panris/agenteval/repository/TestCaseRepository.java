@@ -34,7 +34,7 @@ public class TestCaseRepository {
     }
 
     public Optional<TestCaseEntity> findTestCaseById(String id) {
-        return jpaRepository.findById(id);
+        return jpaRepository.findByIdAndDeletedFalse(id);
     }
 
     public List<TestCaseEntity> findAllTestCases() {
