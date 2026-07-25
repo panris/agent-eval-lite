@@ -160,6 +160,115 @@ public class DataMigrationService {
         }
     }
 
+    private void migrateAgentConfigs() {
+        Path agentsFile = Paths.get(dataDir, "agents.json");
+        if (!Files.exists(agentsFile)) {
+            log.info("No agents.json file found, skipping migration");
+            return;
+        }
+
+        if (agentConfigJpaRepository.count() > 0) {
+            log.info("Agent configs already exist in database, skipping migration");
+            return;
+        }
+
+        try {
+            String content = Files.readString(agentsFile);
+            Map<String, AgentConfig> agents = objectMapper.readValue(content,
+                objectMapper.getTypeFactory().constructMapType(Map.class, String.class, AgentConfig.class));
+
+            int migrated = 0;
+            for (Map.Entry<String, AgentConfig> entry : agents.entrySet()) {
+                AgentConfig config = entry.getValue();
+                AgentConfigEntity entity = new AgentConfigEntity();
+                entity.setId(config.getId());
+                entity.setName(config.getName());
+                entity.setType(config.getType());
+                entity.setDescription(config.getDescription());
+                entity.setEndpoint(config.getEndpoint());
+                entity.setTimeout(config.getTimeout());
+                entity.setCreatedAt(config.getCreatedAt());
+                entity.setUpdatedAt(config.getUpdatedAt());
+
+                if (config.getHeaders() != null) {
+                    entity.setHeadersJson(objectMapper.writeValueAsString(config.getHeaders()));
+                }
+                if (config.getRequestMapping() != null) {
+                    entity.setRequestMappingJson(objectMapper.writeValueAsString(config.getRequestMapping()));
+                }
+                if (config.getResponseMapping() != null) {
+                    entity.setResponseMappingJson(objectMapper.writeValueAsString(config.getResponseMapping()));
+                }
+                if (config.getConfig() != null) {
+                    entity.setConfigJson(objectMapper.writeValueAsString(config.getConfig()));
+                }
+
+                agentConfigJpaRepository.save(entity);
+                migrated++;
+            }
+
+            log.info("Migrated {} agent configs from JSON to database", migrated);
+
+            Path backupFile = Paths.get(dataDir, "backup", "agents_migrated_" + System.currentTimeMillis() + ".json");
+            Files.createDirectories(backupFile.getParent());
+            Files.copy(agentsFile, backupFile);
+            log.info("Backed up agents.json to {}", backupFile);
+
+        } catch (Exception e) {
+            log.error("Failed to migrate agent configs: {}", e.getMessage(), e);
+        }
+    }
+
+    private void migrateEvalLlmConfigs() {
+        Path llmConfigsFile = Paths.get(dataDir, "eval-llm-configs.json");
+        if (!Files.exists(llmConfigsFile)) {
+            log.info("No eval-llm-configs.json file found, skipping migration");
+            return;
+        }
+
+        if (evalLlmConfigJpaRepository.count() > 0) {
+            log.info("Eval LLM configs already exist in database, skipping migration");
+            return;
+        }
+
+        try {
+            String content = Files.readString(llmConfigsFile);
+            Map<String, EvalLlmConfig> configs = objectMapper.readValue(content,
+                objectMapper.getTypeFactory().constructMapType(Map.class, String.class, EvalLlmConfig.class));
+
+            int migrated = 0;
+            for (Map.Entry<String, EvalLlmConfig> entry : configs.entrySet()) {
+                EvalLlmConfig config = entry.getValue();
+                EvalLlmConfigEntity entity = new EvalLlmConfigEntity();
+                entity.setId(config.getId());
+                entity.setName(config.getName());
+                entity.setBaseUrl(config.getBaseUrl());
+                entity.setApiKey(config.getApiKey());
+                entity.setModel(config.getModel());
+                entity.setTemperature(config.getTemperature());
+                entity.setMaxTokens(config.getMaxTokens());
+                entity.setTimeout(config.getTimeout());
+                entity.setPassThreshold(config.getPassThreshold());
+                entity.setSystemPrompt(config.getSystemPrompt());
+                entity.setCreatedAt(config.getCreatedAt());
+                entity.setUpdatedAt(config.getUpdatedAt());
+
+                evalLlmConfigJpaRepository.save(entity);
+                migrated++;
+            }
+
+            log.info("Migrated {} eval LLM configs from JSON to database", migrated);
+
+            Path backupFile = Paths.get(dataDir, "backup", "eval-llm-configs_migrated_" + System.currentTimeMillis() + ".json");
+            Files.createDirectories(backupFile.getParent());
+            Files.copy(llmConfigsFile, backupFile);
+            log.info("Backed up eval-llm-configs.json to {}", backupFile);
+
+        } catch (Exception e) {
+            log.error("Failed to migrate eval LLM configs: {}", e.getMessage(), e);
+        }
+    }
+
     private Integer getIntValue(Map<String, Object> data, String... keys) {
         for (String key : keys) {
             Object value = data.get(key);
