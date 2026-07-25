@@ -44,7 +44,6 @@
 
         <div class="tabs">
             <button class="tab active" data-tab="cases" onclick="switchTab('cases')">📋 测试用例</button>
-            <button class="tab" data-tab="recycle" onclick="switchTab('recycle')">🗑️ 回收站</button>
             <button class="tab" data-tab="evaluate" onclick="switchTab('evaluate')">🚀 选择性评测</button>
             <button class="tab" data-tab="history" onclick="switchTab('history')">📈 评测历史</button>
         </div>
@@ -133,46 +132,6 @@
                     <button class="btn btn-secondary btn-sm" onclick="selectAllCases()">全选</button>
                     <button class="btn btn-secondary btn-sm" onclick="deselectAllCases()">取消全选</button>
                 </div>
-            </div>
-        </div>
-
-        <!-- 回收站 -->
-        <div id="recycle-card" class="card">
-            <h2 class="card-title">🗑️ 回收站</h2>
-
-            <div class="action-bar">
-                <span style="color: var(--text-secondary); font-size: 14px;" id="recycle-stats"></span>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-primary" onclick="restoreSelectedFromRecycle()">🔄 恢复选中</button>
-                    <button class="btn btn-danger" onclick="forceDeleteSelectedFromRecycle()">🗑️ 永久删除选中</button>
-                </div>
-            </div>
-
-            <div class="form-row" style="margin-bottom: 12px;">
-                <input type="text" class="form-control" id="recycle-search" placeholder="🔍 搜索已删除用例" oninput="onRecycleSearch()">
-            </div>
-
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;"><input type="checkbox" id="select-all-recycle" onchange="toggleAllRecycle()"></th>
-                            <th>用例名称</th>
-                            <th>输入</th>
-                            <th>期望输出</th>
-                            <th>删除时间</th>
-                            <th style="width: 120px;">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recycle-tbody">
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="pagination" id="recycle-pagination">
-                <button class="btn btn-sm" id="recycle-prev" disabled>‹ 上一页</button>
-                <span id="recycle-page-info">第 1 / 1 页</span>
-                <button class="btn btn-sm" id="recycle-next" disabled>下一页 ›</button>
             </div>
         </div>
 
