@@ -886,3 +886,149 @@ async function saveParsedCases() {
         document.getElementById('req-save-btn').disabled = false;
     }
 }
+
+// ===== 回收站功能 =====
+let _recycleTestCases = [];
+
+async function loadRecycleCases() {
+    try {
+        const response = await fetch('/api/testcases/deleted', { cache: 'no-cache' });
+        const data = await response.json();
+        _recycleTestCases = data.testCases || [];
+        document.getElementById('recycle-stats').textContent = `共 ${_recycleTestCases.length} 条已删除用例`;
+        renderRecycleTable(_recycleTestCases);
+    } catch (error) {
+        logError('Failed to load recycle cases:', error);
+        showToast('加载回收站失败', 'error');
+    }
+}
+
+function renderRecycleTable(cases) {
+    const tbody = document.getElementById('recycle-tbody');
+    if (!cases || cases.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">回收站为空</td></tr>';
+        return;
+    }
+    tbody.innerHTML = cases.map(tc => {
+        const _name = utils.escapeHtml(tc.name || '');
+        const _input = utils.escapeHtml(tc.input || '');
+        const _expected = utils.escapeHtml(tc.expected || '');
+        const _deletedAt = tc.deletedAt ? new Date(tc.deletedAt).toLocaleString() : '-';
+        return `
+        <tr>
+            <td><input type="checkbox" class="recycle-checkbox" value="${tc.id}"></td>
+            <td>${_name || '<span style="color: var(--text-secondary);">-</span>'}</td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${_input}">${_input.substring(0, 50)}${_input.length > 50 ? '...' : ''}</td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${_expected}">${_expected.substring(0, 50)}${_expected.length > 50 ? '...' : ''}</td>
+            <td>${_deletedAt}</td>
+            <td>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <button class="btn btn-sm btn-primary" onclick="restoreFromRecycle('${tc.id}')">恢复</button>
+                    <button class="btn btn-sm btn-danger" onclick="forceDeleteFromRecycle('${tc.id}')">永久删除</button>
+                </div>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function onRecycleSearch() {
+    const keyword = document.getElementById('recycle-search')?.value?.toLowerCase() || '';
+    if (!keyword) {
+        renderRecycleTable(_recycleTestCases);
+        return;
+    }
+    const filtered = _recycleTestCases.filter(tc =>
+        (tc.name && tc.name.toLowerCase().includes(keyword)) ||
+        (tc.input && tc.input.toLowerCase().includes(keyword)) ||
+        (tc.expected && tc.expected.toLowerCase().includes(keyword))
+    );
+    renderRecycleTable(filtered);
+}
+
+async function restoreFromRecycle(id) {
+    try {
+        const response = await fetch(`/api/testcases/${id}/restore`, { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            showToast('测试用例已恢复', 'success');
+            loadRecycleCases();
+            loadTestCases();
+        } else {
+            showToast(data.error || '恢复失败', 'error');
+        }
+    } catch (error) {
+        logError('Restore failed:', error);
+        showToast('恢复失败', 'error');
+    }
+}
+
+async function forceDeleteFromRecycle(id) {
+    showConfirm('永久删除', '⚠️ 确定要永久删除该测试用例吗？此操作不可恢复！', async () => {
+        try {
+            const response = await fetch(`/api/testcases/${id}/force`, { method: 'DELETE' });
+            const data = await response.json();
+            if (data.success) {
+                showToast('测试用例已永久删除', 'success');
+                loadRecycleCases();
+            } else {
+                showToast(data.error || '删除失败', 'error');
+            }
+        } catch (error) {
+            logError('Force delete failed:', error);
+            showToast('删除失败', 'error');
+        }
+    });
+}
+
+async function restoreSelectedFromRecycle() {
+    const checkboxes = document.querySelectorAll('.recycle-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    if (ids.length === 0) {
+        showToast('请先选择要恢复的用例', 'info');
+        return;
+    }
+    let successCount = 0;
+    for (const id of ids) {
+        try {
+            const response = await fetch(`/api/testcases/${id}/restore`, { method: 'POST' });
+            const data = await response.json();
+            if (data.success) successCount++;
+        } catch (e) {
+            logError('Restore failed:', e);
+        }
+    }
+    showToast(`成功恢复 ${successCount} 个测试用例`, 'success');
+    loadRecycleCases();
+    loadTestCases();
+}
+
+async function forceDeleteSelectedFromRecycle() {
+    const checkboxes = document.querySelectorAll('.recycle-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    if (ids.length === 0) {
+        showToast('请先选择要永久删除的用例', 'info');
+        return;
+    }
+    showConfirm('批量永久删除', `⚠️ 确定要永久删除选中的 ${ids.length} 个测试用例吗？此操作不可恢复！`, async () => {
+        let successCount = 0;
+        for (const id of ids) {
+            try {
+                const response = await fetch(`/api/testcases/${id}/force`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) successCount++;
+            } catch (e) {
+                logError('Force delete failed:', e);
+            }
+        }
+        showToast(`成功永久删除 ${successCount} 个测试用例`, 'success');
+        loadRecycleCases();
+    });
+}
+
+function toggleAllRecycle() {
+    const checked = document.getElementById('select-all-recycle').checked;
+    document.querySelectorAll('.recycle-checkbox').forEach(cb => {
+        cb.checked = checked;
+    });
+}
