@@ -11,6 +11,7 @@ import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
 import io.github.panris.agenteval.model.EvalLlmConfig;
 import io.github.panris.agenteval.service.AsyncEvalService;
+import io.github.panris.agenteval.service.EvalDimensionService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.web.Constants;
 import io.github.panris.agenteval.web.dto.ApiResponse;
@@ -48,6 +49,7 @@ public class EvalController {
     private final AsyncEvalService asyncEvalService;
     private final AgentFactory agentFactory;
     private final ExecutorService executorService;
+    private final EvalDimensionService evalDimensionService;
 
     public EvalController(TestCaseRepository testCaseRepository,
                            EvalLlmConfigRepository evalLlmConfigRepository,
@@ -55,6 +57,7 @@ public class EvalController {
                            AsyncEvalService asyncEvalService,
                            ReportService reportService,
                            AgentFactory agentFactory,
+                           EvalDimensionService evalDimensionService,
                            @org.springframework.beans.factory.annotation.Qualifier("evalExecutorService") ExecutorService executorService) {
         this.testCaseRepository = testCaseRepository;
         this.agentConfigRepository = agentConfigRepository;
@@ -62,6 +65,7 @@ public class EvalController {
         this.asyncEvalService = asyncEvalService;
         this.reportService = reportService;
         this.agentFactory = agentFactory;
+        this.evalDimensionService = evalDimensionService;
         this.executorService = executorService;
     }
 
@@ -295,13 +299,24 @@ public class EvalController {
 
         // Build evaluator
         Evaluator.Builder builder = Evaluator.builder();
+        EvalLlmConfig llmConfig = null;
+        
         if (evalConfigId != null && !evalConfigId.isEmpty()) {
-            EvalLlmConfig llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
+            llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
             if (llmConfig != null) {
-                builder.evalLlmConfig(llmConfig);
-                log.info("Using LLM eval config: {}", llmConfig.getName());
+                log.info("Using explicit LLM eval config: {}", llmConfig.getName());
             }
         }
+        
+        if (llmConfig == null && project != null) {
+            llmConfig = evalDimensionService.resolveConfig(project, module, function);
+            log.info("Resolved eval config from dimensions: project={}, module={}, function={}", project, module, function);
+        }
+        
+        if (llmConfig != null) {
+            builder.evalLlmConfig(llmConfig);
+        }
+        
         for (String metric : metrics) {
             builder.metrics(metric);
         }

@@ -400,6 +400,8 @@ async function runEvaluation() {
     document.getElementById('eval-result').style.display = 'none';
     document.getElementById('eval-details').style.display = 'none';
 
+    console.log('Sending evaluation for', caseIds.length, 'cases:', caseIds);
+
     try {
         const response = await fetch('/api/evaluate/cases', {
             method: 'POST',
@@ -422,6 +424,7 @@ async function runEvaluation() {
 
             window.lastEvaluation = data;
             window.lastReportId = data.reportId;
+            await loadHistory();
         }
     } catch (error) {
         logError('Evaluation failed:', error);

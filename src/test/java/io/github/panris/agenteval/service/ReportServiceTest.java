@@ -1,5 +1,7 @@
 package io.github.panris.agenteval.service;
 
+import io.github.panris.agenteval.repository.ReportJpaRepository;
+import io.github.panris.agenteval.repository.SharedReportJpaRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -8,6 +10,7 @@ import java.nio.file.*;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ReportService.
@@ -50,9 +53,10 @@ class ReportServiceTest {
                 }
             }
         } catch (Exception ignored) {}
-        reportService = new ReportService("data");
-
         // Reset the in-memory maps via reflection (ignore already-loaded data from other tests)
+        ReportJpaRepository mockReportJpaRepo = mock(ReportJpaRepository.class);
+        SharedReportJpaRepository mockSharedReportJpaRepo = mock(SharedReportJpaRepository.class);
+        reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
         Field historyField = ReportService.class.getDeclaredField("reportHistory");
         historyField.setAccessible(true);
         @SuppressWarnings("unchecked")

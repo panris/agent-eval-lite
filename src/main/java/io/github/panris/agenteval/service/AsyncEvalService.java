@@ -42,13 +42,15 @@ public class AsyncEvalService {
 
     private final EvalLlmConfigRepository evalLlmConfigRepository;
     private final io.github.panris.agenteval.repository.AgentConfigRepository agentConfigRepository;
+    private final EvalDimensionService evalDimensionService;
 
     public AsyncEvalService(ReportService reportService, TestCaseRepository testCaseRepository, ObjectMapper objectMapper,
                             @Qualifier("evalTaskExecutor") Executor evalTaskExecutor,
                             @Qualifier("evalExecutorService") ExecutorService evalExecutorService,
                             AgentFactory agentFactory,
                             EvalLlmConfigRepository evalLlmConfigRepository,
-                            io.github.panris.agenteval.repository.AgentConfigRepository agentConfigRepository) {
+                            io.github.panris.agenteval.repository.AgentConfigRepository agentConfigRepository,
+                            EvalDimensionService evalDimensionService) {
         this.reportService = reportService;
         this.testCaseRepository = testCaseRepository;
         this.objectMapper = objectMapper;
@@ -57,6 +59,7 @@ public class AsyncEvalService {
         this.agentFactory = agentFactory;
         this.evalLlmConfigRepository = evalLlmConfigRepository;
         this.agentConfigRepository = agentConfigRepository;
+        this.evalDimensionService = evalDimensionService;
     }
 
     public static class TaskStatus {
@@ -139,12 +142,22 @@ public class AsyncEvalService {
                 Agent agent = buildAgent(agentType, agentConfigId);
 
                 Evaluator.Builder builder = Evaluator.builder();
+                EvalLlmConfig llmConfig = null;
+                
                 if (evalConfigId != null && !evalConfigId.isEmpty()) {
-                    EvalLlmConfig llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
+                    llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
                     if (llmConfig != null) {
                         builder.evalLlmConfig(llmConfig);
                     }
                 }
+                
+                if (llmConfig == null && project != null) {
+                    llmConfig = evalDimensionService.resolveConfig(project, module, function);
+                    if (llmConfig != null) {
+                        builder.evalLlmConfig(llmConfig);
+                    }
+                }
+                
                 for (String metric : metrics) {
                     builder.metrics(metric);
                 }

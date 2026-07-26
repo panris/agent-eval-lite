@@ -3,8 +3,11 @@ package io.github.panris.agenteval.web.controller;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
+import io.github.panris.agenteval.repository.EvalModelRepository;
+import io.github.panris.agenteval.repository.EvalDimensionConfigRepository;
 import io.github.panris.agenteval.service.AsyncEvalService;
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.service.EvalDimensionService;
 import io.github.panris.agenteval.agent.AgentFactory;
 import org.junit.jupiter.api.*;
 import org.springframework.ui.Model;
@@ -42,9 +45,12 @@ class EvalControllerTest {
         mockAgentConfigRepository = mock(AgentConfigRepository.class);
         EvalLlmConfigRepository mockLlmRepo = mock(EvalLlmConfigRepository.class);
         ExecutorService mockExecutor = Executors.newSingleThreadExecutor();
+        EvalModelRepository mockEvalModelRepo = mock(EvalModelRepository.class);
+        EvalDimensionConfigRepository mockEvalDimensionConfigRepo = mock(EvalDimensionConfigRepository.class);
+        EvalDimensionService evalDimensionService = new EvalDimensionService(mockEvalDimensionConfigRepo, mockEvalModelRepo);
         controller = new EvalController(
                 mockTestCaseRepository, mockLlmRepo, mockAgentConfigRepository, mockAsyncEvalService,
-                mockReportService, mockAgentFactory, mockExecutor);
+                mockReportService, mockAgentFactory, evalDimensionService, mockExecutor);
     }
 
     // ============ Page routes ============

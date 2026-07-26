@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>评测配置管理 - agent-eval-lite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<nav class="bg-white shadow-sm border-b">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex gap-6 text-sm">
+    <a href="/" class="text-gray-600 hover:text-blue-600">首页</a>
+    <a href="/manage" class="text-gray-600 hover:text-blue-600">用例管理</a>
+    <a href="/agents" class="text-gray-600 hover:text-blue-600">Agent配置</a>
+    <a href="/eval-llm-config" class="text-gray-600 hover:text-blue-600">评测模型(旧)</a>
+    <a href="/eval-config" class="text-blue-600 font-semibold border-b-2 border-blue-600 pb-3">评测配置(新)</a>
+  </div>
+</nav>
+
+<div class="max-w-7xl mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-6">评测配置管理</h1>
+  <p class="text-gray-500 mb-6 text-sm">管理评测LLM模型和按维度配置评测参数，配置优先级：功能 &gt; 模块 &gt; 项目 &gt; 全局</p>
+
+  <div class="grid grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <span class="w-2 h-2 bg-blue-500 rounded-full"></span> 模型管理
+      </h2>
+      <p class="text-gray-500 text-xs mb-4">统一维护可用的LLM评测模型</p>
+      
+      <div class="mb-4">
+        <button onclick="showModelModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">+ 新增模型</button>
+      </div>
+      
+      <div id="modelList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <span class="w-2 h-2 bg-green-500 rounded-full"></span> 维度配置
+      </h2>
+      <p class="text-gray-500 text-xs mb-4">按全局/项目/模块/功能配置评测参数</p>
+      
+      <div class="mb-4">
+        <button onclick="showDimensionModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">+ 新增配置</button>
+      </div>
+      
+      <div id="dimensionList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modelModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <h3 class="text-lg font-semibold mb-4" id="modelModalTitle">新增模型</h3>
+    <input type="hidden" id="modelId">
+    
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium mb-1">名称 *</label>
+        <input id="modelName" class="w-full border rounded px-3 py-2" placeholder="如: DashScope Qwen">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">提供商</label>
+        <select id="modelProvider" class="w-full border rounded px-3 py-2">
+          <option value="openai">OpenAI</option>
+          <option value="dashscope">DashScope</option>
+          <option value="claude">Claude</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Base URL *</label>
+        <input id="modelBaseUrl" class="w-full border rounded px-3 py-2" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">API Key *</label>
+        <input id="modelApiKey" type="password" class="w-full border rounded px-3 py-2">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-1">Temperature</label>
+          <input id="modelTemperature" type="number" step="0.05" value="0.1" class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Max Tokens</label>
+          <input id="modelMaxTokens" type="number" value="256" class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">超时(ms)</label>
+          <input id="modelTimeout" type="number" value="30000" class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">设为默认</label>
+          <input id="modelIsDefault" type="checkbox" class="mt-2">
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">描述</label>
+        <textarea id="modelDescription" class="w-full border rounded px-3 py-2" rows="2" placeholder="模型描述"></textarea>
+      </div>
+    </div>
+    
+    <div class="mt-6 flex gap-2">
+      <button onclick="saveModel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+      <button onclick="closeModelModal()" class="border px-4 py-2 rounded hover:bg-gray-50">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="dimensionModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+    <h3 class="text-lg font-semibold mb-4" id="dimensionModalTitle">新增维度配置</h3>
+    <input type="hidden" id="dimensionId">
+    
+    <div class="space-y-3">
+      <div>
+        <label class="block text-sm font-medium mb-1">配置级别 *</label>
+        <select id="dimensionLevel" class="w-full border rounded px-3 py-2" onchange="updateDimensionFields()">
+          <option value="GLOBAL">全局（默认）</option>
+          <option value="PROJECT">项目</option>
+          <option value="MODULE">模块</option>
+          <option value="FUNCTION">功能（最小粒度）</option>
+        </select>
+      </div>
+      
+      <div id="dimensionProjectField" class="hidden">
+        <label class="block text-sm font-medium mb-1">项目 *</label>
+        <input id="dimensionProject" class="w-full border rounded px-3 py-2" placeholder="项目名称">
+      </div>
+      
+      <div id="dimensionModuleField" class="hidden">
+        <label class="block text-sm font-medium mb-1">模块 *</label>
+        <input id="dimensionModule" class="w-full border rounded px-3 py-2" placeholder="模块名称">
+      </div>
+      
+      <div id="dimensionFunctionField" class="hidden">
+        <label class="block text-sm font-medium mb-1">功能 *</label>
+        <input id="dimensionFunction" class="w-full border rounded px-3 py-2" placeholder="功能名称">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-1">评测模型</label>
+        <select id="dimensionModelId" class="w-full border rounded px-3 py-2">
+          <option value="">使用默认模型</option>
+        </select>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-1">评测提示词</label>
+        <textarea id="dimensionSystemPrompt" class="w-full border rounded px-3 py-2" rows="4" placeholder="自定义评测提示词，留空使用默认"></textarea>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-1">通过阈值 <span id="dimThreshVal" class="text-gray-400">0.7</span></label>
+        <input id="dimensionPassThreshold" type="range" min="0" max="1" step="0.05" value="0.7" class="w-full" oninput="document.getElementById('dimThreshVal').textContent=this.value">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium mb-1">描述</label>
+        <input id="dimensionDescription" class="w-full border rounded px-3 py-2" placeholder="配置描述">
+      </div>
+    </div>
+    
+    <div class="mt-6 flex gap-2">
+      <button onclick="saveDimension()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">保存</button>
+      <button onclick="closeDimensionModal()" class="border px-4 py-2 rounded hover:bg-gray-50">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var MODEL_API = '/api/eval-config/models';
+var DIMENSION_API = '/api/eval-config/dimensions';
+
+async function loadAll() {
+  await loadModels();
+  await loadDimensions();
+}
+
+async function loadModels() {
+  var res = await fetch(MODEL_API).then(function(r){return r.json();});
+  var html = '';
+  res.forEach(function(m) {
+    var defaultBadge = m.isDefault ? '<span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded ml-2">默认</span>' : '';
+    html += '<div class="border rounded p-3"><div class="flex justify-between items-start"><div><span class="font-medium">' + esc(m.name) + '</span>' + defaultBadge + '<div class="text-xs text-gray-400 mt-1">' + esc(m.provider) + ' | ' + esc(m.baseUrl) + '</div></div><div class="flex gap-1"><button onclick="editModel(' + JSON.stringify(m).replace(/'/g,"&#39;") + ')" class="text-blue-600 text-xs hover:underline">编辑</button><button onclick="delModel(\'' + m.id + '\')" class="text-red-500 text-xs hover:underline ml-2">删除</button></div></div></div>';
+  });
+  document.getElementById('modelList').innerHTML = html || '<p class="text-gray-400 text-sm">暂无模型，请先添加</p>';
+}
+
+async function loadDimensions() {
+  var res = await fetch(DIMENSION_API).then(function(r){return r.json();});
+  var html = '';
+  res.forEach(function(d) {
+    var levelLabel = {GLOBAL:'全局', PROJECT:'项目', MODULE:'模块', FUNCTION:'功能'}[d.level];
+    var levelColor = {GLOBAL:'bg-gray-100 text-gray-600', PROJECT:'bg-blue-100 text-blue-600', MODULE:'bg-yellow-100 text-yellow-600', FUNCTION:'bg-green-100 text-green-600'}[d.level];
+    var path = [];
+    if (d.project) path.push(d.project);
+    if (d.module) path.push(d.module);
+    if (d.function) path.push(d.function);
+    html += '<div class="border rounded p-3"><div class="flex justify-between items-start"><div><span class="text-xs ' + levelColor + ' px-2 py-0.5 rounded mr-2">' + levelLabel + '</span><span class="font-medium">' + (path.length > 0 ? path.join('/') : '默认配置') + '</span><div class="text-xs text-gray-400 mt-1">阈值:' + d.passThreshold + (d.systemPrompt ? ' | 自定义提示词' : '') + '</div></div><div class="flex gap-1"><button onclick="editDimension(' + JSON.stringify(d).replace(/'/g,"&#39;") + ')" class="text-blue-600 text-xs hover:underline">编辑</button><button onclick="delDimension(\'' + d.id + '\')" class="text-red-500 text-xs hover:underline ml-2">删除</button></div></div></div>';
+  });
+  document.getElementById('dimensionList').innerHTML = html || '<p class="text-gray-400 text-sm">暂无维度配置</p>';
+}
+
+function showModelModal() {
+  document.getElementById('modelModalTitle').textContent = '新增模型';
+  document.getElementById('modelId').value = '';
+  document.getElementById('modelName').value = '';
+  document.getElementById('modelProvider').value = 'openai';
+  document.getElementById('modelBaseUrl').value = '';
+  document.getElementById('modelApiKey').value = '';
+  document.getElementById('modelTemperature').value = '0.1';
+  document.getElementById('modelMaxTokens').value = '256';
+  document.getElementById('modelTimeout').value = '30000';
+  document.getElementById('modelIsDefault').checked = false;
+  document.getElementById('modelDescription').value = '';
+  document.getElementById('modelModal').classList.remove('hidden');
+}
+
+function closeModelModal() {
+  document.getElementById('modelModal').classList.add('hidden');
+}
+
+function editModel(m) {
+  document.getElementById('modelModalTitle').textContent = '编辑模型: ' + m.name;
+  document.getElementById('modelId').value = m.id;
+  document.getElementById('modelName').value = m.name || '';
+  document.getElementById('modelProvider').value = m.provider || 'openai';
+  document.getElementById('modelBaseUrl').value = m.baseUrl || '';
+  document.getElementById('modelApiKey').value = m.apiKey || '';
+  document.getElementById('modelTemperature').value = m.temperature || '0.1';
+  document.getElementById('modelMaxTokens').value = m.maxTokens || '256';
+  document.getElementById('modelTimeout').value = m.timeout || '30000';
+  document.getElementById('modelIsDefault').checked = m.isDefault || false;
+  document.getElementById('modelDescription').value = m.description || '';
+  document.getElementById('modelModal').classList.remove('hidden');
+}
+
+async function saveModel() {
+  var data = {
+    name: document.getElementById('modelName').value,
+    provider: document.getElementById('modelProvider').value,
+    baseUrl: document.getElementById('modelBaseUrl').value,
+    apiKey: document.getElementById('modelApiKey').value,
+    temperature: parseFloat(document.getElementById('modelTemperature').value),
+    maxTokens: parseInt(document.getElementById('modelMaxTokens').value),
+    timeout: parseInt(document.getElementById('modelTimeout').value),
+    isDefault: document.getElementById('modelIsDefault').checked,
+    description: document.getElementById('modelDescription').value
+  };
+  
+  if (!data.name || !data.baseUrl || !data.apiKey) {
+    alert('请填写必填字段');
+    return;
+  }
+  
+  var id = document.getElementById('modelId').value;
+  var url = id ? MODEL_API + '/' + id : MODEL_API;
+  var r = await fetch(url, {
+    method: id ? 'PUT' : 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  
+  if (r.ok) {
+    closeModelModal();
+    await loadAll();
+  } else {
+    var j = await r.json();
+    alert('错误: ' + (j.error || '保存失败'));
+  }
+}
+
+async function delModel(id) {
+  if (!confirm('确认删除该模型?')) return;
+  await fetch(MODEL_API + '/' + id, {method: 'DELETE'});
+  await loadAll();
+}
+
+function showDimensionModal() {
+  document.getElementById('dimensionModalTitle').textContent = '新增维度配置';
+  document.getElementById('dimensionId').value = '';
+  document.getElementById('dimensionLevel').value = 'GLOBAL';
+  document.getElementById('dimensionProject').value = '';
+  document.getElementById('dimensionModule').value = '';
+  document.getElementById('dimensionFunction').value = '';
+  document.getElementById('dimensionSystemPrompt').value = '';
+  document.getElementById('dimensionPassThreshold').value = '0.7';
+  document.getElementById('dimThreshVal').textContent = '0.7';
+  document.getElementById('dimensionDescription').value = '';
+  updateDimensionFields();
+  loadModelOptions().then(function() {
+    document.getElementById('dimensionModal').classList.remove('hidden');
+  });
+}
+
+function closeDimensionModal() {
+  document.getElementById('dimensionModal').classList.add('hidden');
+}
+
+function updateDimensionFields() {
+  var level = document.getElementById('dimensionLevel').value;
+  document.getElementById('dimensionProjectField').classList.toggle('hidden', level === 'GLOBAL');
+  document.getElementById('dimensionModuleField').classList.toggle('hidden', level !== 'MODULE' && level !== 'FUNCTION');
+  document.getElementById('dimensionFunctionField').classList.toggle('hidden', level !== 'FUNCTION');
+}
+
+async function loadModelOptions() {
+  var res = await fetch(MODEL_API).then(function(r){return r.json();});
+  var select = document.getElementById('dimensionModelId');
+  select.innerHTML = '<option value="">使用默认模型</option>';
+  res.forEach(function(m) {
+    var defaultLabel = m.isDefault ? ' (默认)' : '';
+    select.innerHTML += '<option value="' + m.id + '">' + esc(m.name) + defaultLabel + '</option>';
+  });
+}
+
+function editDimension(d) {
+  document.getElementById('dimensionModalTitle').textContent = '编辑维度配置';
+  document.getElementById('dimensionId').value = d.id;
+  document.getElementById('dimensionLevel').value = d.level;
+  document.getElementById('dimensionProject').value = d.project || '';
+  document.getElementById('dimensionModule').value = d.module || '';
+  document.getElementById('dimensionFunction').value = d.function || '';
+  document.getElementById('dimensionSystemPrompt').value = d.systemPrompt || '';
+  document.getElementById('dimensionPassThreshold').value = d.passThreshold || '0.7';
+  document.getElementById('dimThreshVal').textContent = d.passThreshold || '0.7';
+  document.getElementById('dimensionDescription').value = d.description || '';
+  updateDimensionFields();
+  loadModelOptions().then(function() {
+    document.getElementById('dimensionModelId').value = d.modelId || '';
+    document.getElementById('dimensionModal').classList.remove('hidden');
+  });
+}
+
+async function saveDimension() {
+  var level = document.getElementById('dimensionLevel').value;
+  var project = document.getElementById('dimensionProject').value;
+  var module = document.getElementById('dimensionModule').value;
+  var functionName = document.getElementById('dimensionFunction').value;
+  
+  if (level === 'PROJECT' && !project) {
+    alert('项目维度必须指定项目');
+    return;
+  }
+  if (level === 'MODULE' && (!project || !module)) {
+    alert('模块维度必须指定项目和模块');
+    return;
+  }
+  if (level === 'FUNCTION' && (!project || !module || !functionName)) {
+    alert('功能维度必须指定项目、模块和功能');
+    return;
+  }
+  
+  var data = {
+    level: level,
+    project: level === 'GLOBAL' ? null : project,
+    module: level === 'GLOBAL' || level === 'PROJECT' ? null : module,
+    function: level === 'FUNCTION' ? functionName : null,
+    modelId: document.getElementById('dimensionModelId').value || null,
+    systemPrompt: document.getElementById('dimensionSystemPrompt').value || null,
+    passThreshold: parseFloat(document.getElementById('dimensionPassThreshold').value),
+    description: document.getElementById('dimensionDescription').value
+  };
+  
+  var id = document.getElementById('dimensionId').value;
+  var url = id ? DIMENSION_API + '/' + id : DIMENSION_API;
+  var r = await fetch(url, {
+    method: id ? 'PUT' : 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  
+  if (r.ok) {
+    closeDimensionModal();
+    await loadAll();
+  } else {
+    var j = await r.json();
+    alert('错误: ' + (j.error || '保存失败'));
+  }
+}
+
+async function delDimension(id) {
+  if (!confirm('确认删除该维度配置?')) return;
+  await fetch(DIMENSION_API + '/' + id, {method: 'DELETE'});
+  await loadAll();
+}
+
+function esc(s) { return s ? s.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
+loadAll();
+</script>
+</body>
+</html>

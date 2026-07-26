@@ -5,6 +5,10 @@ import io.github.panris.agenteval.Agent;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
+import io.github.panris.agenteval.repository.EvalModelRepository;
+import io.github.panris.agenteval.repository.EvalDimensionConfigRepository;
+import io.github.panris.agenteval.repository.ReportJpaRepository;
+import io.github.panris.agenteval.repository.SharedReportJpaRepository;
 import io.github.panris.agenteval.agent.AgentFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,14 +41,19 @@ class AsyncEvalServiceTest {
 
         objectMapper = new ObjectMapper();
         mockRepo = mock(TestCaseRepository.class);
-        reportService = new ReportService(tempDir.toString());
+        ReportJpaRepository mockReportJpaRepo = mock(ReportJpaRepository.class);
+        SharedReportJpaRepository mockSharedReportJpaRepo = mock(SharedReportJpaRepository.class);
+        reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
         Executor executor = Executors.newSingleThreadExecutor();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         mockAgentFactory = mock(AgentFactory.class);
         EvalLlmConfigRepository mockLlmRepo = mock(EvalLlmConfigRepository.class);
         AgentConfigRepository mockAgentConfigRepo = mock(AgentConfigRepository.class);
+        EvalModelRepository mockEvalModelRepo = mock(EvalModelRepository.class);
+        EvalDimensionConfigRepository mockEvalDimensionConfigRepo = mock(EvalDimensionConfigRepository.class);
+        EvalDimensionService evalDimensionService = new EvalDimensionService(mockEvalDimensionConfigRepo, mockEvalModelRepo);
 
-        service = new AsyncEvalService(reportService, mockRepo, objectMapper, executor, executorService, mockAgentFactory, mockLlmRepo, mockAgentConfigRepo);
+        service = new AsyncEvalService(reportService, mockRepo, objectMapper, executor, executorService, mockAgentFactory, mockLlmRepo, mockAgentConfigRepo, evalDimensionService);
     }
 
     @AfterEach
@@ -156,7 +165,10 @@ class AsyncEvalServiceTest {
         Executor singleTaskExec = Executors.newSingleThreadExecutor();
         EvalLlmConfigRepository mockLlmRepo2 = mock(EvalLlmConfigRepository.class);
         AgentConfigRepository mockAgentConfigRepo2 = mock(AgentConfigRepository.class);
-        var timeoutService = new AsyncEvalService(reportService, mockRepo, objectMapper, singleTaskExec, singleExec, mockAgentFactory, mockLlmRepo2, mockAgentConfigRepo2);
+        EvalModelRepository mockEvalModelRepo2 = mock(EvalModelRepository.class);
+        EvalDimensionConfigRepository mockEvalDimensionConfigRepo2 = mock(EvalDimensionConfigRepository.class);
+        EvalDimensionService evalDimensionService2 = new EvalDimensionService(mockEvalDimensionConfigRepo2, mockEvalModelRepo2);
+        var timeoutService = new AsyncEvalService(reportService, mockRepo, objectMapper, singleTaskExec, singleExec, mockAgentFactory, mockLlmRepo2, mockAgentConfigRepo2, evalDimensionService2);
 
         String slowTaskId = timeoutService.submitTask(List.of(new TestCase("2+2", "4")), metrics, "demo", 0, null, null, null, null);
 
