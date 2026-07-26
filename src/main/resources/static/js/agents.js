@@ -177,6 +177,7 @@ const TYPE_META = {
     claude: { label: 'Claude',  cls: 'type-claude', icon: '🟠' },
     http:   { label: 'HTTP',    cls: 'type-http',   icon: '🟣' },
     custom: { label: '自定义',  cls: 'type-custom', icon: '⚪' },
+    intent: { label: '意图服务', cls: 'type-intent', icon: '🚗' },
 };
 
 function renderCard(a) {
@@ -291,6 +292,7 @@ async function openTemplateModal() {
                 claude: '支持 Claude 3 系列模型，Anthropic API',
                 http: '简单的 input→output HTTP 接口，适合自定义后端',
                 custom: '完全自定义请求和响应格式，支持 JSONPath 映射',
+                intent: '车控路由接口，支持意图识别与车辆控制，格式：{"user_id":"...","query":"...","history":[]}',
             };
             list.innerHTML = res.templates.map(t => `
                 <div class="template-item" onclick="selectTemplate('${t.type}')">

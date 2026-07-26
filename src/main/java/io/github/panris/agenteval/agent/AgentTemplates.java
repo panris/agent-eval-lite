@@ -20,7 +20,8 @@ public class AgentTemplates {
                 createOpenAITemplate(),
                 createClaudeTemplate(),
                 createCustomHTTPTemplate(),
-                createSimpleHTTPPTemplate()
+                createSimpleHTTPPTemplate(),
+                createIntentServiceTemplate()
         );
     }
 
@@ -193,7 +194,49 @@ public class AgentTemplates {
             case "claude" -> createClaudeTemplate();
             case "custom" -> createCustomHTTPTemplate();
             case "http" -> createSimpleHTTPPTemplate();
+            case "intent" -> createIntentServiceTemplate();
             default -> createCustomHTTPTemplate();
         };
+    }
+
+    /**
+     * Intent Service template (车控路由).
+     * Compatible with vehicle control route API:
+     * POST /api/v2/vehicle-control/route
+     * { "user_id": "...", "query": "...", "history": [] }
+     */
+    public static AgentConfig createIntentServiceTemplate() {
+        AgentConfig config = new AgentConfig();
+        config.setName("意图服务 API");
+        config.setType("custom");
+        config.setDescription("车控路由接口，支持意图识别与车辆控制");
+        config.setEndpoint("http://localhost:9090/api/v2/vehicle-control/route");
+        config.setTimeout(30000);
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        config.setHeaders(headers);
+
+        AgentConfig.RequestMapping requestMapping = new AgentConfig.RequestMapping();
+        requestMapping.setTemplate("{\"user_id\":\"${userId}\",\"query\":\"${input}\",\"history\":[]}");
+        requestMapping.setInputField("query");
+
+        Map<String, Object> staticFields = new HashMap<>();
+        staticFields.put("userId", "test_user");
+        staticFields.put("history", List.of());
+        requestMapping.setStaticFields(staticFields);
+        config.setRequestMapping(requestMapping);
+
+        AgentConfig.ResponseMapping responseMapping = new AgentConfig.ResponseMapping();
+        responseMapping.setOutputPath("result");
+        responseMapping.setErrorPath("error");
+        responseMapping.setErrorMessagePath("error.message");
+        config.setResponseMapping(responseMapping);
+
+        Map<String, Object> typeConfig = new HashMap<>();
+        typeConfig.put("userId", "test_user");
+        config.setConfig(typeConfig);
+
+        return config;
     }
 }
