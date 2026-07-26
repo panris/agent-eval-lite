@@ -126,20 +126,23 @@
       
       <div id="dimensionProjectField" class="hidden">
         <label class="block text-sm font-medium mb-1">项目 *</label>
-        <input id="dimensionProject" class="w-full border rounded px-3 py-2" placeholder="项目名称" list="project-options">
-        <datalist id="project-options"></datalist>
+        <select id="dimensionProject" class="w-full border rounded px-3 py-2">
+          <option value="">请选择或输入项目</option>
+        </select>
       </div>
       
       <div id="dimensionModuleField" class="hidden">
         <label class="block text-sm font-medium mb-1">模块 *</label>
-        <input id="dimensionModule" class="w-full border rounded px-3 py-2" placeholder="模块名称" list="module-options">
-        <datalist id="module-options"></datalist>
+        <select id="dimensionModule" class="w-full border rounded px-3 py-2">
+          <option value="">请选择或输入模块</option>
+        </select>
       </div>
       
       <div id="dimensionFunctionField" class="hidden">
         <label class="block text-sm font-medium mb-1">功能 *</label>
-        <input id="dimensionFunction" class="w-full border rounded px-3 py-2" placeholder="功能名称" list="function-options">
-        <datalist id="function-options"></datalist>
+        <select id="dimensionFunction" class="w-full border rounded px-3 py-2">
+          <option value="">请选择或输入功能</option>
+        </select>
       </div>
       
       <div>
@@ -332,17 +335,19 @@ async function loadDimensionOptions() {
   var modules = res.modules || [];
   var functions = res.functions || [];
   
-  fillDatalist('project-options', projects);
-  fillDatalist('module-options', modules);
-  fillDatalist('function-options', functions);
+  fillSelect('dimensionProject', projects, '请选择或输入项目');
+  fillSelect('dimensionModule', modules, '请选择或输入模块');
+  fillSelect('dimensionFunction', functions, '请选择或输入功能');
 }
 
-function fillDatalist(id, options) {
-  var list = document.getElementById(id);
-  list.innerHTML = '';
+function fillSelect(id, options, placeholder) {
+  var select = document.getElementById(id);
+  if (!select) return;
+  select.innerHTML = '<option value="">' + placeholder + '</option>';
   options.forEach(function(opt) {
-    list.innerHTML += '<option value="' + esc(opt) + '">';
+    select.innerHTML += '<option value="' + esc(opt) + '">' + esc(opt) + '</option>';
   });
+  select.setAttribute('style', 'width: 100%;');
 }
 
 function editDimension(d) {
