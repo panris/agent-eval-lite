@@ -109,7 +109,7 @@ public class AgentConfigController {
         ));
     }
 
-    private static final Set<String> VALID_TEMPLATE_TYPES = Set.of("openai", "claude", "custom", "http");
+    private static final Set<String> VALID_TEMPLATE_TYPES = Set.of("openai", "claude", "custom", "http", "intent");
 
     @PostMapping("/from-template/{type}")
     @Operation(summary = "从模板创建 Agent 配置", description = "基于预设模板创建新的 Agent 配置")

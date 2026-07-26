@@ -146,8 +146,9 @@ public class ConfigurableHttpAgent implements Agent {
     private String parseResponse(String responseBody) {
         AgentConfig.ResponseMapping responseMapping = config.getResponseMapping();
         if (responseMapping == null) {
-            // Default format: {"output": "..."}
-            return JsonPathUtils.extract(responseBody, "output");
+            // No mapping configured, return entire response
+            logger.debug("No response mapping configured, returning entire response");
+            return responseBody;
         }
 
         // Check for error
@@ -162,14 +163,14 @@ public class ConfigurableHttpAgent implements Agent {
             }
         }
 
-        // Extract output
-        if (responseMapping.getOutputPath() != null) {
+        // Extract output if outputPath is configured
+        if (responseMapping.getOutputPath() != null && !responseMapping.getOutputPath().isEmpty()) {
             String output = JsonPathUtils.extract(responseBody, responseMapping.getOutputPath());
             return output != null ? output : "ERROR: No output found at path " + responseMapping.getOutputPath();
         }
 
         // Fallback: return entire response
-        logger.warn("No output path configured, returning entire response");
+        logger.debug("No output path configured or empty, returning entire response");
         return responseBody;
     }
 
