@@ -324,6 +324,27 @@ async function loadModelOptions() {
   });
 }
 
+async function loadDimensionOptions() {
+  var res = await fetch('/api/testcases/dimensions').then(function(r){return r.json();});
+  if (!res.success) return;
+  
+  var projects = res.projects || [];
+  var modules = res.modules || [];
+  var functions = res.functions || [];
+  
+  fillDatalist('project-options', projects);
+  fillDatalist('module-options', modules);
+  fillDatalist('function-options', functions);
+}
+
+function fillDatalist(id, options) {
+  var list = document.getElementById(id);
+  list.innerHTML = '';
+  options.forEach(function(opt) {
+    list.innerHTML += '<option value="' + esc(opt) + '">';
+  });
+}
+
 function editDimension(d) {
   document.getElementById('dimensionModalTitle').textContent = '编辑维度配置';
   document.getElementById('dimensionId').value = d.id;
@@ -336,7 +357,7 @@ function editDimension(d) {
   document.getElementById('dimThreshVal').textContent = d.passThreshold || '0.7';
   document.getElementById('dimensionDescription').value = d.description || '';
   updateDimensionFields();
-  loadModelOptions().then(function() {
+  Promise.all([loadModelOptions(), loadDimensionOptions()]).then(function() {
     document.getElementById('dimensionModelId').value = d.modelId || '';
     document.getElementById('dimensionModal').classList.remove('hidden');
   });
