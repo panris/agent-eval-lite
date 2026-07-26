@@ -63,7 +63,7 @@ public class AgentFactory {
         logger.info("Creating agent: type={}, config={}", type, config);
 
         return switch (type.toLowerCase()) {
-            case "http", "custom" -> createHttpAgent(config);
+            case "http", "custom", "intent" -> createHttpAgent(config);
             case "openai" -> createOpenAIAgent(config);
             case "claude" -> createClaudeAgent(config);
             case "demo" -> createDemoAgent();
@@ -99,6 +99,7 @@ public class AgentFactory {
         return switch (type.toLowerCase()) {
             case "openai" -> createOpenAIAgentFromConfig(agentConfig);
             case "claude" -> createClaudeAgentFromConfig(agentConfig);
+            case "http", "custom", "intent" -> new ConfigurableHttpAgent(restTemplate, agentConfig);
             default -> new ConfigurableHttpAgent(restTemplate, agentConfig);
         };
     }

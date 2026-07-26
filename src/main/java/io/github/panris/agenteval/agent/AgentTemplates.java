@@ -208,7 +208,7 @@ public class AgentTemplates {
     public static AgentConfig createIntentServiceTemplate() {
         AgentConfig config = new AgentConfig();
         config.setName("意图服务 API");
-        config.setType("custom");
+        config.setType("intent");
         config.setDescription("车控路由接口，支持意图识别与车辆控制");
         config.setEndpoint("http://localhost:9090/api/v2/vehicle-control/route");
         config.setTimeout(30000);
