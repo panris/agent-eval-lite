@@ -126,17 +126,20 @@
       
       <div id="dimensionProjectField" class="hidden">
         <label class="block text-sm font-medium mb-1">项目 *</label>
-        <input id="dimensionProject" class="w-full border rounded px-3 py-2" placeholder="项目名称">
+        <input id="dimensionProject" class="w-full border rounded px-3 py-2" placeholder="项目名称" list="project-options">
+        <datalist id="project-options"></datalist>
       </div>
       
       <div id="dimensionModuleField" class="hidden">
         <label class="block text-sm font-medium mb-1">模块 *</label>
-        <input id="dimensionModule" class="w-full border rounded px-3 py-2" placeholder="模块名称">
+        <input id="dimensionModule" class="w-full border rounded px-3 py-2" placeholder="模块名称" list="module-options">
+        <datalist id="module-options"></datalist>
       </div>
       
       <div id="dimensionFunctionField" class="hidden">
         <label class="block text-sm font-medium mb-1">功能 *</label>
-        <input id="dimensionFunction" class="w-full border rounded px-3 py-2" placeholder="功能名称">
+        <input id="dimensionFunction" class="w-full border rounded px-3 py-2" placeholder="功能名称" list="function-options">
+        <datalist id="function-options"></datalist>
       </div>
       
       <div>
@@ -295,7 +298,7 @@ function showDimensionModal() {
   document.getElementById('dimThreshVal').textContent = '0.7';
   document.getElementById('dimensionDescription').value = '';
   updateDimensionFields();
-  loadModelOptions().then(function() {
+  Promise.all([loadModelOptions(), loadDimensionOptions()]).then(function() {
     document.getElementById('dimensionModal').classList.remove('hidden');
   });
 }
