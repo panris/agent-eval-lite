@@ -135,7 +135,49 @@ public class EvalController {
         if (cr.hasError()) {
             return ApiResponse.error(cr.errorMessage());
         }
-        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), request.getAgentConfig(), request.getAgentConfigId(), request.getEvalConfigId(), null, null, null, null);
+        
+        List<TestCase> testCases = cr.testCases();
+        log.info("Evaluating {} test cases individually", testCases.size());
+        
+        List<Map<String, Object>> results = new ArrayList<>();
+        int totalPassed = 0;
+        int totalFailed = 0;
+        long totalTime = 0;
+        
+        for (TestCase testCase : testCases) {
+            Map<String, Object> result = runEvaluation(
+                List.of(testCase), 
+                request.getMetrics(), 
+                request.getAgentType(), 
+                request.getAgentConfig(), 
+                request.getAgentConfigId(), 
+                request.getEvalConfigId(), 
+                null, 
+                null, 
+                null, 
+                null
+            );
+            
+            if (result.get("success") == Boolean.TRUE) {
+                results.add(result);
+                totalPassed += (Integer) result.getOrDefault("passedTestCases", 0);
+                totalFailed += (Integer) result.getOrDefault("failedTestCases", 0);
+                totalTime += (Long) result.getOrDefault("executionTimeMs", 0L);
+            }
+        }
+        
+        Map<String, Object> finalResult = new LinkedHashMap<>();
+        finalResult.put("success", true);
+        finalResult.put("reportIds", results.stream().map(r -> r.get("reportId")).toList());
+        finalResult.put("totalTestCases", testCases.size());
+        finalResult.put("passedTestCases", totalPassed);
+        finalResult.put("failedTestCases", totalFailed);
+        finalResult.put("executionTimeMs", totalTime);
+        finalResult.put("evaluations", results.stream()
+            .flatMap(r -> ((List<?>) r.get("evaluations")).stream())
+            .toList());
+        
+        return finalResult;
     }
 
     /**

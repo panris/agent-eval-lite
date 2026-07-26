@@ -463,8 +463,10 @@ async function runSelectedEvaluation() {
 
         if (data.success) {
             window.lastEvaluation = data;
-            showToast(`评测完成!通过率: ${data.summary?.pass_rate?.toFixed(1) || 0}%`, 'success');
-            // 先加载历史数据再切换 tab，避免时序竞态
+            const passRate = data.totalTestCases > 0 
+                ? ((data.passedTestCases / data.totalTestCases) * 100).toFixed(1) 
+                : '0';
+            showToast(`评测完成! 通过 ${data.passedTestCases}/${data.totalTestCases} (${passRate}%)`, 'success');
             await loadHistory();
             switchTab('history');
         } else {
