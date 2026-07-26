@@ -274,8 +274,13 @@ async function saveModel() {
 
 async function delModel(id) {
   if (!confirm('确认删除该模型?')) return;
-  await fetch(MODEL_API + '/' + id, {method: 'DELETE'});
-  await loadAll();
+  var r = await fetch(MODEL_API + '/' + id, {method: 'DELETE'});
+  if (r.ok) {
+    await loadAll();
+  } else {
+    var j = await r.json();
+    alert('删除失败: ' + (j.error || '未知错误'));
+  }
 }
 
 function showDimensionModal() {
@@ -383,8 +388,13 @@ async function saveDimension() {
 
 async function delDimension(id) {
   if (!confirm('确认删除该维度配置?')) return;
-  await fetch(DIMENSION_API + '/' + id, {method: 'DELETE'});
-  await loadAll();
+  var r = await fetch(DIMENSION_API + '/' + id, {method: 'DELETE'});
+  if (r.ok) {
+    await loadAll();
+  } else {
+    var j = await r.json();
+    alert('删除失败: ' + (j.error || '未知错误'));
+  }
 }
 
 function esc(s) { return s ? s.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }

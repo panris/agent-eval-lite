@@ -75,13 +75,17 @@ public class EvalConfigController {
                     existing.setTimeout(model.getTimeout());
                     existing.setDescription(model.getDescription());
                     
-                    if (model.getIsDefault() != null && model.getIsDefault() && !existing.getIsDefault()) {
-                        modelRepository.findByIsDefaultTrue().ifPresent(m -> {
-                            m.setIsDefault(false);
-                            m.setUpdatedAt(Instant.now());
-                            modelRepository.save(m);
-                        });
-                        existing.setIsDefault(true);
+                    if (model.getIsDefault() != null) {
+                        if (model.getIsDefault() && !existing.getIsDefault()) {
+                            modelRepository.findByIsDefaultTrue().ifPresent(m -> {
+                                m.setIsDefault(false);
+                                m.setUpdatedAt(Instant.now());
+                                modelRepository.save(m);
+                            });
+                            existing.setIsDefault(true);
+                        } else if (!model.getIsDefault() && existing.getIsDefault()) {
+                            existing.setIsDefault(false);
+                        }
                     }
                     
                     existing.setUpdatedAt(Instant.now());
