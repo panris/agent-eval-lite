@@ -183,7 +183,7 @@ async function loadModels() {
   var html = '';
   res.forEach(function(m) {
     var defaultBadge = m.isDefault ? '<span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded ml-2">默认</span>' : '';
-    html += '<div class="border rounded p-3"><div class="flex justify-between items-start"><div><span class="font-medium">' + esc(m.name) + '</span>' + defaultBadge + '<div class="text-xs text-gray-400 mt-1">' + esc(m.provider) + ' | ' + esc(m.baseUrl) + '</div></div><div class="flex gap-1"><button onclick="editModel(' + JSON.stringify(m).replace(/'/g,"&#39;") + ')" class="text-blue-600 text-xs hover:underline">编辑</button><button onclick="delModel(\'' + m.id + '\')" class="text-red-500 text-xs hover:underline ml-2">删除</button></div></div></div>';
+    html += '<div class="border rounded p-3"><div class="flex justify-between items-start"><div><span class="font-medium">' + esc(m.name) + '</span>' + defaultBadge + '<div class="text-xs text-gray-400 mt-1">' + esc(m.provider) + ' | ' + esc(m.baseUrl) + '</div></div><div class="flex gap-1"><button onclick="editModel(' + JSON.stringify(m).replace(/"/g, '&quot;') + ')" class="text-blue-600 text-xs hover:underline">编辑</button><button onclick="delModel(\'' + m.id + '\')" class="text-red-500 text-xs hover:underline ml-2">删除</button></div></div></div>';
   });
   document.getElementById('modelList').innerHTML = html || '<p class="text-gray-400 text-sm">暂无模型，请先添加</p>';
 }
@@ -198,7 +198,7 @@ async function loadDimensions() {
     if (d.project) path.push(d.project);
     if (d.module) path.push(d.module);
     if (d.function) path.push(d.function);
-    html += '<div class="border rounded p-3"><div class="flex justify-between items-start"><div><span class="text-xs ' + levelColor + ' px-2 py-0.5 rounded mr-2">' + levelLabel + '</span><span class="font-medium">' + (path.length > 0 ? path.join('/') : '默认配置') + '</span><div class="text-xs text-gray-400 mt-1">阈值:' + d.passThreshold + (d.systemPrompt ? ' | 自定义提示词' : '') + '</div></div><div class="flex gap-1"><button onclick="editDimension(' + JSON.stringify(d).replace(/'/g,"&#39;") + ')" class="text-blue-600 text-xs hover:underline">编辑</button><button onclick="delDimension(\'' + d.id + '\')" class="text-red-500 text-xs hover:underline ml-2">删除</button></div></div></div>';
+    html += '<div class="border rounded p-3"><div class="flex justify-between items-start"><div><span class="text-xs ' + levelColor + ' px-2 py-0.5 rounded mr-2">' + levelLabel + '</span><span class="font-medium">' + (path.length > 0 ? path.join('/') : '默认配置') + '</span><div class="text-xs text-gray-400 mt-1">阈值:' + d.passThreshold + (d.systemPrompt ? ' | 自定义提示词' : '') + '</div></div><div class="flex gap-1"><button onclick="editDimension(' + JSON.stringify(d).replace(/"/g, '&quot;') + ')" class="text-blue-600 text-xs hover:underline">编辑</button><button onclick="delDimension(\'' + d.id + '\')" class="text-red-500 text-xs hover:underline ml-2">删除</button></div></div></div>';
   });
   document.getElementById('dimensionList').innerHTML = html || '<p class="text-gray-400 text-sm">暂无维度配置</p>';
 }
