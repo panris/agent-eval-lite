@@ -228,7 +228,7 @@ public class AgentTemplates {
         config.setRequestMapping(requestMapping);
 
         AgentConfig.ResponseMapping responseMapping = new AgentConfig.ResponseMapping();
-        responseMapping.setOutputPath("result");
+        responseMapping.setOutputPath("quick_reply");
         responseMapping.setErrorPath("error");
         responseMapping.setErrorMessagePath("error.message");
         config.setResponseMapping(responseMapping);
