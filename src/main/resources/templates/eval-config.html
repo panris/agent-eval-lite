@@ -126,23 +126,29 @@
       
       <div id="dimensionProjectField" class="hidden">
         <label class="block text-sm font-medium mb-1">项目 *</label>
-        <select id="dimensionProject" class="w-full border rounded px-3 py-2">
+        <select id="dimensionProject" class="w-full border rounded px-3 py-2" onchange="handleCustomSelect(this, 'dimensionProjectCustom')">
           <option value="">请选择或输入项目</option>
+          <option value="_custom_">🔧 输入自定义值...</option>
         </select>
+        <input id="dimensionProjectCustom" class="w-full border rounded px-3 py-2 mt-1 hidden" placeholder="输入自定义项目名称">
       </div>
       
       <div id="dimensionModuleField" class="hidden">
         <label class="block text-sm font-medium mb-1">模块 *</label>
-        <select id="dimensionModule" class="w-full border rounded px-3 py-2">
+        <select id="dimensionModule" class="w-full border rounded px-3 py-2" onchange="handleCustomSelect(this, 'dimensionModuleCustom')">
           <option value="">请选择或输入模块</option>
+          <option value="_custom_">🔧 输入自定义值...</option>
         </select>
+        <input id="dimensionModuleCustom" class="w-full border rounded px-3 py-2 mt-1 hidden" placeholder="输入自定义模块名称">
       </div>
       
       <div id="dimensionFunctionField" class="hidden">
         <label class="block text-sm font-medium mb-1">功能 *</label>
-        <select id="dimensionFunction" class="w-full border rounded px-3 py-2">
+        <select id="dimensionFunction" class="w-full border rounded px-3 py-2" onchange="handleCustomSelect(this, 'dimensionFunctionCustom')">
           <option value="">请选择或输入功能</option>
+          <option value="_custom_">🔧 输入自定义值...</option>
         </select>
+        <input id="dimensionFunctionCustom" class="w-full border rounded px-3 py-2 mt-1 hidden" placeholder="输入自定义功能名称">
       </div>
       
       <div>
@@ -343,11 +349,30 @@ async function loadDimensionOptions() {
 function fillSelect(id, options, placeholder) {
   var select = document.getElementById(id);
   if (!select) return;
-  select.innerHTML = '<option value="">' + placeholder + '</option>';
+  select.innerHTML = '<option value="">' + placeholder + '</option><option value="_custom_">🔧 输入自定义值...</option>';
   options.forEach(function(opt) {
     select.innerHTML += '<option value="' + esc(opt) + '">' + esc(opt) + '</option>';
   });
   select.setAttribute('style', 'width: 100%;');
+}
+
+function handleCustomSelect(select, customInputId) {
+  var customInput = document.getElementById(customInputId);
+  if (select.value === '_custom_') {
+    customInput.classList.remove('hidden');
+    customInput.focus();
+  } else {
+    customInput.classList.add('hidden');
+  }
+}
+
+function getDimensionValue(selectId, customInputId) {
+  var select = document.getElementById(selectId);
+  if (select.value === '_custom_') {
+    var customInput = document.getElementById(customInputId);
+    return customInput.value.trim();
+  }
+  return select.value;
 }
 
 function editDimension(d) {
