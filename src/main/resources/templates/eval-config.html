@@ -379,9 +379,9 @@ function editDimension(d) {
   document.getElementById('dimensionModalTitle').textContent = '编辑维度配置';
   document.getElementById('dimensionId').value = d.id;
   document.getElementById('dimensionLevel').value = d.level;
-  document.getElementById('dimensionProject').value = d.project || '';
-  document.getElementById('dimensionModule').value = d.module || '';
-  document.getElementById('dimensionFunction').value = d.function || '';
+  document.getElementById('dimensionProjectCustom').value = '';
+  document.getElementById('dimensionModuleCustom').value = '';
+  document.getElementById('dimensionFunctionCustom').value = '';
   document.getElementById('dimensionSystemPrompt').value = d.systemPrompt || '';
   document.getElementById('dimensionPassThreshold').value = d.passThreshold || '0.7';
   document.getElementById('dimThreshVal').textContent = d.passThreshold || '0.7';
@@ -389,15 +389,51 @@ function editDimension(d) {
   updateDimensionFields();
   Promise.all([loadModelOptions(), loadDimensionOptions()]).then(function() {
     document.getElementById('dimensionModelId').value = d.modelId || '';
+    if (d.project) {
+      var projectSelect = document.getElementById('dimensionProject');
+      var hasProjectOption = Array.from(projectSelect.options).some(function(o) { return o.value === d.project; });
+      if (hasProjectOption) {
+        projectSelect.value = d.project;
+        document.getElementById('dimensionProjectCustom').classList.add('hidden');
+      } else {
+        projectSelect.value = '_custom_';
+        document.getElementById('dimensionProjectCustom').value = d.project;
+        document.getElementById('dimensionProjectCustom').classList.remove('hidden');
+      }
+    }
+    if (d.module) {
+      var moduleSelect = document.getElementById('dimensionModule');
+      var hasModuleOption = Array.from(moduleSelect.options).some(function(o) { return o.value === d.module; });
+      if (hasModuleOption) {
+        moduleSelect.value = d.module;
+        document.getElementById('dimensionModuleCustom').classList.add('hidden');
+      } else {
+        moduleSelect.value = '_custom_';
+        document.getElementById('dimensionModuleCustom').value = d.module;
+        document.getElementById('dimensionModuleCustom').classList.remove('hidden');
+      }
+    }
+    if (d.function) {
+      var functionSelect = document.getElementById('dimensionFunction');
+      var hasFunctionOption = Array.from(functionSelect.options).some(function(o) { return o.value === d.function; });
+      if (hasFunctionOption) {
+        functionSelect.value = d.function;
+        document.getElementById('dimensionFunctionCustom').classList.add('hidden');
+      } else {
+        functionSelect.value = '_custom_';
+        document.getElementById('dimensionFunctionCustom').value = d.function;
+        document.getElementById('dimensionFunctionCustom').classList.remove('hidden');
+      }
+    }
     document.getElementById('dimensionModal').classList.remove('hidden');
   });
 }
 
 async function saveDimension() {
   var level = document.getElementById('dimensionLevel').value;
-  var project = document.getElementById('dimensionProject').value;
-  var module = document.getElementById('dimensionModule').value;
-  var functionName = document.getElementById('dimensionFunction').value;
+  var project = getDimensionValue('dimensionProject', 'dimensionProjectCustom');
+  var module = getDimensionValue('dimensionModule', 'dimensionModuleCustom');
+  var functionName = getDimensionValue('dimensionFunction', 'dimensionFunctionCustom');
   
   if (level === 'PROJECT' && !project) {
     alert('项目维度必须指定项目');
