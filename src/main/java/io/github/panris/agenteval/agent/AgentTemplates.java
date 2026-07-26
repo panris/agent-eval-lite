@@ -228,9 +228,10 @@ public class AgentTemplates {
         config.setRequestMapping(requestMapping);
 
         AgentConfig.ResponseMapping responseMapping = new AgentConfig.ResponseMapping();
-        responseMapping.setOutputPath("quick_reply");
-        responseMapping.setErrorPath("error");
-        responseMapping.setErrorMessagePath("error.message");
+        // 不设置 outputPath，返回完整响应体，由评测提示词处理提取逻辑
+        responseMapping.setOutputPath(null);
+        responseMapping.setErrorPath(null);
+        responseMapping.setErrorMessagePath(null);
         config.setResponseMapping(responseMapping);
 
         Map<String, Object> typeConfig = new HashMap<>();
