@@ -40,8 +40,8 @@ public class LlmScorer implements EvaluationScorer {
         if (exp == null || act == null) return ScorerResult.failed("缺少期望/实际输出");
 
         try {
-            String prompt = String.format("期望输出:\n%s\n\n实际输出:\n%s\n\n请评分并返回JSON。",
-                truncate(exp, 2000), truncate(act, 2000));
+            String prompt = String.format("用户输入:\n%s\n\n期望输出:\n%s\n\n实际输出:\n%s\n\n请评分并返回JSON。",
+                truncate(tc.getInput(), 1000), truncate(exp, 2000), truncate(act, 2000));
 
             String systemPrompt = config.getSystemPrompt();
             if (systemPrompt == null || systemPrompt.isBlank()) {
@@ -102,8 +102,26 @@ public class LlmScorer implements EvaluationScorer {
 
     private String extractJson(String s) {
         if (s == null) return "{}";
-        int a = s.indexOf('{'), b = s.lastIndexOf('}');
-        return a >= 0 && b > a ? s.substring(a, b + 1) : s.trim();
+        String cleaned = s.trim();
+        cleaned = cleaned.replaceAll("^```json\\s*", "").replaceAll("\\s*```$", "");
+        cleaned = cleaned.replaceAll("^```\\s*", "").replaceAll("\\s*```$", "");
+        
+        int a = cleaned.indexOf('{'), b = cleaned.lastIndexOf('}');
+        if (a >= 0 && b > a) {
+            String jsonPart = cleaned.substring(a, b + 1);
+            return validateJson(jsonPart) ? jsonPart : "{}";
+        }
+        
+        return validateJson(cleaned) ? cleaned : "{}";
+    }
+    
+    private boolean validateJson(String s) {
+        try {
+            mapper.readValue(s, Map.class);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
     private String truncate(String s, int n) {
         return s == null ? "" : s.length() <= n ? s : s.substring(0, n) + "...";

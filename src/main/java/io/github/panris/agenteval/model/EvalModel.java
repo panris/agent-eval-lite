@@ -36,6 +36,9 @@ public class EvalModel {
     @Column(length = 500)
     private String description;
 
+    @Column(name = "model_name", length = 100)
+    private String modelName;
+
     @Column(nullable = false)
     private Boolean isDefault = false;
 
@@ -69,6 +72,8 @@ public class EvalModel {
     public void setTimeout(int timeout) { this.timeout = timeout; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getModelName() { return modelName; }
+    public void setModelName(String modelName) { this.modelName = modelName; }
     public Boolean getIsDefault() { return isDefault; }
     public void setIsDefault(Boolean isDefault) { this.isDefault = isDefault; }
     public Instant getCreatedAt() { return createdAt; }

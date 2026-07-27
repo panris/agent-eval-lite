@@ -1,3 +1,6 @@
+let _asyncPollTimer = null;
+let _asyncCompletedNotified = new Set();
+
 function ensureGroups() {
 }
 

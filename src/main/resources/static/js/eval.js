@@ -487,25 +487,34 @@ function showEvalDetails() {
         return;
     }
 
-    // Render charts
     renderCharts(window.lastEvaluation.evaluations);
     renderReportMeta(window.lastEvaluation);
 
     const evaluations = window.lastEvaluation.evaluations;
     tbody.innerHTML = evaluations.map(ev => {
         const testCase = (window._testCases || []).find(tc => tc.id === ev.testCaseId) || {};
-        const _name = utils.escapeHtml(testCase.name || ev.testCaseId || '');
+        const _name = utils.escapeHtml(testCase.name || ev.testCaseName || ev.testCaseId || '');
         const _input = utils.escapeHtml(testCase.input || ev.testCaseInput || '');
-        const _expected = utils.escapeHtml(testCase.expected || '');
+        const _expected = utils.escapeHtml(testCase.expected || ev.testCaseExpected || '');
+        const _actual = utils.escapeHtml(ev.output || '');
         const scorerNames = Object.keys(ev.scorerResults || {}).join(', ');
         const scorerScores = Object.values(ev.scorerResults || {}).map(sr => sr.score.toFixed(2)).join(', ');
+        
+        let rationaleHtml = '';
+        for (const [key, sr] of Object.entries(ev.scorerResults || {})) {
+            const reason = utils.escapeHtml(sr.rationale || '');
+            if (reason) {
+                rationaleHtml += `<div style="font-size:12px;color:#666;margin-top:2px;">${key}: ${reason}</div>`;
+            }
+        }
 
         return `
             <tr>
                 <td>${_name}</td>
-                <td>${_input || '-'}</td>
-                <td>${_expected || '-'}</td>
-                <td>${scorerScores || '-'} (${scorerNames || '-'})</td>
+                <td style="max-width:200px;word-break:break-all;">${_input || '-'}</td>
+                <td style="max-width:200px;word-break:break-all;">${_expected || '-'}</td>
+                <td style="max-width:300px;word-break:break-all;">${_actual || '-'}</td>
+                <td>${scorerScores || '-'} (${scorerNames || '-'})${rationaleHtml}</td>
                 <td>
                     <span class="badge ${ev.passed ? 'badge-success' : 'badge-danger'}">
                         ${ev.passed ? '通过' : '失败'}

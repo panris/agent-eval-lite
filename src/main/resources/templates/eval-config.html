@@ -74,6 +74,10 @@
         <input id="modelBaseUrl" class="w-full border rounded px-3 py-2" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions">
       </div>
       <div>
+        <label class="block text-sm font-medium mb-1">API模型名称</label>
+        <input id="modelModelName" class="w-full border rounded px-3 py-2" placeholder="如: deepseek-v4-pro">
+      </div>
+      <div>
         <label class="block text-sm font-medium mb-1">API Key *</label>
         <input id="modelApiKey" type="password" class="w-full border rounded px-3 py-2">
       </div>
@@ -240,6 +244,7 @@ function editModel(m) {
   document.getElementById('modelName').value = m.name || '';
   document.getElementById('modelProvider').value = m.provider || 'openai';
   document.getElementById('modelBaseUrl').value = m.baseUrl || '';
+  document.getElementById('modelModelName').value = m.modelName || '';
   document.getElementById('modelApiKey').value = m.apiKey || '';
   document.getElementById('modelTemperature').value = m.temperature || '0.1';
   document.getElementById('modelMaxTokens').value = m.maxTokens || '256';
@@ -254,6 +259,7 @@ async function saveModel() {
     name: document.getElementById('modelName').value,
     provider: document.getElementById('modelProvider').value,
     baseUrl: document.getElementById('modelBaseUrl').value,
+    modelName: document.getElementById('modelModelName').value,
     apiKey: document.getElementById('modelApiKey').value,
     temperature: parseFloat(document.getElementById('modelTemperature').value),
     maxTokens: parseInt(document.getElementById('modelMaxTokens').value),

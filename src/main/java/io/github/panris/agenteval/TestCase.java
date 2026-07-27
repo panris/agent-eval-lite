@@ -13,6 +13,9 @@ public class TestCase {
     private final String expectedOutput;
     private final Map<String, Object> context;
     private final Map<String, Object> metadata;
+    private final String project;
+    private final String module;
+    private final String function;
 
     public TestCase(String input, String expectedOutput) {
         this.id = generateId();
@@ -20,6 +23,9 @@ public class TestCase {
         this.expectedOutput = expectedOutput;
         this.context = Map.of();
         this.metadata = Map.of();
+        this.project = null;
+        this.module = null;
+        this.function = null;
     }
 
     public TestCase(String id, String input, String expectedOutput,
@@ -29,6 +35,22 @@ public class TestCase {
         this.expectedOutput = expectedOutput;
         this.context = context != null ? context : Map.of();
         this.metadata = metadata != null ? metadata : Map.of();
+        this.project = null;
+        this.module = null;
+        this.function = null;
+    }
+
+    public TestCase(String id, String input, String expectedOutput,
+                    Map<String, Object> context, Map<String, Object> metadata,
+                    String project, String module, String function) {
+        this.id = id != null ? id : generateId();
+        this.input = input;
+        this.expectedOutput = expectedOutput;
+        this.context = context != null ? context : Map.of();
+        this.metadata = metadata != null ? metadata : Map.of();
+        this.project = project;
+        this.module = module;
+        this.function = function;
     }
 
     private String generateId() {
@@ -53,6 +75,18 @@ public class TestCase {
 
     public Map<String, Object> getMetadata() {
         return metadata;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public String getModule() {
+        return module;
+    }
+
+    public String getFunction() {
+        return function;
     }
 
     @Override

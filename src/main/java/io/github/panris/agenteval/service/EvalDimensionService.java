@@ -88,7 +88,7 @@ public class EvalDimensionService {
             llmConfig.setName(model.getName());
             llmConfig.setBaseUrl(model.getBaseUrl());
             llmConfig.setApiKey(model.getApiKey());
-            llmConfig.setModel(model.getName());
+            llmConfig.setModel(model.getModelName() != null && !model.getModelName().isEmpty() ? model.getModelName() : model.getName());
             llmConfig.setTemperature(model.getTemperature());
             llmConfig.setMaxTokens(model.getMaxTokens());
             llmConfig.setTimeout(model.getTimeout());

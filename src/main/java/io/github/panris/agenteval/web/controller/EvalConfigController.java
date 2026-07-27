@@ -74,6 +74,7 @@ public class EvalConfigController {
                     existing.setMaxTokens(model.getMaxTokens());
                     existing.setTimeout(model.getTimeout());
                     existing.setDescription(model.getDescription());
+                    existing.setModelName(model.getModelName());
                     
                     if (model.getIsDefault() != null) {
                         if (model.getIsDefault() && !existing.getIsDefault()) {

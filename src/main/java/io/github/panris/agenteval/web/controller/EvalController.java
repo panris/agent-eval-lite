@@ -153,9 +153,9 @@ public class EvalController {
                 request.getAgentConfigId(), 
                 request.getEvalConfigId(), 
                 null, 
-                null, 
-                null, 
-                null
+                testCase.getProject(), 
+                testCase.getModule(), 
+                testCase.getFunction()
             );
             
             if (result.get("success") == Boolean.TRUE) {
@@ -176,6 +176,23 @@ public class EvalController {
         finalResult.put("evaluations", results.stream()
             .flatMap(r -> ((List<?>) r.get("evaluations")).stream())
             .toList());
+        
+        double passRate = testCases.size() > 0 ? (totalPassed * 100.0 / testCases.size()) : 0.0;
+        double avgScore = results.stream()
+            .flatMap(r -> ((List<?>) r.get("evaluations")).stream())
+            .mapToDouble(e -> {
+                Object score = ((Map<?, ?>) e).get("overallScore");
+                return score instanceof Number ? ((Number) score).doubleValue() : 0.0;
+            })
+            .average().orElse(0.0);
+        
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("pass_rate", passRate);
+        summary.put("average_score", avgScore);
+        summary.put("total_test_cases", testCases.size());
+        summary.put("passed_test_cases", totalPassed);
+        summary.put("failed_test_cases", totalFailed);
+        finalResult.put("summary", summary);
         
         return finalResult;
     }
@@ -745,7 +762,8 @@ public class EvalController {
             .filter(java.util.Optional::isPresent)
             .map(opt -> {
                 TestCaseEntity e = opt.get();
-                return new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null);
+                return new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null,
+                    e.getProject(), e.getModule(), e.getFunction());
             })
             .toList();
         log.info("Resolved {} test cases from {} IDs", cases.size(), caseIds.size());
@@ -765,7 +783,8 @@ public class EvalController {
             return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个（当前 " + byDims.size() + "）");
         }
         List<TestCase> cases = byDims.stream()
-            .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null))
+            .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null,
+                e.getProject(), e.getModule(), e.getFunction()))
             .toList();
         return new CaseResolution(cases);
     }

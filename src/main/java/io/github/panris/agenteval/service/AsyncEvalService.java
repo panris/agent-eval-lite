@@ -3,6 +3,7 @@ package io.github.panris.agenteval.service;
 import io.github.panris.agenteval.*;
 import io.github.panris.agenteval.agent.AgentFactory;
 import io.github.panris.agenteval.model.EvalLlmConfig;
+import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.repository.TestCaseRepository;
@@ -261,12 +262,22 @@ public class AsyncEvalService {
             m.put("testCaseId", ev.getTestCaseId());
             TestCase tc = tcMap.get(ev.getTestCaseId());
             m.put("testCaseInput", tc != null && tc.getInput() != null ? tc.getInput() : "");
+            
+            String expectedOutput = "";
+            if (tc != null && tc.getExpectedOutput() != null) {
+                expectedOutput = tc.getExpectedOutput();
+            } else {
+                expectedOutput = testCaseRepository.findTestCaseById(ev.getTestCaseId())
+                        .map(e -> e.getExpected() != null ? e.getExpected() : "")
+                        .orElse("");
+            }
+            m.put("testCaseExpected", expectedOutput);
+            
             m.put("overallScore", ev.getOverallScore());
             m.put("passed", ev.isPassed());
             AgentOutput ao = ev.getAgentOutput();
             m.put("output", ao != null && ao.getOutput() != null ? ao.getOutput() : "");
 
-            // Look up readable test case name from repository (for PDF/UI display)
             String testCaseName = testCaseRepository
                     .findTestCaseById(ev.getTestCaseId())
                     .flatMap(e -> Optional.ofNullable(e.getName()))
