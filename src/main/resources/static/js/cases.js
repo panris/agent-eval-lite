@@ -1,3 +1,62 @@
+let _editingCaseId = null;
+
+function editTestCaseRow(id) {
+    _editingCaseId = id;
+    loadTestCases();
+}
+
+async function saveTestCaseRow(id) {
+    const name = document.getElementById(`edit-name-${id}`)?.value;
+    const input = document.getElementById(`edit-input-${id}`)?.value;
+    const expected = document.getElementById(`edit-expected-${id}`)?.value;
+    const groupId = document.getElementById(`edit-group-${id}`)?.value || null;
+    const description = document.getElementById(`edit-desc-${id}`)?.value || '';
+    const project = document.getElementById(`edit-project-${id}`)?.value || null;
+    const module = document.getElementById(`edit-module-${id}`)?.value || null;
+    const funcDim = document.getElementById(`edit-function-${id}`)?.value || null;
+
+    // 找到当前用例原有数据，保留 metadata
+    const tc = window._testCases?.find(t => t.id === id);
+    if (!tc) return;
+
+    const updateData = {
+        ...tc,
+        name: name || tc.name,
+        input: input || tc.input,
+        expected: expected || tc.expected,
+        groupId: groupId,
+        description: description,
+        project: project,
+        module: module,
+        function: funcDim
+    };
+
+    try {
+        const response = await fetch(`/api/testcases/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast('更新成功', 'success');
+        } else {
+            showToast('更新失败: ' + (result.error || '未知错误'), 'error');
+        }
+    } catch (e) {
+        logError('Failed to update case:', e);
+        showToast('更新失败，请重试', 'error');
+    }
+
+    _editingCaseId = null;
+    loadTestCases();
+}
+
+function cancelEditTestCaseRow() {
+    _editingCaseId = null;
+    loadTestCases();
+}
+
 function addCaseTag() {
     const input = document.getElementById('case-tags-input');
     const tag = input.value.trim();
@@ -146,8 +205,7 @@ function closeAddToGroupModal() {
 }
 
 function closeBatchEditModal() {
-    document.getElementById('batch-edit-modal').classList.remove('show');
-    // 重置表单
+    document.getElementById('batch-edit-modal').style.display = 'none';
     document.getElementById('batch-edit-name-enabled').checked = false;
     document.getElementById('batch-edit-expected-enabled').checked = false;
     document.getElementById('batch-edit-group-enabled').checked = false;
@@ -155,6 +213,7 @@ function closeBatchEditModal() {
     document.getElementById('batch-edit-project-enabled').checked = false;
     document.getElementById('batch-edit-module-enabled').checked = false;
     document.getElementById('batch-edit-function-enabled').checked = false;
+    document.getElementById('batch-edit-description-enabled').checked = false;
     toggleBatchEditField('name');
     toggleBatchEditField('expected');
     toggleBatchEditField('group');
@@ -162,6 +221,7 @@ function closeBatchEditModal() {
     toggleBatchEditField('project');
     toggleBatchEditField('module');
     toggleBatchEditField('function');
+    toggleBatchEditField('description');
 }
 
 function closeCaseTagsModal() {
@@ -432,12 +492,44 @@ async function loadTestCases() {
             const _tags = (tc.metadata?.tags || []).map(t => utils.escapeHtml(t));
             const _desc = utils.escapeHtml(tc.description || '');
             const _descShort = _desc.length > 30 ? _desc.substring(0, 30) + '…' : _desc;
+            const _project = utils.escapeHtml(tc.project || '');
+            const _module = utils.escapeHtml(tc.module || '');
+            const _function = utils.escapeHtml(tc.function || '');
+            const _groupId = utils.escapeHtml(tc.groupId || '');
+            // 如果是当前正在编辑的行，渲染编辑模式
+            if (_editingCaseId === tc.id) {
+                return `
+                <tr data-id="${_id}" class="editing-row">
+                    <td class="checkbox-cell"><input type="checkbox" class="case-checkbox" value="${_id}"></td>
+                    <td><input type="text" class="form-control" id="edit-name-${_id}" value="${_name}" style="width:100%;min-width:80px;"></td>
+                    <td><input type="text" class="form-control" id="edit-input-${_id}" value="${_input}" style="width:100%;min-width:100px;"></td>
+                    <td><input type="text" class="form-control" id="edit-expected-${_id}" value="${_expected}" style="width:100%;min-width:80px;"></td>
+                    <td><input type="text" class="form-control" id="edit-group-${_id}" value="${_groupId}" style="width:100px;" placeholder="分组"></td>
+                    <td><input type="text" class="form-control" id="edit-desc-${_id}" value="${_desc}" style="width:100%;min-width:100px;"></td>
+                    <td>
+                        <input type="text" class="form-control" id="edit-project-${_id}" value="${_project}" style="width:100%;margin-bottom:2px;" placeholder="项目">
+                        <input type="text" class="form-control" id="edit-module-${_id}" value="${_module}" style="width:100%;margin-bottom:2px;" placeholder="模块">
+                        <input type="text" class="form-control" id="edit-function-${_id}" value="${_function}" style="width:100%;" placeholder="功能">
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                            ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                            <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${_id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
+                        </div>
+                    </td>
+                    <td class="actions" style="white-space:nowrap;">
+                        <button class="btn btn-success btn-sm" onclick="saveTestCaseRow('${_id}')" style="margin-right:4px;">保存</button>
+                        <button class="btn btn-sm" onclick="cancelEditTestCaseRow()" style="background:#6c757d;color:white;">取消</button>
+                    </td>
+                </tr>`;
+            }
+            // 普通展示模式
             return `
-            <tr>
+            <tr data-id="${_id}">
                 <td class="checkbox-cell"><input type="checkbox" class="case-checkbox" value="${_id}"></td>
                 <td>${_name}</td>
-                <td>${_input}</td>
-                <td>${_expected}</td>
+                <td title="${_input}">${_input}</td>
+                <td title="${_expected}">${_expected}</td>
                 <td><span class="badge badge-info">${tc.groupId || '未分组'}</span></td>
                 <td>
                     <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-secondary);"
@@ -445,9 +537,9 @@ async function loadTestCases() {
                 </td>
                 <td>
                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                        ${tc.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(tc.project)}</span>` : ''}
-                        ${tc.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(tc.module)}</span>` : ''}
-                        ${tc.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(tc.function)}</span>` : ''}
+                        ${tc.project ? `<span class="badge" style="background: #2563eb;">${_project}</span>` : ''}
+                        ${tc.module ? `<span class="badge" style="background: #7c3aed;">${_module}</span>` : ''}
+                        ${tc.function ? `<span class="badge" style="background: #db2777;">${_function}</span>` : ''}
                         ${(!tc.project && !tc.module && !tc.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
                     </div>
                 </td>
@@ -457,7 +549,8 @@ async function loadTestCases() {
                         <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${_id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
                     </div>
                 </td>
-                <td class="actions">
+                <td class="actions" style="white-space:nowrap;">
+                    <button class="btn btn-sm" onclick="editTestCaseRow('${_id}')" style="background:#0d6efd;color:white;margin-right:4px;">编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteTestCase('${_id}')">删除</button>
                 </td>
             </tr>
@@ -532,9 +625,8 @@ function openBatchEditModal() {
     }
 
     document.getElementById('batch-edit-count').textContent = checked.length;
-    document.getElementById('batch-edit-modal').classList.add('show');
+    document.getElementById('batch-edit-modal').style.display = 'flex';
 
-    // 加载分组列表
     loadGroupsForBatchEdit();
 }
 
@@ -656,6 +748,28 @@ function toggleBatchEditField(field) {
     const input = document.getElementById(`batch-edit-${field}`);
     if (checkbox && input) {
         input.disabled = !checkbox.checked;
+    }
+}
+
+async function loadGroupsForBatchEdit() {
+    try {
+        const response = await fetch('/api/testcases?size=1000');
+        const data = await response.json();
+        const list = data.testCases || [];
+        const groupMap = new Map();
+        list.forEach(tc => {
+            if (tc.groupId && !groupMap.has(tc.groupId)) {
+                groupMap.set(tc.groupId, tc.groupId);
+            }
+        });
+        const select = document.getElementById('batch-edit-group');
+        if (select) {
+            const sortedGroups = Array.from(groupMap.keys()).sort();
+            select.innerHTML = '<option value="">移除分组</option>' +
+                sortedGroups.map(g => `<option value="${utils.escapeHtml(g)}">${utils.escapeHtml(g)}</option>`).join('');
+        }
+    } catch (error) {
+        logError('Failed to load groups:', error);
     }
 }
 

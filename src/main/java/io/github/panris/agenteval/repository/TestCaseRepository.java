@@ -50,7 +50,7 @@ public class TestCaseRepository {
     }
 
     public int countAllTestCases() {
-        return (int) jpaRepository.count();
+        return (int) jpaRepository.countByDeletedFalse();
     }
 
     public List<TestCaseEntity> findTestCasesByDimensions(String project, String module, String function) {

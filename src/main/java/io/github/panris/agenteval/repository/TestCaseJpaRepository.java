@@ -14,6 +14,8 @@ public interface TestCaseJpaRepository extends JpaRepository<TestCaseEntity, Str
 
     List<TestCaseEntity> findByDeletedFalse();
 
+    long countByDeletedFalse();
+
     List<TestCaseEntity> findByDeletedTrue();
 
     Optional<TestCaseEntity> findByIdAndDeletedFalse(String id);
