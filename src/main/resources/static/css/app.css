@@ -60,6 +60,80 @@
             transition: background 0.3s;
         }
 
+        /* Navbar */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1280px;
+            margin: 0 auto 24px;
+            padding: 12px 20px;
+            background: color-mix(in srgb, var(--bg-card) 85%, white 15%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 17px;
+            font-weight: 700;
+            text-decoration: none;
+            color: var(--text-primary);
+            padding: 6px 16px 6px 12px;
+            border-radius: 10px;
+            transition: background 0.15s;
+        }
+        .navbar-brand:hover {
+            background: color-mix(in srgb, var(--bg-table-row-hover) 60%, transparent);
+        }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .navbar-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+        .navbar-link:hover {
+            background: color-mix(in srgb, var(--bg-table-row-hover) 60%, transparent);
+            color: var(--text-primary);
+        }
+        .navbar-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover {
+            background: var(--bg-table-row-hover);
+            transform: scale(1.05);
+        }
+
         .container { max-width: 1400px; margin: 0 auto; }
 
         .header {
