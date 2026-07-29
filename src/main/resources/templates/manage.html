@@ -33,14 +33,15 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" id="theme-btn">🌙</button>
-            <div class="header-content">
-                <h1>📊 样例管理</h1>
-                <p>测试用例集管理与选择性评测</p>
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">🤖 Agent Eval Lite</a>
+            <div class="navbar-links">
+                <a href="/" class="navbar-link">🏠 首页</a>
+                <a href="/manage" class="navbar-link active">📊 管理</a>
+                <a href="/agents" class="navbar-link">🤖 Agent</a>
             </div>
-            <div style="width: 60px;"></div>
-        </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
+        </nav>
 
         <div class="tabs">
             <button class="tab active" data-tab="cases" onclick="switchTab('cases')">📋 测试用例</button>

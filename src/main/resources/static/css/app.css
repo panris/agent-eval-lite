@@ -118,7 +118,7 @@
             color: white;
         }
 
-        .theme-toggle {
+        .navbar .theme-toggle {
             background: none;
             border: 1px solid var(--border-color);
             color: var(--text-primary);
@@ -129,38 +129,12 @@
             transition: all 0.15s;
             flex-shrink: 0;
         }
-        .theme-toggle:hover {
+        .navbar .theme-toggle:hover {
             background: var(--bg-table-row-hover);
             transform: scale(1.05);
         }
 
         .container { max-width: 1400px; margin: 0 auto; }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 0 20px;
-        }
-        .header-content { text-align: center; flex: 1; }
-        .header h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--text-inverse); }
-        .header p { font-size: 1.1rem; opacity: 0.9; color: var(--text-inverse); }
-
-        .theme-toggle {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 20px;
-            transition: all 0.3s;
-        }
-        .theme-toggle:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-        }
 
         .tabs {
             display: flex;
@@ -1036,6 +1010,8 @@
    响应式
    ============================================================ */
 @media (max-width: 768px) {
+    .navbar { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
+    .navbar-links { order: 3; width: 100%; justify-content: center; }
     .agents-header { flex-direction: column; align-items: stretch; }
     .agents-header-actions { justify-content: stretch; flex-wrap: wrap; }
     .agents-header-actions .btn { flex: 1; justify-content: center; }

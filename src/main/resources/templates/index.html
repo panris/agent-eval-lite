@@ -247,15 +247,16 @@
 </head>
 <body>
     <div class="container">
-        <!-- 头部 -->
-        <div class="header">
-            <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" id="theme-btn">🌙</button>
-            <div class="header-content">
-                <h1>🤖 Agent Eval Lite</h1>
-                <p>轻量级 Agent 评测系统</p>
+        <!-- 导航栏 -->
+        <nav class="navbar">
+            <a href="/" class="navbar-brand">🤖 Agent Eval Lite</a>
+            <div class="navbar-links">
+                <a href="/" class="navbar-link active">🏠 首页</a>
+                <a href="/manage" class="navbar-link">📊 管理</a>
+                <a href="/agents" class="navbar-link">🤖 Agent</a>
             </div>
-            <div style="width: 60px;"></div>
-        </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
+        </nav>
 
         <!-- 数据概览 -->
         <div class="dashboard-grid" id="statsGrid">
