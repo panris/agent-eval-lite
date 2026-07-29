@@ -150,19 +150,19 @@ function renderList() {
             el.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">🤖</div>
-                    <div class="empty-title">还没有配置 Agent</div>
-                    <div class="empty-desc">从模板快速创建，或自定义配置接口</div>
+                    <div class="empty-title">暂无 Agent</div>
+                    <div class="empty-desc">从模板创建或自定义配置</div>
                     <div class="empty-actions">
-                        <button class="btn btn-outline" onclick="openTemplateModal()">📦 从模板创建</button>
-                        <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建空白配置</button>
+                        <button class="btn btn-outline" onclick="openTemplateModal()">📦 模板</button>
+                        <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建</button>
                     </div>
                 </div>`;
         } else {
             el.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">🔍</div>
-                    <div class="empty-title">未找到匹配的 Agent</div>
-                    <div class="empty-desc">试试其他关键词，或清除搜索条件</div>
+                    <div class="empty-title">未找到匹配</div>
+                    <div class="empty-desc">试试其他关键词</div>
                     <button class="btn btn-secondary" onclick="clearSearch()">清除搜索</button>
                 </div>`;
         }
