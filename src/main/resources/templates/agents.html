@@ -20,39 +20,29 @@
     </nav>
 
     <div class="page-container page-container-agents">
-        <!-- 简化的头部 -->
+        <!-- 紧凑头部 -->
         <div class="agents-header">
-            <div class="agents-header-left">
-                <h1 class="agents-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
-                <p class="agents-subtitle">管理评测用到的 Agent，支持搜索、快速测试、导入导出。</p>
-            </div>
+            <h1 class="agents-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
             <div class="agents-header-actions">
-                <button class="btn btn-outline" onclick="openTemplateModal()">📦 模板</button>
                 <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建</button>
-                <button class="btn btn-ghost" onclick="exportAgents()">📤 导出</button>
-                <button class="btn btn-ghost" onclick="triggerImport()">📥 导入</button>
+                <button class="btn btn-ghost" onclick="openTemplateModal()">📦 模板</button>
+                <button class="btn btn-ghost" onclick="exportAgents()">📤</button>
+                <button class="btn btn-ghost" onclick="triggerImport()">📥</button>
             </div>
         </div>
 
-        <!-- 工具栏 -->
+        <!-- 工具栏：搜索 + 筛选 -->
         <div class="agents-tools">
-            <div class="agents-toolbar-top">
-                <div class="settings-group">
-                    <input type="text" id="agent-search" class="form-input" placeholder="🔍 搜索名称、类型、端点..."
-                           oninput="handleSearch(this.value)"
-                           onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
-                    <button class="settings-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
-                </div>
-                <div class="settings-group settings-group-sort">
-                    <span class="settings-label">排序</span>
-                    <select id="agent-sort" class="form-select" onchange="applySort(this.value)">
-                        <option value="name">名称 A-Z</option>
-                        <option value="type">类型</option>
-                        <option value="endpoint">端点</option>
-                    </select>
-                </div>
-            </div>
+            <input type="text" id="agent-search" class="form-input" placeholder="🔍 搜索..."
+                   oninput="handleSearch(this.value)"
+                   onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
+            <button class="settings-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
             <div class="filter-chips" id="filter-chips"></div>
+            <select class="sort-select" onchange="applySort(this.value)">
+                <option value="name">名称</option>
+                <option value="type">类型</option>
+                <option value="endpoint">端点</option>
+            </select>
         </div>
 
         <!-- Agent 列表 -->
