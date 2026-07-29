@@ -19,54 +19,69 @@
         <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
     </nav>
 
-    <div class="page-container">
-        <!-- 页面头部 -->
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
-                <p class="page-subtitle">连接外部 Agent，在评测中使用</p>
+    <div class="page-container page-container-agents">
+        <section class="agents-hero">
+            <div class="agents-hero-main">
+                <div class="page-eyebrow">Agent Workspace</div>
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
+                        <p class="page-subtitle">统一管理评测要用到的 Agent，搜索、测试、导入导出都保留在同一页完成。</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="openTemplateModal()">📦 从模板创建</button>
+                        <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建空白配置</button>
+                    </div>
+                </div>
             </div>
-            <div class="page-header-actions">
-                <button class="btn btn-outline" onclick="openTemplateModal()">📦 从模板创建</button>
-                <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建空白配置</button>
-            </div>
-        </div>
+            <aside class="agents-hero-side">
+                <div class="agents-tip-card">
+                    <div class="tip-card-title">常用操作</div>
+                    <div class="tip-card-row"><span>/</span><span>聚焦搜索</span></div>
+                    <div class="tip-card-row"><span>n</span><span>新建配置</span></div>
+                    <div class="tip-card-row"><span>Enter</span><span>卡片内快速测试</span></div>
+                </div>
+            </aside>
+        </section>
 
-        <!-- 搜索栏 -->
-        <div class="search-bar-row">
-            <div class="search-wrap">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="agent-search" class="search-input" placeholder="搜索名称、类型、端点..."
-                       oninput="handleSearch(this.value)"
-                       onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
-                <button class="search-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
-            </div>
-            <div class="toolbar-right">
-                <button class="btn btn-ghost" onclick="exportAgents()" title="导出所有 Agent">📤</button>
-                <button class="btn btn-ghost" onclick="triggerImport()" title="导入 JSON">📥</button>
-            </div>
-        </div>
+        <section class="agents-workbench">
+            <div class="agents-tools">
+                <div class="search-bar-row">
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="agent-search" class="search-input" placeholder="搜索名称、类型、端点..."
+                               oninput="handleSearch(this.value)"
+                               onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
+                        <button class="search-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn btn-ghost" onclick="exportAgents()" title="导出所有 Agent">📤 导出</button>
+                        <button class="btn btn-ghost" onclick="triggerImport()" title="导入 JSON">📥 导入</button>
+                    </div>
+                </div>
 
-        <!-- 筛选 + 排序工具条 -->
-        <div class="list-toolbar">
-            <div class="filter-chips" id="filter-chips"></div>
-            <div class="sort-wrap">
-                <span class="sort-label">排序</span>
-                <select id="agent-sort" class="form-select sort-select" onchange="applySort(this.value)">
-                    <option value="name">名称 A-Z</option>
-                    <option value="type">类型</option>
-                    <option value="endpoint">端点</option>
-                </select>
+                <div class="list-toolbar">
+                    <div class="filter-chips" id="filter-chips"></div>
+                    <div class="sort-wrap">
+                        <span class="sort-label">排序</span>
+                        <select id="agent-sort" class="form-select sort-select" onchange="applySort(this.value)">
+                            <option value="name">名称 A-Z</option>
+                            <option value="type">类型</option>
+                            <option value="endpoint">端点</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Agent 列表 -->
-        <div id="agents-list">
-            <div class="list-loading">
-                <div class="spinner"></div>
-                <span>加载中...</span>
+            <div class="agents-list-shell">
+                <div id="agents-list">
+                    <div class="list-loading">
+                        <div class="spinner"></div>
+                        <span>加载中...</span>
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
     </div>
 
     <!-- ================================================
