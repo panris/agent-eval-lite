@@ -781,27 +781,85 @@
 }
 
 /* 内联测试区域 */
-.agent-test-inline {
+.agent-card-test {
     display: flex;
     gap: 8px;
-    padding-top: 8px;
+    padding-top: 10px;
     border-top: 1px solid var(--border-color);
     margin-top: auto;
 }
 
-.agent-test-inline .form-input {
+.agent-card-test .test-input {
     flex: 1;
     height: 32px;
     padding: 0 10px;
     font-size: 12px;
     border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-input);
+    color: var(--text-primary);
 }
 
-.agent-test-inline .btn {
+.agent-card-test .test-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.agent-card-test .btn {
     padding: 0 12px;
     font-size: 12px;
     height: 32px;
 }
+
+/* 卡片测试结果 */
+.card-test-result {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.card-test-result.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.card-test-result.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.card-test-result.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.card-test-result .text-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 11px;
+    text-decoration: underline;
+    margin-left: auto;
+}
+
+.spinner-sm {
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 
 /* 空状态 */
 .empty-state {
