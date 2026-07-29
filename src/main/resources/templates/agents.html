@@ -20,73 +20,51 @@
     </nav>
 
     <div class="page-container page-container-agents">
-        <section class="agents-hero">
-            <div class="agents-hero-main">
-                <div class="page-eyebrow">Agent Workspace</div>
-                <div class="page-header">
-                    <div>
-                        <h1 class="page-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
-                        <p class="page-subtitle">统一管理评测要用到的 Agent，搜索、测试、导入导出都保留在同一页完成。</p>
-                    </div>
-                    <div class="page-header-actions">
-                        <button class="btn btn-outline" onclick="openTemplateModal()">📦 从模板创建</button>
-                        <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建空白配置</button>
-                    </div>
+        <!-- 简化的头部 -->
+        <div class="agents-header">
+            <div class="agents-header-left">
+                <h1 class="agents-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
+                <p class="agents-subtitle">管理评测用到的 Agent，支持搜索、快速测试、导入导出。</p>
+            </div>
+            <div class="agents-header-actions">
+                <button class="btn btn-outline" onclick="openTemplateModal()">📦 模板</button>
+                <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建</button>
+                <button class="btn btn-ghost" onclick="exportAgents()">📤 导出</button>
+                <button class="btn btn-ghost" onclick="triggerImport()">📥 导入</button>
+            </div>
+        </div>
+
+        <!-- 工具栏 -->
+        <div class="agents-tools">
+            <div class="agents-toolbar-top">
+                <div class="settings-group">
+                    <input type="text" id="agent-search" class="form-input" placeholder="🔍 搜索名称、类型、端点..."
+                           oninput="handleSearch(this.value)"
+                           onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
+                    <button class="settings-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
+                </div>
+                <div class="settings-group settings-group-sort">
+                    <span class="settings-label">排序</span>
+                    <select id="agent-sort" class="form-select" onchange="applySort(this.value)">
+                        <option value="name">名称 A-Z</option>
+                        <option value="type">类型</option>
+                        <option value="endpoint">端点</option>
+                    </select>
                 </div>
             </div>
-            <aside class="agents-hero-side">
-                <div class="agents-tip-card">
-                    <div class="tip-card-title">常用操作</div>
-                    <div class="tip-card-row"><span>/</span><span>聚焦搜索</span></div>
-                    <div class="tip-card-row"><span>n</span><span>新建配置</span></div>
-                    <div class="tip-card-row"><span>Enter</span><span>卡片内快速测试</span></div>
-                </div>
-            </aside>
-        </section>
+            <div class="filter-chips" id="filter-chips"></div>
+        </div>
 
-        <section class="agents-workbench">
-            <div class="agents-tools">
-                <div class="search-bar-row">
-                    <div class="search-wrap">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="agent-search" class="search-input" placeholder="搜索名称、类型、端点..."
-                               oninput="handleSearch(this.value)"
-                               onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
-                        <button class="search-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
-                    </div>
-                    <div class="toolbar-right">
-                        <button class="btn btn-ghost" onclick="exportAgents()" title="导出所有 Agent">📤 导出</button>
-                        <button class="btn btn-ghost" onclick="triggerImport()" title="导入 JSON">📥 导入</button>
-                    </div>
-                </div>
-
-                <div class="list-toolbar">
-                    <div class="filter-chips" id="filter-chips"></div>
-                    <div class="sort-wrap">
-                        <span class="sort-label">排序</span>
-                        <select id="agent-sort" class="form-select sort-select" onchange="applySort(this.value)">
-                            <option value="name">名称 A-Z</option>
-                            <option value="type">类型</option>
-                            <option value="endpoint">端点</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- Agent 列表 -->
+        <div id="agents-list">
+            <div class="list-loading">
+                <div class="spinner"></div>
+                <span>加载中...</span>
             </div>
-
-            <div class="agents-list-shell">
-                <div id="agents-list">
-                    <div class="list-loading">
-                        <div class="spinner"></div>
-                        <span>加载中...</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
     </div>
 
-    <!-- ================================================
-         模板选择弹窗
-         ================================================ -->
+    <!-- 模板选择弹窗 -->
     <div id="template-modal" class="modal" style="display:none;">
         <div class="modal-panel">
             <div class="modal-header">
@@ -101,9 +79,7 @@
         </div>
     </div>
 
-    <!-- ================================================
-         创建 / 编辑 Agent 弹窗
-         ================================================ -->
+    <!-- 创建 / 编辑 Agent 弹窗 -->
     <div id="agent-modal" class="modal" style="display:none;">
         <div class="modal-panel modal-panel-wide">
             <div class="modal-header">
@@ -114,7 +90,6 @@
                 <form id="agent-form" onsubmit="handleSubmit(event)">
                     <input type="hidden" id="agent-id">
 
-                    <!-- 基本信息 -->
                     <div class="form-section">
                         <div class="form-row-2">
                             <div class="form-group">
@@ -137,7 +112,6 @@
                         </div>
                     </div>
 
-                    <!-- 接口配置 -->
                     <div class="form-section">
                         <div class="form-row-2">
                             <div class="form-group">
@@ -153,7 +127,6 @@
                             </div>
                         </div>
 
-                        <!-- OpenAI / Claude 专用 -->
                         <div id="type-simple">
                             <div class="form-row-2">
                                 <div class="form-group">
@@ -167,7 +140,6 @@
                             </div>
                         </div>
 
-                        <!-- 自定义 HTTP -->
                         <div id="type-advanced" style="display:none;">
                             <div class="form-group">
                                 <label class="form-label">请求头 (JSON)</label>
@@ -201,7 +173,6 @@
                         </div>
                     </div>
 
-                    <!-- 底部操作栏 -->
                     <div class="form-footer">
                         <div class="form-footer-left">
                             <button type="button" class="btn btn-ghost" onclick="runQuickTest()">🧪 快速测试</button>
@@ -216,9 +187,7 @@
         </div>
     </div>
 
-    <!-- ================================================
-         快速测试弹窗（独立）
-         ================================================ -->
+    <!-- 快速测试弹窗 -->
     <div id="test-modal" class="modal" style="display:none;">
         <div class="modal-panel">
             <div class="modal-header">
@@ -232,9 +201,12 @@
                     <input type="text" id="test-input" class="form-input" placeholder="输入测试内容" value="你好，请介绍一下你自己" onkeydown="if(event.key==='Enter')runTest()">
                 </div>
                 <div id="test-result" class="test-result-area"></div>
-                <div class="form-footer-right">
-                    <button class="btn btn-secondary" onclick="closeTestModal()">关闭</button>
-                    <button class="btn btn-primary" onclick="runTest()">运行测试</button>
+                <div class="form-footer" style="border-top:none;margin-top:12px;">
+                    <div></div>
+                    <div class="form-footer-right">
+                        <button class="btn btn-secondary" onclick="closeTestModal()">关闭</button>
+                        <button class="btn btn-primary" onclick="runTest()">运行测试</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -243,6 +215,6 @@
     <!-- 隐藏文件导入 -->
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImportFile(event)">
 
-    <script src="/js/agents.js?v=20260723"></script>
+    <script src="/js/agents.js?v=202607281900"></script>
 </body>
 </html>
