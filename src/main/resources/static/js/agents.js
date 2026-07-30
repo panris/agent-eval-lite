@@ -32,6 +32,7 @@ async function loadAgents() {
         const res = await utils.api.get('/api/agents');
         if (res.success) {
             allAgents = res.agents || [];
+            updateCountBadge();
             renderFilterChips();
             applyFilters();
         } else {
@@ -40,6 +41,14 @@ async function loadAgents() {
     } catch (e) {
         utils.logError('loadAgents', e);
         renderError('加载失败');
+    }
+}
+
+function updateCountBadge() {
+    const el = document.getElementById('agent-count-badge');
+    if (el) {
+        el.textContent = allAgents.length;
+        el.style.display = allAgents.length > 0 ? '' : 'none';
     }
 }
 

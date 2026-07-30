@@ -20,23 +20,40 @@
     </nav>
 
     <div class="container">
-        <!-- 工具栏：搜索 + 操作 -->
+        <!-- 页面头部 -->
+        <div class="agents-page-header">
+            <div class="agents-page-title">
+                <h2>Agent 配置</h2>
+                <span class="agents-count" id="agent-count-badge"></span>
+            </div>
+            <p class="agents-page-desc">管理你的 Agent 接入配置，支持快速测试和批量导入导出</p>
+        </div>
+
+        <!-- 工具栏 -->
         <div class="agents-toolbar">
-            <input type="text" id="agent-search" class="agents-search-input" placeholder="搜索 Agent..."
-                   oninput="handleSearch(this.value)"
-                   onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
+            <div class="agents-search-wrap">
+                <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+                <input type="text" id="agent-search" class="agents-search-input" placeholder="搜索名称、端点..."
+                       oninput="handleSearch(this.value)"
+                       onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
+            </div>
             <div class="agents-toolbar-actions">
                 <button class="btn btn-primary" onclick="openCreateModal()">+ 新建</button>
-                <button class="btn btn-ghost" onclick="openTemplateModal()" title="从模板创建">📦 模板</button>
-                <button class="btn btn-ghost" onclick="exportAgents()" title="导出">📤</button>
-                <button class="btn btn-ghost" onclick="triggerImport()" title="导入">📥</button>
+                <button class="btn btn-secondary" onclick="openTemplateModal()" title="从模板创建">模板</button>
+                <span class="toolbar-divider"></span>
+                <button class="btn btn-icon" onclick="exportAgents()" title="导出 JSON">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M13 8V2H7v6H2l8 8 8-8h-5z"/><path d="M0 18h20v2H0v-2z"/></svg>
+                </button>
+                <button class="btn btn-icon" onclick="triggerImport()" title="导入 JSON">
+                    <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path d="M7 12v6h6v-6h5l-8-8-8 8h5z"/><path d="M0 0h20v2H0V0z"/></svg>
+                </button>
             </div>
         </div>
 
         <!-- 类型筛选 -->
         <div class="filter-chips" id="filter-chips"></div>
 
-        <!-- Agent 列表（表格） -->
+        <!-- Agent 列表 -->
         <div class="agents-table-wrap" id="agents-list">
             <div class="list-loading"><div class="spinner"></div><span>加载中...</span></div>
         </div>
