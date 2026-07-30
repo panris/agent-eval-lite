@@ -19,38 +19,26 @@
         <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">🌙</button>
     </nav>
 
-    <div class="page-container page-container-agents">
-        <!-- 紧凑头部 -->
-        <div class="agents-header">
-            <h1 class="agents-title">Agent 配置 <span class="count-badge" id="agent-count"></span></h1>
-            <div class="agents-header-actions">
-                <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建</button>
-                <button class="btn btn-ghost" onclick="openTemplateModal()">📦 模板</button>
-                <button class="btn btn-ghost" onclick="exportAgents()">📤</button>
-                <button class="btn btn-ghost" onclick="triggerImport()">📥</button>
-            </div>
-        </div>
-
-        <!-- 工具栏：搜索 + 筛选 -->
-        <div class="agents-tools">
-            <input type="text" id="agent-search" class="form-input" placeholder="🔍 搜索..."
+    <div class="container">
+        <!-- 工具栏：搜索 + 操作 -->
+        <div class="agents-toolbar">
+            <input type="text" id="agent-search" class="agents-search-input" placeholder="搜索 Agent..."
                    oninput="handleSearch(this.value)"
                    onkeydown="if(event.key==='Escape'){clearSearch();this.blur();}">
-            <button class="settings-clear" id="search-clear" style="display:none" onclick="clearSearch()">✕</button>
-            <div class="filter-chips" id="filter-chips"></div>
-            <select class="sort-select" onchange="applySort(this.value)">
-                <option value="name">名称</option>
-                <option value="type">类型</option>
-                <option value="endpoint">端点</option>
-            </select>
+            <div class="agents-toolbar-actions">
+                <button class="btn btn-primary" onclick="openCreateModal()">+ 新建</button>
+                <button class="btn btn-ghost" onclick="openTemplateModal()" title="从模板创建">📦 模板</button>
+                <button class="btn btn-ghost" onclick="exportAgents()" title="导出">📤</button>
+                <button class="btn btn-ghost" onclick="triggerImport()" title="导入">📥</button>
+            </div>
         </div>
 
-        <!-- Agent 列表 -->
-        <div id="agents-list">
-            <div class="list-loading">
-                <div class="spinner"></div>
-                <span>加载中...</span>
-            </div>
+        <!-- 类型筛选 -->
+        <div class="filter-chips" id="filter-chips"></div>
+
+        <!-- Agent 列表（表格） -->
+        <div class="agents-table-wrap" id="agents-list">
+            <div class="list-loading"><div class="spinner"></div><span>加载中...</span></div>
         </div>
     </div>
 
@@ -89,16 +77,16 @@
                             <div class="form-group">
                                 <label class="form-label">类型</label>
                                 <select id="agent-type" class="form-select" onchange="onTypeChange()">
-                                    <option value="openai">🟢 OpenAI (GPT-4 / GPT-3.5)</option>
-                                    <option value="claude">🟠 Anthropic Claude</option>
-                                    <option value="http">🔵 简单 HTTP</option>
-                                    <option value="custom">⚪ 自定义 HTTP</option>
+                                    <option value="openai">🟢 OpenAI</option>
+                                    <option value="claude">🟠 Claude</option>
+                                    <option value="http">🔵 HTTP</option>
+                                    <option value="custom">⚪ 自定义</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">描述</label>
-                            <input type="text" id="agent-description" class="form-input" placeholder="选填，用于备注此 Agent 的用途">
+                            <input type="text" id="agent-description" class="form-input" placeholder="选填备注">
                         </div>
                     </div>
 
@@ -109,11 +97,8 @@
                                 <input type="text" id="agent-endpoint" class="form-input" placeholder="https://api.openai.com/v1/chat/completions" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">超时时间</label>
-                                <div class="input-group">
-                                    <input type="number" id="agent-timeout" class="form-input" value="30000" min="1000" max="300000">
-                                    <span class="input-suffix">ms</span>
-                                </div>
+                                <label class="form-label">超时(ms)</label>
+                                <input type="number" id="agent-timeout" class="form-input" value="30000" min="1000" max="300000">
                             </div>
                         </div>
 
@@ -137,7 +122,7 @@
                                           placeholder='{"Content-Type": "application/json"}'></textarea>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">请求模板 <span class="field-hint">${input} 表示用户输入</span></label>
+                                <label class="form-label">请求模板 <span class="field-hint">${input} = 用户输入</span></label>
                                 <textarea id="agent-request-template" class="form-textarea code" rows="2"
                                           placeholder='{"messages":[{"role":"user","content":"${input}"}]}'></textarea>
                             </div>
@@ -164,12 +149,10 @@
                     </div>
 
                     <div class="form-footer">
-                        <div class="form-footer-left">
-                            <button type="button" class="btn btn-ghost" onclick="runQuickTest()">🧪 快速测试</button>
-                        </div>
+                        <button type="button" class="btn btn-ghost" onclick="runQuickTest()">🧪 测试</button>
                         <div class="form-footer-right">
                             <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                            <button type="submit" id="save-btn" class="btn btn-primary">💾 保存</button>
+                            <button type="submit" id="save-btn" class="btn btn-primary">保存</button>
                         </div>
                     </div>
                 </form>
@@ -181,13 +164,12 @@
     <div id="test-modal" class="modal" style="display:none;">
         <div class="modal-panel">
             <div class="modal-header">
-                <h3 id="test-modal-title">🧪 测试 Agent</h3>
+                <h3 id="test-modal-title">🧪 测试</h3>
                 <button class="modal-close-btn" onclick="closeTestModal()">✕</button>
             </div>
             <div class="modal-body">
                 <div class="test-context" id="test-context"></div>
                 <div class="form-group">
-                    <label class="form-label">输入</label>
                     <input type="text" id="test-input" class="form-input" placeholder="输入测试内容" value="你好，请介绍一下你自己" onkeydown="if(event.key==='Enter')runTest()">
                 </div>
                 <div id="test-result" class="test-result-area"></div>
@@ -195,7 +177,7 @@
                     <div></div>
                     <div class="form-footer-right">
                         <button class="btn btn-secondary" onclick="closeTestModal()">关闭</button>
-                        <button class="btn btn-primary" onclick="runTest()">运行测试</button>
+                        <button class="btn btn-primary" onclick="runTest()">发送</button>
                     </div>
                 </div>
             </div>
@@ -205,6 +187,6 @@
     <!-- 隐藏文件导入 -->
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImportFile(event)">
 
-    <script src="/js/agents.js?v=202607281900"></script>
+    <script src="/js/agents.js?v=202607302000"></script>
 </body>
 </html>

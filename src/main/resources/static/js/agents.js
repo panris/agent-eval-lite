@@ -1,15 +1,12 @@
 /**
- * Agent 管理页 JS
- * 核心：列表展示 + 创建/编辑 + 模板 + 搜索 + 测试
+ * Agent 管理页 JS — 表格列表版
  */
 
-// ============ 状态 ============
 let allAgents = [];
 let filteredAgents = [];
 let currentSearch = '';
 let currentFilter = 'all';
-let currentSort = 'name';
-let currentTestAgentId = null; // '' = 来自表单（未保存），id = 已保存的 Agent
+let currentTestAgentId = null;
 let searchTimer = null;
 
 // ============ 生命周期 ============
@@ -18,75 +15,59 @@ window.onload = async function () {
     document.addEventListener('keydown', onKeydown);
 };
 
-// ============ 键盘 ============
 function onKeydown(e) {
     if (e.key === 'Escape') {
-        closeAllMenus();
-        closeModal();
-        closeTestModal();
-        closeTemplateModal();
+        closeModal(); closeTestModal(); closeTemplateModal();
         return;
     }
-    // 快捷键：n 新建，/ 聚焦搜索（输入框内不触发）
     const tag = (e.target.tagName || '').toLowerCase();
-    const inField = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
-    if (inField) return;
+    if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
     if (e.key === 'n') { e.preventDefault(); openCreateModal(); }
     else if (e.key === '/') { e.preventDefault(); document.getElementById('agent-search')?.focus(); }
 }
 
-// ============ 加载列表 ============
+// ============ 加载 ============
 async function loadAgents() {
     try {
         const res = await utils.api.get('/api/agents');
         if (res.success) {
             allAgents = res.agents || [];
-            updateCount();
             renderFilterChips();
             applyFilters();
         } else {
-            renderListError('加载失败');
+            renderError('加载失败');
         }
     } catch (e) {
-        utils.logError('loadAgents failed', e);
-        renderListError('加载失败');
+        utils.logError('loadAgents', e);
+        renderError('加载失败');
     }
 }
 
-function renderListError(msg) {
+function renderError(msg) {
     document.getElementById('agents-list').innerHTML = `
         <div class="empty-state">
-            <div class="empty-icon">⚠️</div>
-            <div>${utils.escapeHtml(msg)}</div>
+            <div class="empty-icon">⚠️</div><div>${utils.escapeHtml(msg)}</div>
             <button class="btn btn-secondary" onclick="loadAgents()">重试</button>
         </div>`;
-}
-
-function updateCount() {
-    const el = document.getElementById('agent-count');
-    if (el) el.textContent = allAgents.length;
 }
 
 // ============ 搜索 ============
 function handleSearch(value) {
     clearTimeout(searchTimer);
     currentSearch = value;
-    document.getElementById('search-clear').style.display = value ? 'flex' : 'none';
-    searchTimer = setTimeout(applyFilters, 200);
+    searchTimer = setTimeout(applyFilters, 150);
 }
 
 function clearSearch() {
     const input = document.getElementById('agent-search');
     if (input) input.value = '';
     currentSearch = '';
-    document.getElementById('search-clear').style.display = 'none';
     applyFilters();
 }
 
-// 综合筛选：搜索 + 类型 + 排序
 function applyFilters() {
     const kw = currentSearch.toLowerCase().trim();
-    let list = allAgents.filter(a => {
+    filteredAgents = allAgents.filter(a => {
         const matchKw = !kw ||
             a.name?.toLowerCase().includes(kw) ||
             a.type?.toLowerCase().includes(kw) ||
@@ -95,43 +76,22 @@ function applyFilters() {
         const matchType = currentFilter === 'all' || a.type === currentFilter;
         return matchKw && matchType;
     });
-
-    list.sort((a, b) => {
-        if (currentSort === 'name') return (a.name || '').localeCompare(b.name || '', 'zh');
-        if (currentSort === 'type') return (a.type || '').localeCompare(b.type || '');
-        if (currentSort === 'endpoint') return (a.endpoint || '').localeCompare(b.endpoint || '');
-        return 0;
-    });
-
-    filteredAgents = list;
+    filteredAgents.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh'));
     renderList();
 }
 
-function applySort(value) {
-    currentSort = value;
-    applyFilters();
-}
-
-// 类型筛选 chips
+// ============ 类型筛选 ============
 function renderFilterChips() {
     const el = document.getElementById('filter-chips');
     if (!el) return;
-    const countByType = allAgents.reduce((acc, a) => {
-        const t = a.type || 'unknown';
-        acc[t] = (acc[t] || 0) + 1;
-        return acc;
-    }, {});
     const types = [...new Set(allAgents.map(a => a.type).filter(Boolean))];
-    const chips = [{ key: 'all', label: '全部', icon: '🗂️', count: allAgents.length },
-        ...types.map(t => ({
-            key: t,
-            label: TYPE_META[t]?.label || t,
-            icon: TYPE_META[t]?.icon || '⚪',
-            count: countByType[t] || 0,
-        }))];
+    if (types.length <= 1) { el.innerHTML = ''; return; }
+    const countByType = allAgents.reduce((acc, a) => { acc[a.type] = (acc[a.type] || 0) + 1; return acc; }, {});
+    const chips = [{ key: 'all', label: '全部', count: allAgents.length },
+        ...types.map(t => ({ key: t, label: TYPE_META[t]?.label || t, count: countByType[t] || 0 }))];
     el.innerHTML = chips.map(c => `
         <button class="chip ${currentFilter === c.key ? 'active' : ''}" onclick="setFilter('${c.key}')">
-            <span>${c.icon}</span>${c.label}<span class="chip-count">${c.count}</span>
+            ${c.label} <span class="chip-count">${c.count}</span>
         </button>`).join('');
 }
 
@@ -141,7 +101,15 @@ function setFilter(type) {
     applyFilters();
 }
 
-// ============ 渲染列表 ============
+// ============ 渲染表格 ============
+const TYPE_META = {
+    openai: { label: 'OpenAI', cls: 'type-openai', icon: '🟢' },
+    claude: { label: 'Claude', cls: 'type-claude', icon: '🟠' },
+    http:   { label: 'HTTP',   cls: 'type-http',   icon: '🔵' },
+    custom: { label: '自定义', cls: 'type-custom', icon: '⚪' },
+    intent: { label: '意图',   cls: 'type-intent', icon: '🚗' },
+};
+
 function renderList() {
     const el = document.getElementById('agents-list');
 
@@ -151,130 +119,57 @@ function renderList() {
                 <div class="empty-state">
                     <div class="empty-icon">🤖</div>
                     <div class="empty-title">暂无 Agent</div>
-                    <div class="empty-desc">从模板创建或自定义配置</div>
+                    <div class="empty-desc">点击「+ 新建」或从模板创建</div>
                     <div class="empty-actions">
+                        <button class="btn btn-primary" onclick="openCreateModal()">+ 新建</button>
                         <button class="btn btn-outline" onclick="openTemplateModal()">📦 模板</button>
-                        <button class="btn btn-primary" onclick="openCreateModal()">➕ 新建</button>
                     </div>
                 </div>`;
         } else {
             el.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">🔍</div>
-                    <div class="empty-title">未找到匹配</div>
-                    <div class="empty-desc">试试其他关键词</div>
+                    <div class="empty-title">无匹配结果</div>
                     <button class="btn btn-secondary" onclick="clearSearch()">清除搜索</button>
                 </div>`;
         }
         return;
     }
 
-    el.innerHTML = `<div class="agents-grid">${filteredAgents.map(renderCard).join('')}</div>`;
+    el.innerHTML = `
+        <table class="agents-table">
+            <thead>
+                <tr>
+                    <th style="width:180px;">名称</th>
+                    <th style="width:80px;">类型</th>
+                    <th>接口地址</th>
+                    <th style="width:180px;">描述</th>
+                    <th style="width:200px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filteredAgents.map(renderRow).join('')}
+            </tbody>
+        </table>`;
 }
 
-const TYPE_META = {
-    openai: { label: 'OpenAI', cls: 'type-openai', icon: '🟢' },
-    claude: { label: 'Claude',  cls: 'type-claude', icon: '🟠' },
-    http:   { label: 'HTTP',    cls: 'type-http',   icon: '🟣' },
-    custom: { label: '自定义',  cls: 'type-custom', icon: '⚪' },
-    intent: { label: '意图服务', cls: 'type-intent', icon: '🚗' },
-};
-
-function renderCard(a) {
-    const meta = TYPE_META[a.type] || { label: a.type || 'Agent', cls: 'type-custom', icon: '⚪' };
-    const endpoint = a.endpoint || '';
+function renderRow(a) {
+    const meta = TYPE_META[a.type] || { label: a.type || '-', cls: 'type-custom', icon: '⚪' };
+    const endpoint = utils.escapeHtml(a.endpoint || '');
+    const desc = utils.escapeHtml(a.description || '');
     return `
-        <div class="agent-card" data-id="${utils.escapeHtml(a.id)}">
-            <div class="agent-card-top">
-                <div class="agent-card-title">
-                    <span class="agent-type-icon" title="${meta.label}">${meta.icon}</span>
-                    <span class="agent-name" title="${utils.escapeHtml(a.name)}">${utils.escapeHtml(a.name)}</span>
-                    <span class="agent-type-badge ${meta.cls}">${meta.label}</span>
-                </div>
-                <div class="agent-card-menu" onclick="event.stopPropagation()">
-                    <button class="menu-btn" onclick="toggleMenu(this)" aria-label="更多操作">⋮</button>
-                    <div class="menu-dropdown" style="display:none">
-                        <div class="menu-item" onclick="editAgent('${a.id}')">✏️ 编辑</div>
-                        <div class="menu-item" onclick="testAgentModal('${a.id}')">🧪 测试</div>
-                        <div class="menu-item" onclick="copyAgent('${a.id}')">📋 复制</div>
-                        <div class="menu-divider"></div>
-                        <div class="menu-item danger" onclick="deleteAgent('${a.id}')">🗑️ 删除</div>
-                    </div>
-                </div>
-            </div>
-            <div class="agent-card-endpoint" title="点击复制端点" onclick="copyEndpoint(this, '${utils.escapeHtml(endpoint)}')">
-                <span class="endpoint-text">${utils.escapeHtml(endpoint)}</span>
-                <span class="copy-hint">⧉</span>
-            </div>
-            ${a.description ? `<div class="agent-card-desc" title="${utils.escapeHtml(a.description)}">${utils.escapeHtml(a.description)}</div>` : ''}
-            <div class="agent-card-test">
-                <input type="text" class="test-input" placeholder="🧪 输入内容测试..."
-                       onkeydown="if(event.key==='Enter')testCardAgent('${a.id}', this)">
-                <button class="btn btn-sm btn-outline" onclick="testCardAgent('${a.id}', this.previousElementSibling)">发送</button>
-            </div>
-        </div>`;
-}
-
-async function copyEndpoint(el, endpoint) {
-    try {
-        await navigator.clipboard.writeText(endpoint);
-        utils.toast.success('端点已复制');
-    } catch {
-        // 降级：临时 textarea
-        const ta = document.createElement('textarea');
-        ta.value = endpoint;
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); utils.toast.success('端点已复制'); } catch {}
-        document.body.removeChild(ta);
-    }
-}
-
-function toggleMenu(btn) {
-    const dropdown = btn.nextElementSibling;
-    const isOpen = dropdown.style.display !== 'none';
-    document.querySelectorAll('.menu-dropdown').forEach(m => m.style.display = 'none');
-    dropdown.style.display = isOpen ? 'none' : 'block';
-}
-
-// 点击页面其他位置关闭所有菜单
-document.addEventListener('click', () => document.querySelectorAll('.menu-dropdown').forEach(m => m.style.display = 'none'));
-
-// ============ 卡片内测试 ============
-async function testCardAgent(id, inputEl) {
-    const input = inputEl.value.trim();
-    if (!input) { inputEl.focus(); return; }
-
-    const card = inputEl.closest('.agent-card');
-    const sendBtn = inputEl.nextElementSibling;
-    const resultEl = card.querySelector('.card-test-result') || createCardResultEl(card);
-    resultEl.style.display = 'flex';
-    resultEl.className = 'card-test-result pending';
-    resultEl.innerHTML = '<div class="spinner-sm"></div><span>测试中...</span>';
-    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '...'; }
-
-    try {
-        const res = await utils.api.post(`/api/agents/${id}/test`, { input });
-        if (res.success) {
-            resultEl.className = 'card-test-result success';
-            resultEl.innerHTML = `<span>✅ ${utils.escapeHtml(truncate(res.output, 120))}</span><button class="text-btn" onclick="this.parentElement.style.display='none'">隐藏</button>`;
-        } else {
-            resultEl.className = 'card-test-result error';
-            resultEl.innerHTML = `<span>❌ ${utils.escapeHtml(res.error || '未知错误')}</span><button class="text-btn" onclick="this.parentElement.style.display='none'">隐藏</button>`;
-        }
-    } catch (e) {
-        resultEl.className = 'card-test-result error';
-        resultEl.innerHTML = `<span>❌ ${utils.escapeHtml(e.message)}</span><button class="text-btn" onclick="this.parentElement.style.display='none'">隐藏</button>`;
-    } finally {
-        if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '发送'; }
-    }
-}
-
-function createCardResultEl(card) {
-    const el = document.createElement('div');
-    el.className = 'card-test-result';
-    card.querySelector('.agent-card-test').after(el);
-    return el;
+        <tr data-id="${utils.escapeHtml(a.id)}">
+            <td><strong>${utils.escapeHtml(a.name)}</strong></td>
+            <td><span class="agent-type-badge ${meta.cls}">${meta.icon} ${meta.label}</span></td>
+            <td class="cell-endpoint" title="${endpoint}">${endpoint}</td>
+            <td class="cell-desc" title="${desc}">${desc || '-'}</td>
+            <td class="cell-actions">
+                <button class="btn btn-sm btn-ghost" onclick="editAgent('${a.id}')">编辑</button>
+                <button class="btn btn-sm btn-ghost" onclick="testAgentModal('${a.id}')">测试</button>
+                <button class="btn btn-sm btn-ghost" onclick="copyAgent('${a.id}')">复制</button>
+                <button class="btn btn-sm btn-danger-ghost" onclick="deleteAgent('${a.id}')">删除</button>
+            </td>
+        </tr>`;
 }
 
 // ============ 模板弹窗 ============
@@ -287,43 +182,28 @@ async function openTemplateModal() {
     try {
         const res = await utils.api.get('/api/agents/templates');
         if (res.success && res.templates?.length) {
-            const descs = {
-                openai: '支持 GPT-4、GPT-3.5 等模型，填入 API Key 即可使用',
-                claude: '支持 Claude 3 系列模型，Anthropic API',
-                http: '简单的 input→output HTTP 接口，适合自定义后端',
-                custom: '完全自定义请求和响应格式，支持 JSONPath 映射',
-                intent: '车控路由接口，支持意图识别与车辆控制，格式：{"user_id":"...","query":"...","history":[]}',
-            };
             list.innerHTML = res.templates.map(t => `
                 <div class="template-item" onclick="selectTemplate('${t.type}')">
-                    <div class="template-item-icon">${TYPE_META[t.type]?.icon || '⚪'}</div>
-                    <div class="template-item-info">
-                        <div class="template-item-name">${utils.escapeHtml(t.name)}</div>
-                        <div class="template-item-desc">${descs[t.type] || utils.escapeHtml(t.description || '')}</div>
-                    </div>
-                    <div class="template-item-arrow">→</div>
+                    <div class="template-item-name">${TYPE_META[t.type]?.icon || '⚪'} ${utils.escapeHtml(t.name)}</div>
+                    <div class="template-item-desc">${utils.escapeHtml(t.description || '')}</div>
                 </div>`).join('');
         } else {
             list.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div>暂无模板</div></div>';
         }
-    } catch (e) {
+    } catch {
         list.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div>加载失败</div></div>';
     }
 }
 
-function closeTemplateModal() {
-    document.getElementById('template-modal').style.display = 'none';
-}
+function closeTemplateModal() { document.getElementById('template-modal').style.display = 'none'; }
 
 async function selectTemplate(type) {
     closeTemplateModal();
     const res = await utils.api.get(`/api/agents/templates/${type}`);
-    if (res.success && res.template) {
-        openCreateModal(res.template);
-    }
+    if (res.success && res.template) openCreateModal(res.template);
 }
 
-// ============ 创建 / 编辑弹窗 ============
+// ============ 创建 / 编辑 ============
 function openCreateModal(template = null) {
     document.getElementById('agent-modal').style.display = 'flex';
     document.getElementById('modal-title').textContent = template ? '从模板创建' : '新建 Agent';
@@ -338,7 +218,6 @@ function openCreateModal(template = null) {
 async function editAgent(id) {
     const agent = allAgents.find(a => a.id === id);
     if (!agent) return;
-    closeAllMenus();
     document.getElementById('agent-modal').style.display = 'flex';
     document.getElementById('modal-title').textContent = '编辑 Agent';
     clearErrors();
@@ -348,7 +227,6 @@ async function editAgent(id) {
     setTimeout(() => document.getElementById('agent-name').focus(), 0);
 }
 
-// 填充表单（创建/编辑/模板共用）
 function populateForm(agent) {
     document.getElementById('agent-name').value = agent.name || '';
     document.getElementById('agent-type').value = agent.type || 'openai';
@@ -365,12 +243,7 @@ function populateForm(agent) {
     document.getElementById('agent-error-msg-path').value = agent.responseMapping?.errorMessagePath || '';
 }
 
-function cleanConfig(cfg) {
-    // 展示时移除 apiKey（安全考虑）
-    const c = { ...cfg };
-    delete c.apiKey;
-    return c;
-}
+function cleanConfig(cfg) { const c = { ...cfg }; delete c.apiKey; return c; }
 
 function onTypeChange() {
     const type = document.getElementById('agent-type').value;
@@ -379,26 +252,17 @@ function onTypeChange() {
     const endpoint = document.getElementById('agent-endpoint');
 
     if (type === 'openai') {
-        simple.style.display = 'block';
-        advanced.style.display = 'none';
+        simple.style.display = 'block'; advanced.style.display = 'none';
         if (!endpoint.value) endpoint.value = 'https://api.openai.com/v1/chat/completions';
     } else if (type === 'claude') {
-        simple.style.display = 'block';
-        advanced.style.display = 'none';
+        simple.style.display = 'block'; advanced.style.display = 'none';
         if (!endpoint.value) endpoint.value = 'https://api.anthropic.com/v1/messages';
     } else {
-        simple.style.display = 'none';
-        advanced.style.display = 'block';
+        simple.style.display = 'none'; advanced.style.display = 'block';
     }
 }
 
-function closeModal() {
-    document.getElementById('agent-modal').style.display = 'none';
-}
-
-function closeAllMenus() {
-    document.querySelectorAll('.menu-dropdown').forEach(m => m.style.display = 'none');
-}
+function closeModal() { document.getElementById('agent-modal').style.display = 'none'; }
 
 // ============ 表单提交 ============
 function clearErrors() {
@@ -410,7 +274,7 @@ function setSaving(loading) {
     const btn = document.getElementById('save-btn');
     if (!btn) return;
     btn.disabled = loading;
-    btn.textContent = loading ? '⏳ 保存中...' : '💾 保存';
+    btn.textContent = loading ? '保存中...' : '保存';
 }
 
 async function handleSubmit(e) {
@@ -424,8 +288,7 @@ async function handleSubmit(e) {
 
     const type = document.getElementById('agent-type').value;
     const agentData = {
-        name,
-        type,
+        name, type,
         description: document.getElementById('agent-description').value.trim(),
         endpoint,
         timeout: parseInt(document.getElementById('agent-timeout').value) || 30000,
@@ -470,14 +333,13 @@ async function handleSubmit(e) {
         else res = await utils.api.post('/api/agents', agentData);
 
         if (res.success) {
-            utils.toast.success(id ? 'Agent 已更新' : 'Agent 已创建');
+            utils.toast.success(id ? '已更新' : '已创建');
             closeModal();
             await loadAgents();
         } else {
             utils.toast.error(res.error || '保存失败');
         }
     } catch (e) {
-        utils.logError('saveAgent failed', e);
         utils.toast.error('保存失败: ' + e.message);
     } finally {
         setSaving(false);
@@ -497,33 +359,27 @@ function showFieldError(id, msg) {
 // ============ 测试弹窗 ============
 function runQuickTest() {
     currentTestAgentId = '';
-    openTestModal('🧪 快速测试', '你好，请简单介绍一下你自己');
+    openTestModal('🧪 快速测试');
 }
 
 function testAgentModal(id) {
-    closeAllMenus();
     currentTestAgentId = id;
     const agent = allAgents.find(a => a.id === id);
-    const name = agent?.name || 'Agent';
-    openTestModal(`🧪 测试：${name}`, '你好，请简单介绍一下你自己');
+    openTestModal(`🧪 测试：${agent?.name || 'Agent'}`);
 }
 
-function openTestModal(title, defaultInput) {
+function openTestModal(title) {
     document.getElementById('test-modal-title').textContent = title;
     const ctx = document.getElementById('test-context');
     if (currentTestAgentId) {
         const agent = allAgents.find(a => a.id === currentTestAgentId);
         if (agent) {
             const meta = TYPE_META[agent.type] || { label: agent.type, cls: '' };
-            ctx.innerHTML = `<span class="ctx-type ${meta.cls}">${meta.label}</span> <span class="ctx-endpoint">${utils.escapeHtml(agent.endpoint || '')}</span>`;
+            ctx.innerHTML = `<span class="agent-type-badge ${meta.cls}">${meta.label}</span> <span style="font-size:12px;color:var(--text-secondary)">${utils.escapeHtml(agent.endpoint || '')}</span>`;
         } else ctx.innerHTML = '';
     } else {
-        const type = document.getElementById('agent-type').value;
-        const meta = TYPE_META[type] || { label: type, cls: '' };
-        const endpoint = document.getElementById('agent-endpoint').value.trim();
-        ctx.innerHTML = `<span class="ctx-type ${meta.cls}">未保存配置</span> <span class="ctx-endpoint">${utils.escapeHtml(endpoint)}</span>`;
+        ctx.innerHTML = '<span style="font-size:12px;color:var(--text-secondary)">从当前表单配置测试</span>';
     }
-    document.getElementById('test-input').value = defaultInput;
     document.getElementById('test-result').innerHTML = '';
     document.getElementById('test-modal').style.display = 'flex';
     document.getElementById('test-input').focus();
@@ -532,7 +388,7 @@ function openTestModal(title, defaultInput) {
 async function runTest() {
     const input = document.getElementById('test-input').value.trim();
     const resultEl = document.getElementById('test-result');
-    if (!input) { resultEl.innerHTML = '<div class="test-msg error">❌ 请输入内容</div>'; return; }
+    if (!input) { resultEl.innerHTML = '<div class="test-msg error">请输入内容</div>'; return; }
 
     resultEl.innerHTML = '<div class="test-msg pending">⏳ 测试中...</div>';
 
@@ -542,36 +398,23 @@ async function runTest() {
             res = await utils.api.post(`/api/agents/${currentTestAgentId}/test`, { input });
         } else {
             let payload;
-            try {
-                payload = buildConfigFromForm();
-            } catch {
-                resultEl.innerHTML = '<div class="test-msg error">❌ 配置 JSON 格式错误，请检查「请求头」或「配置(JSON)」字段</div>';
-                return;
-            }
+            try { payload = buildConfigFromForm(); }
+            catch { resultEl.innerHTML = '<div class="test-msg error">配置 JSON 格式错误</div>'; return; }
             res = await utils.api.post('/api/agents/test-config', { config: payload, input });
         }
 
         if (res.success) {
             resultEl.innerHTML = `
-                <div class="test-msg success">✅ 成功</div>
-                <div class="test-block">
-                    <div class="test-label">输入</div>
-                    <div class="test-val">${utils.escapeHtml(input)}</div>
-                </div>
-                <div class="test-block">
-                    <div class="test-label">输出</div>
-                    <div class="test-val code">${utils.escapeHtml(res.output || '（无输出）')}</div>
-                </div>
-                ${res.responseTimeMs ? `<div class="test-meta">耗时 ${res.responseTimeMs}ms</div>` : ''}`;
+                <div class="test-msg success">✅ 成功 ${res.responseTimeMs ? `(${res.responseTimeMs}ms)` : ''}</div>
+                <pre class="test-output">${utils.escapeHtml(res.output || '（无输出）')}</pre>`;
         } else {
-            resultEl.innerHTML = `<div class="test-msg error">❌ ${utils.escapeHtml(res.error || res.message || '未知错误')}</div>`;
+            resultEl.innerHTML = `<div class="test-msg error">❌ ${utils.escapeHtml(res.error || '未知错误')}</div>`;
         }
     } catch (e) {
         resultEl.innerHTML = `<div class="test-msg error">❌ ${utils.escapeHtml(e.message)}</div>`;
     }
 }
 
-// 从表单构建 config（快速测试用）
 function buildConfigFromForm() {
     const type = document.getElementById('agent-type').value;
     const endpoint = document.getElementById('agent-endpoint').value.trim();
@@ -583,8 +426,7 @@ function buildConfigFromForm() {
     if (type === 'openai' || type === 'claude') {
         payload.config = {
             apiKey: document.getElementById('agent-api-key').value.trim(),
-            model: document.getElementById('agent-model').value.trim() ||
-                (type === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-sonnet-20240229'),
+            model: document.getElementById('agent-model').value.trim() || 'gpt-3.5-turbo',
         };
     } else {
         if (headersText) payload.headers = JSON.parse(headersText);
@@ -599,9 +441,7 @@ function buildConfigFromForm() {
     return payload;
 }
 
-function closeTestModal() {
-    document.getElementById('test-modal').style.display = 'none';
-}
+function closeTestModal() { document.getElementById('test-modal').style.display = 'none'; }
 
 // ============ 导入 / 导出 ============
 function exportAgents() {
@@ -639,9 +479,8 @@ async function handleImportFile(e) {
     e.target.value = '';
 }
 
-// ============ 复制 ============
+// ============ 复制 / 删除 ============
 async function copyAgent(id) {
-    closeAllMenus();
     const agent = allAgents.find(a => a.id === id);
     if (!agent) return;
     const { id: _, ...payload } = { ...agent, name: agent.name + ' (副本)' };
@@ -649,27 +488,14 @@ async function copyAgent(id) {
         const res = await utils.api.post('/api/agents', payload);
         if (res.success) { utils.toast.success('已创建副本'); await loadAgents(); }
         else utils.toast.error(res.error || '复制失败');
-    } catch (e) {
-        utils.toast.error('复制失败: ' + e.message);
-    }
+    } catch (e) { utils.toast.error('复制失败: ' + e.message); }
 }
 
-// ============ 删除 ============
 async function deleteAgent(id) {
-    closeAllMenus();
-    if (!await utils.confirm('确定要删除这个 Agent 配置吗？')) return;
+    if (!await utils.confirm('确定要删除这个 Agent 吗？')) return;
     try {
         const res = await utils.api.delete(`/api/agents/${id}`);
         if (res.success) { utils.toast.success('已删除'); await loadAgents(); }
         else utils.toast.error(res.error || '删除失败');
-    } catch (e) {
-        utils.logError('deleteAgent failed', e);
-        utils.toast.error('删除失败: ' + e.message);
-    }
-}
-
-// ============ 工具 ============
-function truncate(str, max) {
-    if (!str) return '';
-    return str.length > max ? str.slice(0, max) + '…' : str;
+    } catch (e) { utils.toast.error('删除失败: ' + e.message); }
 }
