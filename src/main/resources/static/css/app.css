@@ -2,52 +2,52 @@
         :root {
             --bg-gradient-start: #667eea;
             --bg-gradient-end: #764ba2;
-            --bg-body: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg-card: white;
+            --bg-body: #f5f7fa;
+            --bg-card: #ffffff;
             --bg-header: transparent;
-            --bg-table-header: #f8f9fa;
-            --bg-table-row-hover: #f8f9fa;
-            --bg-input: white;
+            --bg-table-header: #f0f2f5;
+            --bg-table-row-hover: #f5f7fa;
+            --bg-input: #f8f9fb;
             --bg-loading: white;
-            --text-primary: #333;
-            --text-secondary: #666;
+            --text-primary: #1a1a2e;
+            --text-secondary: #5c6370;
             --text-inverse: white;
-            --border-color: #e0e0e0;
-            --border-focus: #667eea;
-            --primary-color: #667eea;
-            --shadow: 0 10px 30px rgba(0,0,0,0.2);
-            --spinner-border: #f3f3f3;
-            --spinner-top: #667eea;
-            --success-bg: #d4edda;
-            --success-text: #155724;
-            --overlay-bg: rgba(0,0,0,0.5);
+            --border-color: #e2e5ea;
+            --border-focus: #4f6ce8;
+            --primary-color: #4f6ce8;
+            --primary-hover: #3d5bd6;
+            --shadow: 0 2px 12px rgba(0,0,0,0.06);
+            --spinner-border: #e2e5ea;
+            --spinner-top: #4f6ce8;
+            --success-bg: #e8f5e9;
+            --success-text: #1b5e20;
+            --overlay-bg: rgba(15,23,42,0.45);
             --badge-text: white;
             --btn-text: white;
         }
 
         /* Dark Theme */
         [data-theme="dark"] {
-            --bg-gradient-start: #1a1a2e;
-            --bg-gradient-end: #16213e;
-            --bg-body: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --bg-card: #252542;
+            --bg-body: #0f1117;
+            --bg-card: #1a1d28;
             --bg-header: transparent;
-            --bg-table-header: #1e1e36;
-            --bg-table-row-hover: #2d2d4a;
-            --bg-input: #1e1e36;
-            --bg-loading: #252542;
-            --text-primary: #e0e0e0;
-            --text-secondary: #a0a0a0;
-            --text-inverse: #e0e0e0;
-            --border-color: #3d3d5c;
-            --border-focus: #667eea;
-            --primary-color: #667eea;
-            --shadow: 0 10px 30px rgba(0,0,0,0.5);
-            --spinner-border: #3d3d5c;
-            --spinner-top: #667eea;
-            --success-bg: #1e4d3a;
+            --bg-table-header: #151820;
+            --bg-table-row-hover: #1f2333;
+            --bg-input: #151820;
+            --bg-loading: #1a1d28;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8b92a5;
+            --text-inverse: #f0f0f5;
+            --border-color: #2a2e3d;
+            --border-focus: #6b82f0;
+            --primary-color: #6b82f0;
+            --primary-hover: #5a70e0;
+            --shadow: 0 2px 12px rgba(0,0,0,0.3);
+            --spinner-border: #2a2e3d;
+            --spinner-top: #6b82f0;
+            --success-bg: #1a3a2a;
             --success-text: #7ddfb8;
-            --overlay-bg: rgba(0,0,0,0.7);
+            --overlay-bg: rgba(0,0,0,0.6);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1128,11 +1128,13 @@
     .navbar { flex-wrap: wrap; gap: 8px; padding: 10px 14px; }
     .navbar-links { order: 3; width: 100%; justify-content: center; }
     .agents-toolbar { flex-direction: column; align-items: stretch; }
-    .agents-search-input { max-width: none; }
+    .agents-search-wrap { max-width: none; }
     .agents-toolbar-actions { justify-content: stretch; flex-wrap: wrap; }
     .agents-toolbar-actions .btn { flex: 1; justify-content: center; }
+    .agents-toolbar-actions .btn-icon { flex: none; }
+    .toolbar-divider { display: none; }
     .agents-table-wrap { overflow-x: auto; }
-    .agents-table { min-width: 600px; }
+    .agents-table { min-width: 640px; }
     .form-row-2, .form-row-3 { grid-template-columns: 1fr; }
     .modal-panel { max-height: 100vh; border-radius: 14px 14px 0 0; align-self: flex-end; }
     .empty-actions { flex-direction: column; }
