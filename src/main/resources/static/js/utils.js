@@ -249,6 +249,19 @@ const Theme = {
 function toggleTheme() { Theme.toggle(); }
 function loadTheme() { Theme.init(); }
 
+// ============ 导航栏移动端菜单 ============
+function toggleNavMenu() {
+    const links = document.getElementById('nav-links');
+    if (links) links.classList.toggle('show');
+}
+document.addEventListener('click', function(e) {
+    const navbar = e.target.closest('.navbar');
+    if (!navbar) {
+        const links = document.getElementById('nav-links');
+        if (links) links.classList.remove('show');
+    }
+});
+
 // ============ 导出工具 ============
 const Export = {
     json(data, filename) {
