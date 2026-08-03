@@ -1,0 +1,18 @@
+# 生产环境配置：安全优先
+# 使用方式: java -jar agent-eval-lite.jar --spring.profiles.active=prod
+
+# CORS 来源白名单（逗号分隔，留空则仅允许同源）
+# 示例: cors.allowedOrigins=https://your-domain.com,https://app.your-domain.com
+cors:
+  allowedOrigins: ""
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false
+
+logging:
+  level:
+    io.github.panris.agenteval: INFO
+    org.springframework.web: WARN
