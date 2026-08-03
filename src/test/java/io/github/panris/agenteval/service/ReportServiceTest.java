@@ -1,12 +1,11 @@
 package io.github.panris.agenteval.service;
 
+import io.github.panris.agenteval.model.ReportEntity;
+import io.github.panris.agenteval.model.SharedReportEntity;
 import io.github.panris.agenteval.repository.ReportJpaRepository;
 import io.github.panris.agenteval.repository.SharedReportJpaRepository;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.lang.reflect.*;
-import java.nio.file.*;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,60 +13,83 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ReportService.
- * Uses a temp directory via -Dagenteval.data.dir so no file pollution.
- *
- * NOTE: Because DATA_DIR is a static field resolved at class-load time,
- * we set the system property BEFORE the class is loaded.
- * This is why this test class lives in a separate package and uses
- * its own static block.
+ * Uses pure Mockito mocks — no reflection, no file I/O.
  */
 class ReportServiceTest {
 
-    // DATA_DIR is set via JVM argument in pom.xml (agenteval.data.dir=${java.io.tmpdir}/agenteval-test).
-    // The @BeforeEach setUp() method cleans the directory before each test so each test
-    // starts with a truly clean slate. This static block only ensures the directory exists.
-    static {
-        try {
-            Files.createDirectories(Paths.get(System.getProperty("agenteval.data.dir", "data")));
-        } catch (Exception ignored) {}
-    }
-
-    @TempDir
-    Path tempDir;
-
     private ReportService reportService;
+    // In-memory store for the mock JPA repo
+    private final Map<String, ReportEntity> reportStore = new HashMap<>();
+    private final Map<String, SharedReportEntity> sharedStore = new HashMap<>();
 
     @BeforeEach
-    void setUp() throws Exception {
-        // Clean the data directory before each test so each test starts with a clean slate.
-        // ReportService persists to disk on every save, and new instances reload from disk
-        // via @PostConstruct. Without cleaning here, data from previous tests leaks through.
-        Path dataDir = Paths.get(System.getProperty("agenteval.data.dir", "data"));
-        try {
-            Files.createDirectories(dataDir);
-            java.io.File d = dataDir.toFile();
-            java.io.File[] files = d.listFiles();
-            if (files != null) {
-                for (java.io.File f : files) {
-                    f.delete();
-                }
-            }
-        } catch (Exception ignored) {}
-        // Reset the in-memory maps via reflection (ignore already-loaded data from other tests)
+    void setUp() {
+        reportStore.clear();
+        sharedStore.clear();
+
         ReportJpaRepository mockReportJpaRepo = mock(ReportJpaRepository.class);
         SharedReportJpaRepository mockSharedReportJpaRepo = mock(SharedReportJpaRepository.class);
-        reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
-        Field historyField = ReportService.class.getDeclaredField("reportHistory");
-        historyField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        Map<String, Map<String, Object>> history = (Map<String, Map<String, Object>>) historyField.get(reportService);
-        history.clear();
 
-        Field sharedField = ReportService.class.getDeclaredField("sharedReports");
-        sharedField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        Map<String, String> shared = (Map<String, String>) sharedField.get(reportService);
-        shared.clear();
+        // findById: return stored entity if exists, otherwise empty (standard JPA behavior)
+        when(mockReportJpaRepo.findById(anyString()))
+            .thenAnswer(inv -> Optional.ofNullable(reportStore.get(inv.getArgument(0))));
+
+        doAnswer(inv -> {
+            // save() always writes the current state of the entity into the store
+            ReportEntity entity = inv.getArgument(0);
+            reportStore.put(entity.getId(), entity);
+            return entity;
+        }).when(mockReportJpaRepo).save(any(ReportEntity.class));
+        // deleteById: remove from store (covers deleteReport)
+        doAnswer(inv -> reportStore.remove(inv.getArgument(0))).when(mockReportJpaRepo).deleteById(anyString());
+        // deleteAll: clear store (covers clearAllReports)
+        doAnswer(inv -> { reportStore.clear(); return null; }).when(mockReportJpaRepo).deleteAll();
+
+        when(mockReportJpaRepo.findAllOrderByTimestampDesc())
+            .thenAnswer(inv -> {
+                // Live snapshot — reads current store contents at call time
+                List<ReportEntity> sorted = new ArrayList<>(reportStore.values());
+                sorted.sort((a, b) -> Long.compare(
+                    a.getTimestamp() != null ? a.getTimestamp() : 0L,
+                    b.getTimestamp() != null ? b.getTimestamp() : 0L));
+                return sorted;
+            });
+        // count: needed by cleanupOldReports
+        when(mockReportJpaRepo.count()).thenAnswer(inv -> (long) reportStore.size());
+        // existsById: needed by createShareLink
+        when(mockReportJpaRepo.existsById(anyString())).thenAnswer(inv -> reportStore.containsKey(inv.getArgument(0)));
+        // findByFavoriteTrue: needed by getFavorites (fallback path)
+        when(mockReportJpaRepo.findByFavoriteTrue()).thenAnswer(inv -> reportStore.values().stream()
+            .filter(e -> Boolean.TRUE.equals(e.getFavorite())).collect(java.util.stream.Collectors.toList()));
+        // findFavoritesOrderByTimestampDesc: needed by getFavorites
+        when(mockReportJpaRepo.findFavoritesOrderByTimestampDesc())
+            .thenAnswer(inv -> reportStore.values().stream()
+                .filter(e -> Boolean.TRUE.equals(e.getFavorite()))
+                .sorted((a, b) -> Long.compare(
+                    a.getTimestamp() != null ? a.getTimestamp() : 0L,
+                    b.getTimestamp() != null ? b.getTimestamp() : 0L))
+                .collect(java.util.stream.Collectors.toList()));
+
+        // findByReportId: return shares for the given reportId (used by deleteReport cascade)
+        when(mockSharedReportJpaRepo.findByReportId(anyString()))
+            .thenAnswer(inv -> sharedStore.values().stream()
+                .filter(e -> inv.getArgument(0).equals(e.getReportId()))
+                .collect(java.util.stream.Collectors.toList()));
+        when(mockSharedReportJpaRepo.findById(anyString()))
+            .thenAnswer(inv -> Optional.ofNullable(sharedStore.get(inv.getArgument(0))));
+        doAnswer(inv -> {
+            SharedReportEntity e = inv.getArgument(0);
+            sharedStore.put(e.getShareId(), e);
+            return e;
+        }).when(mockSharedReportJpaRepo).save(any(SharedReportEntity.class));
+        doNothing().when(mockSharedReportJpaRepo).deleteAll();
+        doAnswer(inv -> {
+            ((List<SharedReportEntity>) inv.getArgument(0))
+                .forEach(e -> sharedStore.remove(e.getShareId()));
+            return null;
+        }).when(mockSharedReportJpaRepo).deleteAll(anyList());
+
+        reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
     }
 
     // ============ Delete / sharedReports cascade ============

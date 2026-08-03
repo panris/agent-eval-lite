@@ -54,7 +54,8 @@ public class ReportService {
         entity.setPassedTestCases(getIntValue(report, "passedTestCases", "passed_test_cases"));
         entity.setFailedTestCases(getIntValue(report, "failedTestCases", "failed_test_cases"));
         entity.setExecutionTimeMs(getLongValue(report, "executionTimeMs", "execution_time_ms"));
-        entity.setTimestamp(getLongValue(report, "timestamp"));
+        Long ts = getLongValue(report, "timestamp");
+        entity.setTimestamp(ts != null ? ts : System.currentTimeMillis());
         entity.setFavorite((Boolean) report.getOrDefault("favorite", false));
         entity.setNote((String) report.get("note"));
         entity.setGroup((String) report.get("group"));
@@ -460,11 +461,16 @@ public class ReportService {
 
             List<ReportEntity> sorted = reportJpaRepository.findAllOrderByTimestampDesc();
             int toRemove = (int) (count - maxReports);
-            
-            for (int i = sorted.size() - 1; i >= sorted.size() - toRemove; i--) {
+            // findAllOrderByTimestampDesc returns ASCENDING order (oldest first),
+            // so delete from the beginning to remove the oldest reports
+            for (int i = 0; i < toRemove; i++) {
                 String id = sorted.get(i).getId();
                 reportJpaRepository.deleteById(id);
-                removeShareByReportId(id);
+                try {
+                    removeShareByReportId(id);
+                } catch (Exception e) {
+                    log.warn("清理分享链接失败 (reportId={}): {}", id, e.getMessage());
+                }
             }
             log.info("自动清理 {} 条旧报告，保留最近 {} 条", toRemove, maxReports);
         } catch (Exception e) {
