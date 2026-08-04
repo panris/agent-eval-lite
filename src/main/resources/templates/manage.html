@@ -86,22 +86,22 @@
                 <button class="btn btn-primary" onclick="createTestCase()">添加</button>
             </div>
 
-            <div class="form-row" style="margin-top: 8px;">
-                <input type="text" class="form-control" id="case-project" placeholder="项目（三维分组）" list="project-list" style="flex: 1; min-width: 120px;">
-                <input type="text" class="form-control" id="case-module" placeholder="模块（三维分组）" list="module-list" style="flex: 1; min-width: 120px;">
-                <input type="text" class="form-control" id="case-function" placeholder="功能（三维分组）" list="function-list" style="flex: 1; min-width: 120px;">
+            <div class="form-row u-margin-top-8px">
+                <input type="text" id="case-project" placeholder="项目（三维分组）" list="project-list" class="form-control u-flex-1 u-min-width-120px">
+                <input type="text" id="case-module" placeholder="模块（三维分组）" list="module-list" class="form-control u-flex-1 u-min-width-120px">
+                <input type="text" id="case-function" placeholder="功能（三维分组）" list="function-list" class="form-control u-flex-1 u-min-width-120px">
                 <datalist id="project-list"></datalist>
                 <datalist id="module-list"></datalist>
                 <datalist id="function-list"></datalist>
             </div>
 
-            <div class="form-row" style="margin-top: 8px;">
-                <textarea class="form-control" id="case-description" placeholder="用例说明" rows="2"
-                    style="resize: vertical; width: 100%; font-size: 13px;"></textarea>
+            <div class="form-row u-margin-top-8px">
+                <textarea id="case-description" placeholder="用例说明" rows="2"
+                    class="form-control u-resize-vertical u-width-100 u-font-size-13px"></textarea>
             </div>
 
-            <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
-                <input type="text" class="form-control" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" style="flex: 1; min-width: 200px;">
+            <div class="u-margin-bottom-15px u-display-flex u-gap-10px u-flex-wrap-wrap">
+                <input type="text" id="case-search" placeholder="🔍 搜索测试用例" onkeyup="filterTestCases()" class="form-control u-flex-1 u-min-width-200px">
                 <button class="btn btn-success btn-sm" onclick="exportAllTestCases('json')">📤 导出 JSON</button>
                 <button class="btn btn-success btn-sm" onclick="exportAllTestCases('csv')">📤 导出 CSV</button>
                 <button class="btn btn-success btn-sm" onclick="exportTestCasesExcel()">📊 导出 Excel</button>
@@ -130,10 +130,10 @@
             </table>
 
             <!-- 分页 -->
-            <div id="cases-pagination" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
-                <span id="cases-pagination-info" style="color: var(--text-secondary); font-size: 13px;"></span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <select id="cases-page-size" class="form-control" style="width: auto; padding: 4px 8px; font-size: 13px;" onchange="tcGoToPage(1)">
+            <div id="cases-pagination" class="u-display-flex u-justify-content-space-between u-align-items-center u-flex-wrap-wrap u-gap-10px u-margin-top-15px">
+                <span id="cases-pagination-info" class="u-color-var-text-secondary u-font-size-13px"></span>
+                <div class="u-display-flex u-align-items-center u-gap-6px">
+                    <select id="cases-page-size" onchange="tcGoToPage(1)" class="form-control u-width-auto u-padding-4px-8px u-font-size-13px">
                         <option value="10">10条/页</option>
                         <option value="20" selected>20条/页</option>
                         <option value="50">50条/页</option>
@@ -145,11 +145,11 @@
                 </div>
             </div>
 
-            <div style="margin-top: 15px; padding: 15px; background: var(--bg-checkbox-item); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <span style="color: var(--text-secondary);">
+            <div class="u-margin-top-15px u-padding-15px u-background-var-bg-checkbox-item u-border-radius-8px u-display-flex u-justify-content-space-between u-align-items-center u-flex-wrap-wrap u-gap-10px">
+                <span class="u-color-var-text-secondary">
                     已选择 <span id="selected-case-count">0</span> 个用例
                 </span>
-                <div style="display: flex; gap: 10px;">
+                <div class="u-display-flex u-gap-10px">
                     <button class="btn btn-success btn-sm" onclick="openRequirementModal()">📝 从需求生成</button>
                     <button class="btn btn-success btn-sm" onclick="openImportExcelModal()">📥 导入 Excel</button>
                     <button class="btn btn-primary btn-sm" onclick="runSelectedEvaluation()">🚀 评测选中用例</button>
@@ -167,8 +167,8 @@
             <h2 class="card-title">选择性评测</h2>
 
             <div class="action-bar">
-                <div class="metric-checkboxes" style="display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <label style="font-size: 12px; color: var(--text-secondary);">指标:</label>
+                <div class="metric-checkboxes u-display-inline-flex u-gap-8px u-align-items-center u-flex-wrap-wrap">
+                <label class="u-font-size-12px u-color-var-text-secondary">指标:</label>
                 <label><input type="checkbox" class="eval-metric" value="correctness" checked> 正确性</label>
                 <label><input type="checkbox" class="eval-metric" value="llm"> LLM</label>
                 <label><input type="checkbox" class="eval-metric" value="safety"> 安全</label>
@@ -177,18 +177,18 @@
                 <label><input type="checkbox" class="eval-metric" value="rouge"> ROUGE</label>
                 <label><input type="checkbox" class="eval-metric" value="similarity"> 相似度</label>
                 </div>
-                <span style="color: var(--text-secondary); font-size: 13px; margin-right: 10px;">
-                    已选中 <span id="eval-selected-count" style="color: var(--text-primary); font-weight: 600;">0</span> 个用例
+                <span class="u-color-var-text-secondary u-font-size-13px u-margin-right-10px">
+                    已选中 <span id="eval-selected-count" class="u-color-var-text-primary u-font-weight-600">0</span> 个用例
                 </span>
                 <button class="btn btn-success" onclick="runEvaluation()">▶ 运行选中用例</button>
-                <select class="form-control" id="eval-agent" style="width: auto;"><option value="">Agent(演示)</option></select>
-                <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
-                <select class="form-control" id="eval-project" style="width: auto;" onchange="loadDimensionCases()"><option value="">项目(任意)</option></select>
-                <select class="form-control" id="eval-module" style="width: auto;" onchange="loadDimensionCases()"><option value="">模块(任意)</option></select>
-                <select class="form-control" id="eval-function" style="width: auto;" onchange="loadDimensionCases()"><option value="">功能(任意)</option></select>
+                <select id="eval-agent" class="form-control u-width-auto"><option value="">Agent(演示)</option></select>
+                <span class="u-width-1px u-height-24px u-background-var-border-color u-margin-0-4px"></span>
+                <select id="eval-project" onchange="loadDimensionCases()" class="form-control u-width-auto"><option value="">项目(任意)</option></select>
+                <select id="eval-module" onchange="loadDimensionCases()" class="form-control u-width-auto"><option value="">模块(任意)</option></select>
+                <select id="eval-function" onchange="loadDimensionCases()" class="form-control u-width-auto"><option value="">功能(任意)</option></select>
                 <button class="btn btn-warning" onclick="runDimensionEvaluation()">按维度评测</button>
-                <span style="width: 1px; height: 24px; background: var(--border-color); margin: 0 4px;"></span>
-                <select class="form-control" id="eval-config" style="width: auto;"><option value="">评测模型(默认算法)</option></select>
+                <span class="u-width-1px u-height-24px u-background-var-border-color u-margin-0-4px"></span>
+                <select id="eval-config" class="form-control u-width-auto"><option value="">评测模型(默认算法)</option></select>
             </div>
 
             <div class="loading" id="eval-loading">
@@ -196,8 +196,8 @@
                 <p>评测中...</p>
             </div>
 
-            <div id="eval-result" style="display: none;">
-                <div style="margin-bottom: 10px;">
+            <div id="eval-result" class="u-display-none">
+                <div class="u-margin-bottom-10px">
                     ✅ 评测完成!通过率: <span id="pass-rate">0%</span>
                 </div>
                 <div class="chart-container">
@@ -220,10 +220,10 @@
                 <button class="btn btn-success btn-sm" onclick="exportReportPdf()">📄 导出 PDF</button>
             </div>
 
-            <div id="eval-details" style="display: none; margin-bottom: 20px;">
-                <h3 style="color: var(--text-primary); margin-bottom: 15px;">评测详情</h3>
-                <div id="report-meta" style="display: none; margin-bottom: 15px; padding: 10px 14px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <span style="color: var(--text-secondary); font-size: 13px; margin-right: 6px;">分组维度:</span>
+            <div id="eval-details" class="u-display-none u-margin-bottom-20px">
+                <h3 class="u-color-var-text-primary u-margin-bottom-15px">评测详情</h3>
+                <div id="report-meta" class="u-display-none u-margin-bottom-15px u-padding-10px-14px u-background-var-bg-secondary u-border-radius-8px u-border-1px-solid-var-border-color">
+                    <span class="u-color-var-text-secondary u-font-size-13px u-margin-right-6px">分组维度:</span>
                     <span id="report-meta-group"></span>
                     <span id="report-meta-dims"></span>
                 </div>
@@ -261,51 +261,51 @@
         <!-- 评测历史 -->
         <div id="history-card" class="card">
             <h2 class="card-title">评测历史记录
-                <button id="sort-btn" class="btn btn-sm" onclick="toggleSort()" style="margin-left: 10px; font-size: 12px;" title="切换排序">↕️ 最新优先</button>
-                <button class="btn btn-sm" onclick="openAsyncTasksModal()" style="margin-left: 6px; font-size: 12px; background:#6f42c1; color:white;">⚡ 任务监控</button>
+                <button id="sort-btn" onclick="toggleSort()" title="切换排序" class="btn btn-sm u-margin-left-10px u-font-size-12px">↕️ 最新优先</button>
+                <button onclick="openAsyncTasksModal()" class="btn btn-sm u-margin-left-6px u-font-size-12px u-background-6f42c1 u-color-white">⚡ 任务监控</button>
             </h2>
 
             <!-- 趋势图表 -->
-            <div class="chart-container" style="margin-bottom: 20px;">
-                <div class="chart-box" style="flex: 2; max-width: 100%;">
+            <div class="chart-container u-margin-bottom-20px">
+                <div class="chart-box u-flex-2 u-max-width-100">
                     <div class="chart-title">📈 评测趋势</div>
-                    <div class="chart-wrapper" style="height: 200px;">
+                    <div class="chart-wrapper u-height-200px">
                         <canvas id="trend-chart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="action-bar" style="margin-bottom: 15px;">
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <div style="position: relative; display: inline-block;">
-                        <input type="text" id="history-search" class="form-control" placeholder="🔍 搜索报告..."
-                            style="width: 200px; padding-right: 28px;" oninput="onHistorySearch(); utils.toggleClearBtn('history-search','history-search-clr')">
+            <div class="action-bar u-margin-bottom-15px">
+                <div class="u-display-flex u-gap-10px u-align-items-center u-flex-wrap-wrap">
+                    <div class="u-position-relative u-display-inline-block">
+                        <input type="text" id="history-search" placeholder="🔍 搜索报告..."
+                            oninput="onHistorySearch(); utils.toggleClearBtn('history-search','history-search-clr')" class="form-control u-width-200px u-padding-right-28px">
                         <button id="history-search-clr" type="button" onclick="utils.clearInput('history-search'); onHistorySearch()"
-                            style="display:none; position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; color:var(--text-secondary); line-height:1;">×</button>
+                            class="u-display-none u-position-absolute u-right-6px u-top-50 u-transform-translatey-50 u-background-none u-border-none u-cursor-pointer u-font-size-16px u-color-var-text-secondary u-line-height-1">×</button>
                     </div>
-                    <select id="history-filter" class="form-control" style="width: 120px;" onchange="_reportPage=1;filterHistory()">
+                    <select id="history-filter" onchange="_reportPage=1;filterHistory()" class="form-control u-width-120px">
                         <option value="">全部报告</option>
                         <option value="favorites">⭐ 收藏</option>
                         <option value="passed">✅ 已通过</option>
                         <option value="failed">❌ 未通过</option>
                     </select>
-                    <div style="display: flex; gap: 5px; align-items: center;">
-                        <input type="date" id="history-date-start" class="form-control" style="width: 140px;" onchange="filterHistory()">
+                    <div class="u-display-flex u-gap-5px u-align-items-center">
+                        <input type="date" id="history-date-start" onchange="filterHistory()" class="form-control u-width-140px">
                         <span>至</span>
-                        <input type="date" id="history-date-end" class="form-control" style="width: 140px;" onchange="filterHistory()">
+                        <input type="date" id="history-date-end" onchange="filterHistory()" class="form-control u-width-140px">
                     </div>
-                    <select id="history-project" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
+                    <select id="history-project" onchange="_reportPage=1;loadHistory()" class="form-control u-width-110px">
                         <option value="">全部项目</option>
                     </select>
-                    <select id="history-module" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
+                    <select id="history-module" onchange="_reportPage=1;loadHistory()" class="form-control u-width-110px">
                         <option value="">全部模块</option>
                     </select>
-                    <select id="history-function" class="form-control" style="width: 110px;" onchange="_reportPage=1;loadHistory()">
+                    <select id="history-function" onchange="_reportPage=1;loadHistory()" class="form-control u-width-110px">
                         <option value="">全部功能</option>
                     </select>
-                    <button class="btn btn-sm" onclick="clearDateFilter()" style="padding: 8px 12px;">清除筛选</button>
+                    <button onclick="clearDateFilter()" class="btn btn-sm u-padding-8px-12px">清除筛选</button>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div class="u-display-flex u-gap-10px">
                     <button class="btn btn-sm" onclick="compareSelectedReports()">📊 对比选中</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteSelectedReports()">🗑️ 删除选中</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteAllReports()">⚠️ 清空全部</button>
@@ -317,23 +317,23 @@
                 <p>加载中...</p>
             </div>
 
-            <div id="history-stats" style="margin-bottom: 8px; color: var(--text-secondary); font-size: 13px; display:inline;"></div>
-            <div id="history-pagination" style="display: flex; gap: 6px; align-items: center; justify-content: flex-end; margin-bottom: 8px;">
-                <select id="page-size" class="form-control" style="width: 80px;" onchange="_reportPage=1;loadHistory()">
+            <div id="history-stats" class="u-margin-bottom-8px u-color-var-text-secondary u-font-size-13px u-display-inline"></div>
+            <div id="history-pagination" class="u-display-flex u-gap-6px u-align-items-center u-justify-content-flex-end u-margin-bottom-8px">
+                <select id="page-size" onchange="_reportPage=1;loadHistory()" class="form-control u-width-80px">
                     <option value="10">10/页</option>
                     <option value="20" selected>20/页</option>
                     <option value="50">50/页</option>
                     <option value="100">100/页</option>
                 </select>
                 <button class="btn btn-sm" id="page-prev" onclick="goToPage(_reportPage-1)" disabled>◀ 上一页</button>
-                <span id="page-info" style="font-size:13px;color:var(--text-secondary);min-width:80px;text-align:center;">第 1 / 1 页</span>
+                <span id="page-info" class="u-font-size-13px u-color-var-text-secondary u-min-width-80px u-text-align-center">第 1 / 1 页</span>
                 <button class="btn btn-sm" id="page-next" onclick="goToPage(_reportPage+1)" disabled>下一页 ▶</button>
             </div>
 
             <table class="table" id="history-table">
                 <thead>
                     <tr>
-                        <th style="width: 40px;"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
+                        <th class="u-width-40px"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
                         <th>报告ID</th>
                         <th>时间</th>
                         <th>通过率</th>
@@ -350,12 +350,12 @@
     </div>
 
     <!-- 批量添加到分组模态框 -->
-    <div id="add-to-group-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000;">
-        <div style="position: relative; width: 80%; max-width: 800px; margin: 50px auto; padding: 30px; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
+    <div id="add-to-group-modal" class="u-display-none u-position-fixed u-top-0 u-left-0 u-width-100 u-height-100 u-z-index-1000">
+        <div class="u-position-relative u-width-80 u-max-width-800px u-margin-50px-auto u-padding-30px u-border-radius-12px u-max-height-80vh u-overflow-y-auto">
             <h2>批量添加用例到分组</h2>
-            <button onclick="closeAddToGroupModal()" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            <button onclick="closeAddToGroupModal()" class="u-position-absolute u-top-20px u-right-20px u-background-none u-border-none u-font-size-24px u-cursor-pointer">×</button>
 
-            <table class="table" style="margin-top: 20px;">
+            <table class="table u-margin-top-20px">
                 <thead>
                     <tr>
                         <th class="checkbox-cell"><input type="checkbox" id="modal-select-all" onchange="toggleModalSelectAll()"></th>
@@ -367,84 +367,84 @@
                 <tbody id="modal-cases-tbody"></tbody>
             </table>
 
-            <div style="margin-top: 20px; text-align: right;">
+            <div class="u-margin-top-20px u-text-align-right">
                 <button class="btn btn-success" onclick="addSelectedToGroup()">添加选中</button>
-                <button class="btn" onclick="closeAddToGroupModal()" style="margin-left: 10px; background: #6c757d; color: white;">取消</button>
+                <button onclick="closeAddToGroupModal()" class="btn u-margin-left-10px u-background-6c757d u-color-white">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 标签编辑模态框 -->
-    <div id="tags-modal" class="confirm-overlay" style="display: none;">
+    <div id="tags-modal" class="confirm-overlay u-display-none">
         <div class="confirm-dialog">
             <h3>📌 编辑标签</h3>
             <input type="hidden" id="tags-report-id">
-            <div style="margin: 15px 0;">
+            <div class="u-margin-15px-0">
                 <input type="text" id="tags-input" class="form-control" placeholder="输入标签后按回车添加"
                     onkeypress="if(event.key==='Enter'){addTag();event.preventDefault();}">
             </div>
-            <div id="tags-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; min-height: 30px;"></div>
-            <div style="text-align: right;">
+            <div id="tags-list" class="u-display-flex u-gap-8px u-flex-wrap-wrap u-margin-bottom-15px u-min-height-30px"></div>
+            <div class="u-text-align-right">
                 <button class="btn btn-primary btn-sm" onclick="saveTags()">保存</button>
-                <button class="btn btn-sm" onclick="closeTagsModal()" style="background: #6c757d; color: white;">取消</button>
+                <button onclick="closeTagsModal()" class="btn btn-sm u-background-6c757d u-color-white">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 测试用例标签模态框 -->
-    <div id="case-tags-modal" class="confirm-overlay" style="display: none;">
+    <div id="case-tags-modal" class="confirm-overlay u-display-none">
         <div class="confirm-dialog">
             <h3>🏷️ 编辑用例标签</h3>
             <input type="hidden" id="case-tags-report-id">
-            <div style="margin: 15px 0;">
+            <div class="u-margin-15px-0">
                 <input type="text" id="case-tags-input" class="form-control" placeholder="输入标签后按回车添加"
                     onkeypress="if(event.key==='Enter'){addCaseTag();event.preventDefault();}">
             </div>
-            <div id="case-tags-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; min-height: 30px;"></div>
-            <div style="text-align: right;">
+            <div id="case-tags-list" class="u-display-flex u-gap-8px u-flex-wrap-wrap u-margin-bottom-15px u-min-height-30px"></div>
+            <div class="u-text-align-right">
                 <button class="btn btn-primary btn-sm" onclick="saveCaseTags()">保存</button>
-                <button class="btn btn-sm" onclick="closeCaseTagsModal()" style="background: #6c757d; color: white;">取消</button>
+                <button onclick="closeCaseTagsModal()" class="btn btn-sm u-background-6c757d u-color-white">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 备注编辑模态框 -->
-    <div id="note-modal" class="confirm-overlay" style="display: none;">
+    <div id="note-modal" class="confirm-overlay u-display-none">
         <div class="confirm-dialog">
             <h3>📝 编辑备注</h3>
             <input type="hidden" id="note-report-id">
-            <div style="margin: 15px 0;">
-                <textarea id="note-input" class="form-control" rows="4" placeholder="输入备注..." style="resize: vertical;"></textarea>
+            <div class="u-margin-15px-0">
+                <textarea id="note-input" rows="4" placeholder="输入备注..." class="form-control u-resize-vertical"></textarea>
             </div>
-            <div style="text-align: right;">
+            <div class="u-text-align-right">
                 <button class="btn btn-primary btn-sm" onclick="saveNote()">保存</button>
-                <button class="btn btn-sm" onclick="closeNoteModal()" style="background: #6c757d; color: white;">取消</button>
+                <button onclick="closeNoteModal()" class="btn btn-sm u-background-6c757d u-color-white">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 批量编辑模态框 -->
-    <div id="batch-edit-modal" class="confirm-overlay" style="display: none;">
-        <div class="confirm-dialog" style="max-width: 600px;">
+    <div id="batch-edit-modal" class="confirm-overlay u-display-none">
+        <div class="confirm-dialog u-max-width-600px">
             <h3>✏️ 批量编辑测试用例</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 15px;">将为选中的 <span id="batch-edit-count">0</span> 个用例应用以下修改:</p>
+            <p class="u-color-var-text-secondary u-margin-bottom-15px">将为选中的 <span id="batch-edit-count">0</span> 个用例应用以下修改:</p>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-name-enabled" onchange="toggleBatchEditField('name')"> 名称
                 </label>
                 <input type="text" id="batch-edit-name" class="form-control" placeholder="统一修改为..." disabled>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-expected-enabled" onchange="toggleBatchEditField('expected')"> 期望输出
                 </label>
                 <input type="text" id="batch-edit-expected" class="form-control" placeholder="统一修改为..." disabled>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-group-enabled" onchange="toggleBatchEditField('group')"> 分组
                 </label>
                 <select id="batch-edit-group" class="form-control" disabled>
@@ -452,12 +452,12 @@
                 </select>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-tags-enabled" onchange="toggleBatchEditField('tags')"> 标签
                 </label>
-                <div style="display: flex; gap: 10px;">
-                    <select id="batch-edit-tags-action" class="form-control" style="width: 120px;" onchange="toggleBatchTagsAction()">
+                <div class="u-display-flex u-gap-10px">
+                    <select id="batch-edit-tags-action" onchange="toggleBatchTagsAction()" class="form-control u-width-120px">
                         <option value="add">添加标签</option>
                         <option value="remove">移除标签</option>
                         <option value="replace">替换标签</option>
@@ -466,52 +466,52 @@
                 </div>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-project-enabled" onchange="toggleBatchEditField('project')"> 项目(三维分组)
                 </label>
                 <input type="text" id="batch-edit-project" class="form-control" placeholder="统一修改为..." list="project-list" disabled>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-module-enabled" onchange="toggleBatchEditField('module')"> 模块(三维分组)
                 </label>
                 <input type="text" id="batch-edit-module" class="form-control" placeholder="统一修改为..." list="module-list" disabled>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-function-enabled" onchange="toggleBatchEditField('function')"> 功能(三维分组)
                 </label>
                 <input type="text" id="batch-edit-function" class="form-control" placeholder="统一修改为…" list="function-list" disabled>
             </div>
 
-            <div style="margin: 15px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary);">
+            <div class="u-margin-15px-0">
+                <label class="u-display-block u-margin-bottom-8px u-font-weight-600 u-color-var-text-primary">
                     <input type="checkbox" id="batch-edit-description-enabled" onchange="toggleBatchEditField('description')"> 用例说明
                 </label>
-                <textarea id="batch-edit-description" class="form-control" placeholder="统一修改为…" rows="2" disabled
-                    style="resize: vertical;"></textarea>
+                <textarea id="batch-edit-description" placeholder="统一修改为…" rows="2" disabled
+                    class="form-control u-resize-vertical"></textarea>
             </div>
 
-            <div style="text-align: right; margin-top: 20px;">
+            <div class="u-text-align-right u-margin-top-20px">
                 <button class="btn btn-primary btn-sm" onclick="applyBatchEdit()">应用修改</button>
-                <button class="btn btn-sm" onclick="closeBatchEditModal()" style="background: #6c757d; color: white;">取消</button>
+                <button onclick="closeBatchEditModal()" class="btn btn-sm u-background-6c757d u-color-white">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 异步任务监控模态框 -->
-    <div id="async-tasks-modal" class="confirm-overlay" style="display: none;">
-        <div class="confirm-dialog" style="max-width: 560px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                <h3 style="margin:0;">⚡ 异步评测任务</h3>
-                <button onclick="closeAsyncTasksModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-secondary);">&times;</button>
+    <div id="async-tasks-modal" class="confirm-overlay u-display-none">
+        <div class="confirm-dialog u-max-width-560px">
+            <div class="u-display-flex u-justify-content-space-between u-align-items-center u-margin-bottom-16px">
+                <h3 class="u-margin-0">⚡ 异步评测任务</h3>
+                <button onclick="closeAsyncTasksModal()" class="u-background-none u-border-none u-font-size-22px u-cursor-pointer u-color-var-text-secondary">&times;</button>
             </div>
-            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">运行中的任务每2秒自动刷新，完成后自动停止轮询</p>
-            <div id="async-tasks-body" style="max-height:400px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px;margin-bottom:16px;"></div>
-            <div style="text-align:right;">
+            <p class="u-color-var-text-secondary u-font-size-13px u-margin-bottom-12px">运行中的任务每2秒自动刷新，完成后自动停止轮询</p>
+            <div id="async-tasks-body" class="u-max-height-400px u-overflow-y-auto u-border-1px-solid-var-border-color u-border-radius-8px u-margin-bottom-16px"></div>
+            <div class="u-text-align-right">
                 <button class="btn btn-secondary btn-sm" onclick="pollAsyncTasks()">🔄 刷新</button>
                 <button class="btn btn-cancel" onclick="closeAsyncTasksModal()">关闭</button>
             </div>
@@ -519,39 +519,39 @@
     </div>
 
     <!-- 导入 Excel 模态框 -->
-    <div id="import-excel-modal" class="confirm-overlay" style="display: none;">
-        <div class="confirm-dialog" style="max-width: 500px;">
+    <div id="import-excel-modal" class="confirm-overlay u-display-none">
+        <div class="confirm-dialog u-max-width-500px">
             <h3>📥 导入测试用例</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 15px;">支持 .xlsx / .csv 格式</p>
+            <p class="u-color-var-text-secondary u-margin-bottom-15px">支持 .xlsx / .csv 格式</p>
 
-            <div style="margin: 20px 0;">
+            <div class="u-margin-20px-0">
                 <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv"
-                    style="padding: 10px; border: 2px dashed var(--border-color); border-radius: 8px; width: 100%; cursor: pointer;">
+                    class="u-padding-10px u-border-2px-dashed-var-border-color u-border-radius-8px u-width-100 u-cursor-pointer">
             </div>
 
-            <p style="color: var(--text-secondary); font-size: 12px;">
+            <p class="u-color-var-text-secondary u-font-size-12px">
                 Excel 列顺序:名称 | 输入 | 期望输出 | 分组 | 项目 | 模块 | 功能<br>
                 CSV 格式:name,input,expected,group,project,module,function(首行可为表头)
             </p>
 
-            <div style="text-align: right; margin-top: 20px;">
+            <div class="u-text-align-right u-margin-top-20px">
                 <button class="btn btn-primary btn-sm" onclick="importTestCasesExcel()">导入</button>
-                <button class="btn btn-sm" onclick="closeImportExcelModal()" style="background: #6c757d; color: white;">取消</button>
+                <button onclick="closeImportExcelModal()" class="btn btn-sm u-background-6c757d u-color-white">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 从需求生成测试用例模态框 -->
-    <div id="requirement-modal" class="confirm-overlay" style="display: none;">
-        <div class="confirm-dialog" style="max-width: 800px; width: 95%;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="margin: 0;">📝 从需求文档生成测试用例</h3>
-                <button onclick="closeRequirementModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); line-height: 1;">&times;</button>
+    <div id="requirement-modal" class="confirm-overlay u-display-none">
+        <div class="confirm-dialog u-max-width-800px u-width-95">
+            <div class="u-display-flex u-justify-content-space-between u-align-items-center u-margin-bottom-16px">
+                <h3 class="u-margin-0">📝 从需求文档生成测试用例</h3>
+                <button onclick="closeRequirementModal()" class="u-background-none u-border-none u-font-size-24px u-cursor-pointer u-color-var-text-secondary u-line-height-1">&times;</button>
             </div>
 
-            <div style="margin-bottom: 12px;">
-                <label style="display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-primary); font-size: 14px;">需求文档内容</label>
-                <textarea id="req-text" class="form-control" rows="10"
+            <div class="u-margin-bottom-12px">
+                <label class="u-display-block u-margin-bottom-6px u-font-weight-600 u-color-var-text-primary u-font-size-14px">需求文档内容</label>
+                <textarea id="req-text" rows="10"
                     placeholder="粘贴需求文档内容，支持 Markdown 格式...
 
 格式示例：
@@ -559,27 +559,27 @@
 ### 登录成功
 输入：admin / 123456
 期望：返回 token，状态码 200"
-                    style="resize: vertical; width: 100%; font-family: monospace; font-size: 13px;"></textarea>
+                    class="form-control u-resize-vertical u-width-100 u-font-family-monospace u-font-size-13px"></textarea>
             </div>
 
-            <div style="margin-bottom: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+            <div class="u-margin-bottom-12px u-display-grid u-grid-template-columns-1fr-1fr-1fr-1fr u-gap-8px">
                 <input type="text" id="req-project" class="form-control" placeholder="项目（默认）" list="project-list">
                 <input type="text" id="req-module" class="form-control" placeholder="模块（默认）" list="module-list">
                 <input type="text" id="req-function" class="form-control" placeholder="功能（默认）" list="function-list">
                 <input type="text" id="req-group" class="form-control" placeholder="分组（默认）">
             </div>
 
-            <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center;">
+            <div class="u-margin-bottom-12px u-display-flex u-gap-10px u-align-items-center">
                 <button class="btn btn-primary" onclick="parseRequirement()" id="req-parse-btn">🔍 解析生成</button>
                 <button class="btn btn-success" onclick="saveParsedCases()" id="req-save-btn" disabled>💾 保存选中</button>
-                <span id="req-count" style="color: var(--text-secondary); font-size: 13px;"></span>
-                <div class="loading" id="req-loading" style="display: none; padding: 5px;">
-                    <div class="spinner" style="width: 24px; height: 24px;"></div>
+                <span id="req-count" class="u-color-var-text-secondary u-font-size-13px"></span>
+                <div id="req-loading" class="loading u-display-none u-padding-5px">
+                    <div class="spinner u-width-24px u-height-24px"></div>
                 </div>
             </div>
 
-            <div id="req-preview" style="display: none; max-height: 350px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px;">
-                <table class="table" style="margin: 0;">
+            <div id="req-preview" class="u-display-none u-max-height-350px u-overflow-y-auto u-border-1px-solid-var-border-color u-border-radius-8px">
+                <table class="table u-margin-0">
                     <thead>
                         <tr>
                             <th class="checkbox-cell"><input type="checkbox" id="req-select-all" onchange="toggleReqSelectAll()"></th>
