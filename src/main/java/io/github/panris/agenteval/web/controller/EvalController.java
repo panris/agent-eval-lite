@@ -71,6 +71,13 @@ public class EvalController {
     @GetMapping("/")
     public String index(Model model) {
         model.addAttribute("testCases", List.of());
+        model.addAttribute("totalTestCases", evalCaseService.countTestCases());
+        Map<String, Object> stats = reportService.getDashboardStats();
+        model.addAttribute("totalReports", stats.get("totalReports"));
+        model.addAttribute("avgPassRateText",
+                String.format("%.1f%%", ((Number) stats.get("avgPassRate")).doubleValue()));
+        model.addAttribute("avgResponseTimeText",
+                String.format("%.0fms", ((Number) stats.get("avgResponseTime")).doubleValue()));
         return "index";
     }
 

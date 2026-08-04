@@ -33,6 +33,10 @@ public class TestCaseRepository {
         return saved;
     }
 
+    public long count() {
+        return jpaRepository.count();
+    }
+
     public Optional<TestCaseEntity> findTestCaseById(String id) {
         return jpaRepository.findByIdAndDeletedFalse(id);
     }

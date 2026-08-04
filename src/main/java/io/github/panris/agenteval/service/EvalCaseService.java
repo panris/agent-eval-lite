@@ -26,6 +26,11 @@ public class EvalCaseService {
         this.testCaseRepository = testCaseRepository;
     }
 
+    /** 测试用例总数（用于首页控制台统计）。 */
+    public long countTestCases() {
+        return testCaseRepository.count();
+    }
+
     /** Result holder: either resolved TestCase list or an error message. */
     public record CaseResolution(List<TestCase> testCases, String errorMessage) {
         public CaseResolution(List<TestCase> testCases) { this(testCases, null); }

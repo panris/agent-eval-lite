@@ -72,6 +72,8 @@ class EvalControllerTest {
     @Test
     @DisplayName("GET / → returns 'index' view name")
     void testIndex() {
+        when(mockReportService.getDashboardStats()).thenReturn(
+                Map.of("totalReports", 0L, "avgPassRate", 0.0, "avgResponseTime", 0.0));
         Model mockModel = mock(Model.class);
         String view = controller.index(mockModel);
         assertEquals("index", view);

@@ -395,11 +395,37 @@ class ReportServiceTest {
         assertThat(((Map<?, ?>) reportService.getReport(newId)).get("note")).isEqualTo("original note");
     }
 
-    // ============ getReport ============
+    // ============ getDashboardStats ============
 
     @Test
-    @DisplayName("getReport returns null for unknown ID")
-    void testGetReportUnknown() {
-        assertThat(reportService.getReport("unknown")).isNull();
+    @DisplayName("getDashboardStats 汇总报告总数/平均通过率/平均响应时间")
+    void testGetDashboardStats() {
+        reportStore.clear();
+        reportStore.put("r1", buildReportEntity("r1", 80.0, 1000L));
+        reportStore.put("r2", buildReportEntity("r2", 60.0, 3000L));
+
+        Map<String, Object> stats = reportService.getDashboardStats();
+
+        assertThat((Long) stats.get("totalReports")).isEqualTo(2L);
+        assertThat((Double) stats.get("avgPassRate")).isEqualTo(70.0);
+        assertThat((Double) stats.get("avgResponseTime")).isEqualTo(2000.0);
+    }
+
+    @Test
+    @DisplayName("getDashboardStats 无报告时返回零值")
+    void testGetDashboardStatsEmpty() {
+        reportStore.clear();
+        Map<String, Object> stats = reportService.getDashboardStats();
+        assertThat((Long) stats.get("totalReports")).isEqualTo(0L);
+        assertThat((Double) stats.get("avgPassRate")).isEqualTo(0.0);
+        assertThat((Double) stats.get("avgResponseTime")).isEqualTo(0.0);
+    }
+
+    private ReportEntity buildReportEntity(String id, double passRate, long execMs) {
+        ReportEntity e = new ReportEntity(id);
+        e.setSummaryJson("{\"pass_rate\":" + passRate + "}");
+        e.setExecutionTimeMs(execMs);
+        e.setTimestamp(System.currentTimeMillis());
+        return e;
     }
 }

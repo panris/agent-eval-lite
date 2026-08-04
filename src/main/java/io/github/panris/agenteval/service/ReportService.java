@@ -192,6 +192,43 @@ public class ReportService {
         return result;
     }
 
+    /**
+     * 首页控制台统计：报告总数、平均通过率、平均响应时间。
+     * 服务端预填充，避免首屏展示占位符 "-"（前端 JS 仍会在加载后刷新）。
+     */
+    public Map<String, Object> getDashboardStats() {
+        Map<String, Object> all = getAllReports("desc", null, null, null, null, null, null,
+                null, null, null, "timestamp", 1, Integer.MAX_VALUE, true);
+        List<Map<String, Object>> reports =
+                (List<Map<String, Object>>) all.getOrDefault("reports", List.of());
+        long totalReports = ((Number) all.getOrDefault("total", reports.size())).longValue();
+
+        double sumPass = 0.0;
+        int passCount = 0;
+        double sumExec = 0.0;
+        int execCount = 0;
+        for (Map<String, Object> r : reports) {
+            Object summary = r.get("summary");
+            if (summary instanceof Map) {
+                sumPass += extractPassRate(summary);
+                passCount++;
+            }
+            Object exec = r.get("executionTimeMs");
+            if (exec instanceof Number) {
+                sumExec += ((Number) exec).doubleValue();
+                execCount++;
+            }
+        }
+        double avgPassRate = passCount > 0 ? sumPass / passCount : 0.0;
+        double avgResponseTime = execCount > 0 ? sumExec / execCount : 0.0;
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("totalReports", totalReports);
+        stats.put("avgPassRate", Math.round(avgPassRate * 10.0) / 10.0);
+        stats.put("avgResponseTime", (double) Math.round(avgResponseTime));
+        return stats;
+    }
+
     private Double extractScore(Object summaryObj) {
         if (!(summaryObj instanceof Map)) return null;
         Map<?, ?> s = (Map<?, ?>) summaryObj;
