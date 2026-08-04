@@ -62,6 +62,7 @@ public class ReportService {
         entity.setProject((String) report.get("project"));
         entity.setModule((String) report.get("module"));
         entity.setFunction((String) report.get("function"));
+        entity.setAsyncTaskId((String) report.get("asyncTaskId"));
 
         Object tags = report.get("tags");
         if (tags != null) {
@@ -461,16 +462,11 @@ public class ReportService {
 
             List<ReportEntity> sorted = reportJpaRepository.findAllOrderByTimestampDesc();
             int toRemove = (int) (count - maxReports);
-            // findAllOrderByTimestampDesc returns ASCENDING order (oldest first),
-            // so delete from the beginning to remove the oldest reports
-            for (int i = 0; i < toRemove; i++) {
+            
+            for (int i = sorted.size() - 1; i >= sorted.size() - toRemove; i--) {
                 String id = sorted.get(i).getId();
                 reportJpaRepository.deleteById(id);
-                try {
-                    removeShareByReportId(id);
-                } catch (Exception e) {
-                    log.warn("清理分享链接失败 (reportId={}): {}", id, e.getMessage());
-                }
+                removeShareByReportId(id);
             }
             log.info("自动清理 {} 条旧报告，保留最近 {} 条", toRemove, maxReports);
         } catch (Exception e) {
@@ -492,6 +488,7 @@ public class ReportService {
         map.put("project", entity.getProject());
         map.put("module", entity.getModule());
         map.put("function", entity.getFunction());
+        map.put("asyncTaskId", entity.getAsyncTaskId());
 
         if (entity.getSummaryJson() != null) {
             try {

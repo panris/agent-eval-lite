@@ -49,6 +49,9 @@ public class ReportEntity {
 
     private String function;
 
+    @Column(name = "async_task_id", length = 50)
+    private String asyncTaskId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -180,6 +183,14 @@ public class ReportEntity {
 
     public void setFunction(String function) {
         this.function = function;
+    }
+
+    public String getAsyncTaskId() {
+        return asyncTaskId;
+    }
+
+    public void setAsyncTaskId(String asyncTaskId) {
+        this.asyncTaskId = asyncTaskId;
     }
 
     public LocalDateTime getCreatedAt() {

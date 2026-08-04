@@ -2,6 +2,8 @@ package io.github.panris.agenteval.service;
 
 import io.github.panris.agenteval.TestCase;
 import io.github.panris.agenteval.Agent;
+import io.github.panris.agenteval.model.ReportEntity;
+import io.github.panris.agenteval.model.SharedReportEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
@@ -17,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -35,6 +39,10 @@ class AsyncEvalServiceTest {
     private ObjectMapper objectMapper;
     private AgentFactory mockAgentFactory;
 
+    // in-memory stores backing the ReportService's JPA mocks
+    private final Map<String, ReportEntity> reportStore = new ConcurrentHashMap<>();
+    private final Map<String, SharedReportEntity> shareStore = new ConcurrentHashMap<>();
+
     @BeforeEach
     void setUp() throws Exception {
         System.setProperty("agenteval.data.dir", tempDir.toString());
@@ -43,20 +51,57 @@ class AsyncEvalServiceTest {
         mockRepo = mock(TestCaseRepository.class);
         ReportJpaRepository mockReportJpaRepo = mock(ReportJpaRepository.class);
         SharedReportJpaRepository mockSharedReportJpaRepo = mock(SharedReportJpaRepository.class);
-
-        // In-memory store so save() is immediately visible to findById()
-        java.util.Map<String, io.github.panris.agenteval.model.ReportEntity> reportStore = new java.util.HashMap<>();
-        doAnswer(inv -> {
-            io.github.panris.agenteval.model.ReportEntity entity = inv.getArgument(0);
-            reportStore.put(entity.getId(), entity);
-            return entity;
-        }).when(mockReportJpaRepo).save(any(io.github.panris.agenteval.model.ReportEntity.class));
-        when(mockReportJpaRepo.findById(anyString()))
-            .thenAnswer(inv -> java.util.Optional.ofNullable(reportStore.get(inv.getArgument(0))));
-        when(mockReportJpaRepo.findAllOrderByTimestampDesc())
-            .thenAnswer(inv -> new java.util.ArrayList<>(reportStore.values()));
-
         reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
+
+        // In-memory store behavior for the report/ share JPA mocks so that reports
+        // saved by AsyncEvalService during task execution can be read back.
+        when(mockReportJpaRepo.save(any(ReportEntity.class))).thenAnswer(inv -> {
+            ReportEntity e = inv.getArgument(0);
+            reportStore.put(e.getId(), e);
+            return e;
+        });
+        when(mockReportJpaRepo.findById(anyString())).thenAnswer(inv ->
+                Optional.ofNullable(reportStore.get(inv.getArgument(0))));
+        when(mockReportJpaRepo.findAllOrderByTimestampDesc()).thenAnswer(inv ->
+                reportStore.values().stream()
+                        .sorted(Comparator.comparingLong((ReportEntity e) ->
+                                e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed())
+                        .collect(Collectors.toList()));
+        when(mockReportJpaRepo.findFavoritesOrderByTimestampDesc()).thenAnswer(inv ->
+                reportStore.values().stream()
+                        .filter(e -> e.getFavorite() != null && e.getFavorite())
+                        .sorted(Comparator.comparingLong((ReportEntity e) ->
+                                e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed())
+                        .collect(Collectors.toList()));
+        when(mockReportJpaRepo.count()).thenAnswer(inv -> (long) reportStore.size());
+        when(mockReportJpaRepo.existsById(anyString())).thenAnswer(inv ->
+                reportStore.containsKey(inv.getArgument(0)));
+        doAnswer(inv -> { reportStore.remove(inv.getArgument(0)); return null; })
+                .when(mockReportJpaRepo).deleteById(anyString());
+        doAnswer(inv -> { reportStore.clear(); return null; })
+                .when(mockReportJpaRepo).deleteAll();
+
+        when(mockSharedReportJpaRepo.save(any(SharedReportEntity.class))).thenAnswer(inv -> {
+            SharedReportEntity e = inv.getArgument(0);
+            shareStore.put(e.getShareId(), e);
+            return e;
+        });
+        when(mockSharedReportJpaRepo.findById(anyString())).thenAnswer(inv ->
+                Optional.ofNullable(shareStore.get(inv.getArgument(0))));
+        when(mockSharedReportJpaRepo.findByReportId(anyString())).thenAnswer(inv ->
+                shareStore.values().stream()
+                        .filter(s -> inv.getArgument(0).equals(s.getReportId()))
+                        .collect(Collectors.toList()));
+        doAnswer(inv -> { shareStore.remove(inv.getArgument(0)); return null; })
+                .when(mockSharedReportJpaRepo).deleteById(anyString());
+        doAnswer(inv -> { shareStore.clear(); return null; })
+                .when(mockSharedReportJpaRepo).deleteAll();
+        doAnswer(inv -> {
+                    for (Object o : (Iterable<?>) inv.getArgument(0)) {
+                        shareStore.remove(((SharedReportEntity) o).getShareId());
+                    }
+                    return null;
+                }).when(mockSharedReportJpaRepo).deleteAll(anyList());
         Executor executor = Executors.newSingleThreadExecutor();
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         mockAgentFactory = mock(AgentFactory.class);
@@ -261,8 +306,11 @@ class AsyncEvalServiceTest {
         var report = reportService.getReport(status.reportId);
         assertThat(report).isNotNull();
         assertThat(report.get("totalTestCases")).isEqualTo(3);
+        assertThat(report.get("asyncTaskId")).isEqualTo(taskId);
 
-        // asyncTaskId is passed via Map but not persisted to ReportEntity — skip this assertion
+        // 2 out of 3 should pass (keys are snake_case)
+        var summary = (Map<?, ?>) report.get("summary");
+        assertThat(((Number) summary.get("passed_test_cases")).intValue()).isEqualTo(2);
     }
 
     @Test

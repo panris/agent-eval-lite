@@ -7,87 +7,84 @@ import io.github.panris.agenteval.repository.SharedReportJpaRepository;
 import org.junit.jupiter.api.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ReportService.
- * Uses pure Mockito mocks — no reflection, no file I/O.
+ *
+ * Uses in-memory store mocks (when().thenAnswer()) for the JPA repositories so the
+ * report / share-link logic runs end-to-end without a database or disk persistence.
+ * This avoids depending on internal fields (which were removed during the JPA migration).
  */
 class ReportServiceTest {
 
     private ReportService reportService;
-    // In-memory store for the mock JPA repo
-    private final Map<String, ReportEntity> reportStore = new HashMap<>();
-    private final Map<String, SharedReportEntity> sharedStore = new HashMap<>();
+    private ReportJpaRepository mockReportJpaRepo;
+    private SharedReportJpaRepository mockSharedReportJpaRepo;
+
+    // in-memory stores backing the repository mocks
+    private final Map<String, ReportEntity> reportStore = new ConcurrentHashMap<>();
+    private final Map<String, SharedReportEntity> shareStore = new ConcurrentHashMap<>();
 
     @BeforeEach
     void setUp() {
-        reportStore.clear();
-        sharedStore.clear();
+        mockReportJpaRepo = mock(ReportJpaRepository.class);
+        mockSharedReportJpaRepo = mock(SharedReportJpaRepository.class);
 
-        ReportJpaRepository mockReportJpaRepo = mock(ReportJpaRepository.class);
-        SharedReportJpaRepository mockSharedReportJpaRepo = mock(SharedReportJpaRepository.class);
-
-        // findById: return stored entity if exists, otherwise empty (standard JPA behavior)
-        when(mockReportJpaRepo.findById(anyString()))
-            .thenAnswer(inv -> Optional.ofNullable(reportStore.get(inv.getArgument(0))));
-
-        doAnswer(inv -> {
-            // save() always writes the current state of the entity into the store
-            ReportEntity entity = inv.getArgument(0);
-            reportStore.put(entity.getId(), entity);
-            return entity;
-        }).when(mockReportJpaRepo).save(any(ReportEntity.class));
-        // deleteById: remove from store (covers deleteReport)
-        doAnswer(inv -> reportStore.remove(inv.getArgument(0))).when(mockReportJpaRepo).deleteById(anyString());
-        // deleteAll: clear store (covers clearAllReports)
-        doAnswer(inv -> { reportStore.clear(); return null; }).when(mockReportJpaRepo).deleteAll();
-
-        when(mockReportJpaRepo.findAllOrderByTimestampDesc())
-            .thenAnswer(inv -> {
-                // Live snapshot — reads current store contents at call time
-                List<ReportEntity> sorted = new ArrayList<>(reportStore.values());
-                sorted.sort((a, b) -> Long.compare(
-                    a.getTimestamp() != null ? a.getTimestamp() : 0L,
-                    b.getTimestamp() != null ? b.getTimestamp() : 0L));
-                return sorted;
-            });
-        // count: needed by cleanupOldReports
-        when(mockReportJpaRepo.count()).thenAnswer(inv -> (long) reportStore.size());
-        // existsById: needed by createShareLink
-        when(mockReportJpaRepo.existsById(anyString())).thenAnswer(inv -> reportStore.containsKey(inv.getArgument(0)));
-        // findByFavoriteTrue: needed by getFavorites (fallback path)
-        when(mockReportJpaRepo.findByFavoriteTrue()).thenAnswer(inv -> reportStore.values().stream()
-            .filter(e -> Boolean.TRUE.equals(e.getFavorite())).collect(java.util.stream.Collectors.toList()));
-        // findFavoritesOrderByTimestampDesc: needed by getFavorites
-        when(mockReportJpaRepo.findFavoritesOrderByTimestampDesc())
-            .thenAnswer(inv -> reportStore.values().stream()
-                .filter(e -> Boolean.TRUE.equals(e.getFavorite()))
-                .sorted((a, b) -> Long.compare(
-                    a.getTimestamp() != null ? a.getTimestamp() : 0L,
-                    b.getTimestamp() != null ? b.getTimestamp() : 0L))
-                .collect(java.util.stream.Collectors.toList()));
-
-        // findByReportId: return shares for the given reportId (used by deleteReport cascade)
-        when(mockSharedReportJpaRepo.findByReportId(anyString()))
-            .thenAnswer(inv -> sharedStore.values().stream()
-                .filter(e -> inv.getArgument(0).equals(e.getReportId()))
-                .collect(java.util.stream.Collectors.toList()));
-        when(mockSharedReportJpaRepo.findById(anyString()))
-            .thenAnswer(inv -> Optional.ofNullable(sharedStore.get(inv.getArgument(0))));
-        doAnswer(inv -> {
-            SharedReportEntity e = inv.getArgument(0);
-            sharedStore.put(e.getShareId(), e);
+        // ---- ReportJpaRepository in-memory behavior ----
+        when(mockReportJpaRepo.save(any(ReportEntity.class))).thenAnswer(inv -> {
+            ReportEntity e = inv.getArgument(0);
+            reportStore.put(e.getId(), e);
             return e;
-        }).when(mockSharedReportJpaRepo).save(any(SharedReportEntity.class));
-        doNothing().when(mockSharedReportJpaRepo).deleteAll();
+        });
+        when(mockReportJpaRepo.findById(anyString())).thenAnswer(inv ->
+                Optional.ofNullable(reportStore.get(inv.getArgument(0))));
+        when(mockReportJpaRepo.findAllOrderByTimestampDesc()).thenAnswer(inv ->
+                reportStore.values().stream()
+                        .sorted(Comparator.comparingLong((ReportEntity e) ->
+                                e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed())
+                        .collect(Collectors.toList()));
+        when(mockReportJpaRepo.findFavoritesOrderByTimestampDesc()).thenAnswer(inv ->
+                reportStore.values().stream()
+                        .filter(e -> e.getFavorite() != null && e.getFavorite())
+                        .sorted(Comparator.comparingLong((ReportEntity e) ->
+                                e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed())
+                        .collect(Collectors.toList()));
+        when(mockReportJpaRepo.count()).thenAnswer(inv -> (long) reportStore.size());
+        when(mockReportJpaRepo.existsById(anyString())).thenAnswer(inv ->
+                reportStore.containsKey(inv.getArgument(0)));
+        doAnswer(inv -> { reportStore.remove(inv.getArgument(0)); return null; })
+                .when(mockReportJpaRepo).deleteById(anyString());
+        doAnswer(inv -> { reportStore.clear(); return null; })
+                .when(mockReportJpaRepo).deleteAll();
+
+        // ---- SharedReportJpaRepository in-memory behavior ----
+        when(mockSharedReportJpaRepo.save(any(SharedReportEntity.class))).thenAnswer(inv -> {
+            SharedReportEntity e = inv.getArgument(0);
+            shareStore.put(e.getShareId(), e);
+            return e;
+        });
+        when(mockSharedReportJpaRepo.findById(anyString())).thenAnswer(inv ->
+                Optional.ofNullable(shareStore.get(inv.getArgument(0))));
+        when(mockSharedReportJpaRepo.findByReportId(anyString())).thenAnswer(inv ->
+                shareStore.values().stream()
+                        .filter(s -> inv.getArgument(0).equals(s.getReportId()))
+                        .collect(Collectors.toList()));
+        doAnswer(inv -> { shareStore.remove(inv.getArgument(0)); return null; })
+                .when(mockSharedReportJpaRepo).deleteById(anyString());
+        doAnswer(inv -> { shareStore.clear(); return null; })
+                .when(mockSharedReportJpaRepo).deleteAll();
         doAnswer(inv -> {
-            ((List<SharedReportEntity>) inv.getArgument(0))
-                .forEach(e -> sharedStore.remove(e.getShareId()));
-            return null;
-        }).when(mockSharedReportJpaRepo).deleteAll(anyList());
+                    for (Object o : (Iterable<?>) inv.getArgument(0)) {
+                        shareStore.remove(((SharedReportEntity) o).getShareId());
+                    }
+                    return null;
+                }).when(mockSharedReportJpaRepo).deleteAll(anyList());
 
         reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
     }

@@ -1,67 +1,64 @@
 package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.Agent;
-import io.github.panris.agenteval.Evaluation;
-import io.github.panris.agenteval.EvaluationReport;
 import io.github.panris.agenteval.Evaluator;
 import io.github.panris.agenteval.TestCase;
-import io.github.panris.agenteval.model.TestCaseEntity;
-import io.github.panris.agenteval.repository.TestCaseRepository;
+import io.github.panris.agenteval.model.AgentConfig;
+import io.github.panris.agenteval.model.EvalLlmConfig;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.repository.EvalLlmConfigRepository;
-import io.github.panris.agenteval.model.EvalLlmConfig;
+import io.github.panris.agenteval.agent.AgentFactory;
 import io.github.panris.agenteval.service.AsyncEvalService;
+import io.github.panris.agenteval.service.EvalCaseService;
 import io.github.panris.agenteval.service.EvalDimensionService;
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.web.Constants;
 import io.github.panris.agenteval.web.dto.ApiResponse;
-import io.github.panris.agenteval.agent.AgentFactory;
-import org.springframework.http.*;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import io.github.panris.agenteval.web.dto.EvalRequest;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.web.bind.annotation.*;
-
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.time.Instant;
-import java.util.ArrayList;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
+/**
+ * 评测执行 Controller：从原 EvalController 拆分出来，
+ * 负责评测的发起（同步/异步）、首页/管理页路由。
+ * 报告管理 → ReportController，异步任务查询 → TaskController。
+ */
 @Controller
 public class EvalController {
+
     private static final Logger log = LoggerFactory.getLogger(EvalController.class);
 
-    private final ReportService reportService;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-    private final TestCaseRepository testCaseRepository;
-    private final AgentConfigRepository agentConfigRepository;
+    private final EvalCaseService evalCaseService;
     private final EvalLlmConfigRepository evalLlmConfigRepository;
+    private final AgentConfigRepository agentConfigRepository;
     private final AsyncEvalService asyncEvalService;
+    private final ReportService reportService;
     private final AgentFactory agentFactory;
-    private final ExecutorService executorService;
     private final EvalDimensionService evalDimensionService;
+    private final ExecutorService executorService;
 
-    public EvalController(TestCaseRepository testCaseRepository,
-                           EvalLlmConfigRepository evalLlmConfigRepository,
-                           AgentConfigRepository agentConfigRepository,
-                           AsyncEvalService asyncEvalService,
-                           ReportService reportService,
-                           AgentFactory agentFactory,
-                           EvalDimensionService evalDimensionService,
-                           @org.springframework.beans.factory.annotation.Qualifier("evalExecutorService") ExecutorService executorService) {
-        this.testCaseRepository = testCaseRepository;
-        this.agentConfigRepository = agentConfigRepository;
+    public EvalController(
+            EvalCaseService evalCaseService,
+            EvalLlmConfigRepository evalLlmConfigRepository,
+            AgentConfigRepository agentConfigRepository,
+            AsyncEvalService asyncEvalService,
+            ReportService reportService,
+            AgentFactory agentFactory,
+            EvalDimensionService evalDimensionService,
+            @org.springframework.beans.factory.annotation.Qualifier("evalExecutorService") ExecutorService executorService) {
+        this.evalCaseService = evalCaseService;
         this.evalLlmConfigRepository = evalLlmConfigRepository;
+        this.agentConfigRepository = agentConfigRepository;
         this.asyncEvalService = asyncEvalService;
         this.reportService = reportService;
         this.agentFactory = agentFactory;
@@ -69,13 +66,11 @@ public class EvalController {
         this.executorService = executorService;
     }
 
+    // ─── Page routes ───────────────────────────────────────────────────────────
+
     @GetMapping("/")
     public String index(Model model) {
-        model.addAttribute("testCases", List.of(
-            new TestCase("2+2=?", "4"),
-            new TestCase("3*3=?", "9")
-        ));
-        model.addAttribute("metrics", List.of("correctness", "llm", "safety", "response_time", "bleu", "rouge", "similarity"));
+        model.addAttribute("testCases", List.of());
         return "index";
     }
 
@@ -84,272 +79,153 @@ public class EvalController {
         return "manage";
     }
 
+    // ─── Sync evaluation ──────────────────────────────────────────────────────
+
     @Operation(summary = "执行同步评测，返回完整报告")
     @PostMapping("/api/evaluate")
     @ResponseBody
-    public Map<String, Object> evaluate(@RequestBody EvalRequest request,
-                                        @RequestParam(required = false) String agentConfigId) {
-        if (request == null) {
-            return ApiResponse.error("请求体不能为空");
-        }
-        if (request.getTestCases() == null || request.getTestCases().isEmpty()) {
-            return ApiResponse.error("测试用例列表不能为空");
-        }
-
-        String agentType = request.getAgentType();
-        if (agentType == null || agentType.trim().isEmpty()) {
-            agentType = "demo";
-        }
-
-        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
-        if (metricsError != null) {
-            return metricsError;
-        }
-
-        CaseResolution cr = resolveFromDtos(request.getTestCases());
-        if (cr.hasError()) {
-            return ApiResponse.error(cr.errorMessage());
-        }
-
-        return runEvaluation(cr.testCases(), request.getMetrics(), agentType, request.getAgentConfig(), agentConfigId, request.getEvalConfigId(), null, null, null, null);
+    public Map<String, Object> evaluate(@RequestBody EvalRequest request) {
+        return doEvaluate(request, null, null, null, null);
     }
 
-    /**
-     * Evaluate by specific test case IDs.
-     */
     @Operation(summary = "按用例 ID 列表执行同步评测")
     @PostMapping("/api/evaluate/cases")
     @ResponseBody
-    public Map<String, Object> evaluateByCaseIds(@RequestBody EvaluateByCaseIdsRequest request) {
-        if (request == null) {
-            return ApiResponse.error("请求体不能为空");
+    public Map<String, Object> evaluateByCaseIds(@RequestBody EvalRequest request) {
+        if (request == null || request.getCaseIds() == null) {
+            return ApiResponse.error("请提供 caseIds 列表");
         }
-        if (request.getCaseIds() == null || request.getCaseIds().isEmpty()) {
-            return ApiResponse.error("测试用例 ID 列表不能为空");
-        }
-        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
-        if (metricsError != null) {
-            return metricsError;
-        }
-        CaseResolution cr = resolveFromCaseIds(request.getCaseIds());
-        if (cr.hasError()) {
-            return ApiResponse.error(cr.errorMessage());
-        }
-        
-        List<TestCase> testCases = cr.testCases();
-        log.info("Evaluating {} test cases individually", testCases.size());
-        
-        List<Map<String, Object>> results = new ArrayList<>();
-        int totalPassed = 0;
-        int totalFailed = 0;
-        long totalTime = 0;
-        
-        for (TestCase testCase : testCases) {
-            Map<String, Object> result = runEvaluation(
-                List.of(testCase), 
-                request.getMetrics(), 
-                request.getAgentType(), 
-                request.getAgentConfig(), 
-                request.getAgentConfigId(), 
-                request.getEvalConfigId(), 
-                null, 
-                testCase.getProject(), 
-                testCase.getModule(), 
-                testCase.getFunction()
-            );
-            
-            if (result.get("success") == Boolean.TRUE) {
-                results.add(result);
-                totalPassed += (Integer) result.getOrDefault("passedTestCases", 0);
-                totalFailed += (Integer) result.getOrDefault("failedTestCases", 0);
-                totalTime += (Long) result.getOrDefault("executionTimeMs", 0L);
-            }
-        }
-        
-        Map<String, Object> finalResult = new LinkedHashMap<>();
-        finalResult.put("success", true);
-        finalResult.put("reportIds", results.stream().map(r -> r.get("reportId")).toList());
-        finalResult.put("totalTestCases", testCases.size());
-        finalResult.put("passedTestCases", totalPassed);
-        finalResult.put("failedTestCases", totalFailed);
-        finalResult.put("executionTimeMs", totalTime);
-        finalResult.put("evaluations", results.stream()
-            .flatMap(r -> ((List<?>) r.get("evaluations")).stream())
-            .toList());
-        
-        double passRate = testCases.size() > 0 ? (totalPassed * 100.0 / testCases.size()) : 0.0;
-        double avgScore = results.stream()
-            .flatMap(r -> ((List<?>) r.get("evaluations")).stream())
-            .mapToDouble(e -> {
-                Object score = ((Map<?, ?>) e).get("overallScore");
-                return score instanceof Number ? ((Number) score).doubleValue() : 0.0;
-            })
-            .average().orElse(0.0);
-        
-        Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("pass_rate", passRate);
-        summary.put("average_score", avgScore);
-        summary.put("total_test_cases", testCases.size());
-        summary.put("passed_test_cases", totalPassed);
-        summary.put("failed_test_cases", totalFailed);
-        finalResult.put("summary", summary);
-        
-        return finalResult;
+        return doEvaluate(request, null, null, null, null);
     }
 
-    /**
-     * 按三维分组（项目/模块/功能）同步评测。任一维度为空表示不限制该维度。
-     */
     @Operation(summary = "按三维维度执行同步评测")
     @PostMapping("/api/evaluate/dimensions")
     @ResponseBody
     public Map<String, Object> evaluateByDimensions(@RequestBody EvalRequest request) {
-        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
-        if (metricsError != null) {
-            return metricsError;
-        }
-        CaseResolution cr = resolveFromDimensions(request.getProject(), request.getModule(), request.getFunction());
-        if (cr.hasError()) {
-            return ApiResponse.error(cr.errorMessage());
-        }
-        String groupLabel = request.getFunction() != null ? request.getFunction()
-            : request.getModule() != null ? request.getModule()
-            : request.getProject();
-        return runEvaluation(cr.testCases(), request.getMetrics(), request.getAgentType(), request.getAgentConfig(), null, request.getEvalConfigId(), groupLabel,
-            request.getProject(), request.getModule(), request.getFunction());
+        return doEvaluate(request, request.getGroup(),
+                request.getProject(), request.getModule(), request.getFunction());
     }
 
-    /**
-     * Submit async batch evaluation task.
-     */
+    // ─── Async evaluation ─────────────────────────────────────────────────────
+
     @Operation(summary = "提交异步评测任务，返回任务 ID")
     @PostMapping("/api/evaluate/async")
     @ResponseBody
     public Map<String, Object> evaluateAsync(@RequestBody EvalRequest request) {
+        Map<String, Object> validation = validateMetrics(request.getMetrics());
+        if (validation != null) return validation;
+
+        EvalCaseService.CaseResolution resolution = resolveCases(request);
+        if (resolution.isError()) {
+            return ApiResponse.error(resolution.errorMessage());
+        }
+
+        String taskId = asyncEvalService.submitTask(
+                resolution.testCases(),
+                request.getMetrics(),
+                request.getAgentType(),
+                300,
+                request.getGroup(),
+                request.getProject(),
+                request.getModule(),
+                request.getFunction(),
+                request.getEvalConfigId(),
+                request.getAgentConfigId());
+        return ApiResponse.success(Map.of(
+                "taskId", taskId,
+                "message", "评测任务已提交，请通过 GET /api/tasks/" + taskId + " 查询进度"
+        ));
+    }
+
+    // ─── Core evaluation logic ────────────────────────────────────────────────
+
+    /**
+     * Full param version used by evaluate (inline cases).
+     */
+    private Map<String, Object> doEvaluate(
+            EvalRequest request,
+            String group,
+            String project,
+            String module,
+            String function) {
         if (request == null) {
-            return ApiResponse.error("请求不能为空");
+            return ApiResponse.error("请求体不能为空");
         }
-        Map<String, Object> metricsError = validateMetrics(request.getMetrics());
-        if (metricsError != null) {
-            return metricsError;
-        }
-        String agentType = request.getAgentType() != null ? request.getAgentType() : "demo";
+        Map<String, Object> validation = validateMetrics(request.getMetrics());
+        if (validation != null) return validation;
 
-        CaseResolution cr;
-        if (request.getTestCases() != null && !request.getTestCases().isEmpty()) {
-            cr = resolveFromDtos(request.getTestCases());
-        } else if (request.getCaseIds() != null && !request.getCaseIds().isEmpty()) {
-            cr = resolveFromCaseIds(request.getCaseIds());
-        } else {
-            cr = resolveFromDimensions(request.getProject(), request.getModule(), request.getFunction());
-        }
-        if (cr.hasError()) {
-            return ApiResponse.error(cr.errorMessage());
-        }
-        String taskId = asyncEvalService.submitTask(cr.testCases(), request.getMetrics(), agentType,
-                300, request.getGroup(), request.getProject(), request.getModule(), request.getFunction(),
-                request.getEvalConfigId(), request.getAgentConfigId());
-        return Map.of("success", true, "taskId", taskId, "status", "PENDING");
+        return doEvaluate(request, group, project, module, function,
+                null, null, null, null, null,
+                null, null, null, null, null);
     }
 
     /**
-     * Get async task status.
+     * All-params version called by evaluate / evaluateByCaseIds / evaluateByDimensions.
      */
-    @Operation(summary = "查询异步评测任务状态")
-    @GetMapping("/api/tasks/{taskId}")
-    @ResponseBody
-    public Map<String, Object> getTaskStatus(@PathVariable String taskId) {
-        AsyncEvalService.TaskStatus status = asyncEvalService.getStatus(taskId);
-        if (status == null) {
-            return ApiResponse.error("任务不存在");
-        }
-        return Map.of(
-            "success", true,
-            "taskId", status.taskId,
-            "status", status.status,
-            "reportId", status.reportId != null ? status.reportId : "",
-            "error", status.error != null ? status.error : "",
-            "totalCases", status.totalCases,
-            "completedCases", status.completedCases,
-            "createdAt", status.createdAt,
-            "completedAt", status.completedAt,
-            "timeoutSeconds", status.timeoutSeconds
-        );
-    }
+    private Map<String, Object> doEvaluate(
+            EvalRequest request,
+            String group,
+            String project,
+            String module,
+            String function,
+            List<String> metrics,
+            String agentType,
+            Map<String, Object> agentConfig,
+            String agentConfigId,
+            String evalConfigId,
+            List<TestCase> testCases,
+            String agentTypeOverride,
+            Map<String, Object> agentConfigOverride,
+            String agentConfigIdOverride,
+            String evalConfigIdOverride) {
 
-    /**
-     * List all async tasks.
-     */
-    @GetMapping("/api/tasks")
-    @ResponseBody
-    public List<Map<String, Object>> listTasks() {
-        return asyncEvalService.getAllStatuses().stream()
-            .sorted((a, b) -> Long.compare(b.createdAt, a.createdAt))
-            .limit(50)
-            .map(s -> Map.<String, Object>of(
-                "taskId", s.taskId,
-                "status", s.status,
-                "reportId", s.reportId != null ? s.reportId : "",
-                "totalCases", s.totalCases,
-                "completedCases", s.completedCases,
-                "createdAt", s.createdAt,
-                "completedAt", s.completedAt
-            ))
-            .toList();
-    }
+        List<String> m = metrics != null ? metrics : (request != null ? request.getMetrics() : null);
+        String at = agentTypeOverride != null ? agentTypeOverride
+                : (agentType != null ? agentType : (request != null ? request.getAgentType() : null));
+        Map<String, Object> ac = agentConfigOverride != null ? agentConfigOverride
+                : (agentConfig != null ? agentConfig : (request != null ? request.getAgentConfig() : null));
+        String acid = agentConfigIdOverride != null ? agentConfigIdOverride
+                : (agentConfigId != null ? agentConfigId : (request != null ? request.getAgentConfigId() : null));
+        String eid = evalConfigIdOverride != null ? evalConfigIdOverride
+                : (evalConfigId != null ? evalConfigId : (request != null ? request.getEvalConfigId() : null));
+        String grp = group != null ? group : (request != null ? request.getGroup() : null);
+        String prj = project != null ? project : (request != null ? request.getProject() : null);
+        String mod = module != null ? module : (request != null ? request.getModule() : null);
+        String fnc = function != null ? function : (request != null ? request.getFunction() : null);
 
-    /**
-     * Validate the requested metrics list. Returns an error response map if invalid,
-     * or null if validation passes. Guards against null metrics (NPE in Evaluator)
-     * and unknown metric names.
-     */
-    private Map<String, Object> validateMetrics(List<String> metrics) {
-        if (metrics == null || metrics.isEmpty()) {
-            return ApiResponse.error("评测指标不能为空");
+        // Resolve cases if not provided
+        EvalCaseService.CaseResolution resolution = resolveCases(
+                testCases != null ? null : request,
+                prj, mod, fnc);
+        if (resolution == null || resolution.isError()) {
+            return ApiResponse.error(resolution != null ? resolution.errorMessage() : "无法解析测试用例");
         }
-        for (String metric : metrics) {
-            if (metric == null || !Constants.VALID_METRICS.contains(metric)) {
-                return ApiResponse.error("不支持的评测指标: " + metric);
-            }
-        }
-        return null;
-    }
+        List<TestCase> cases = testCases != null ? testCases : resolution.testCases();
 
-    private Map<String, Object> runEvaluation(
-        List<TestCase> testCases,
-        List<String> metrics,
-        String agentType,
-        Map<String, Object> agentConfig,
-        String agentConfigId,
-        String evalConfigId,
-        String group,
-        String project,
-        String module,
-        String function
-    ) {
-        // Create agent from config ID or type
+        Map<String, Object> validation = validateMetrics(m);
+        if (validation != null) return validation;
+
+        // Create agent
         Agent agent;
         try {
-            if (agentConfigId != null && !agentConfigId.isEmpty()) {
-                // Load from AgentConfigRepository
-                io.github.panris.agenteval.model.AgentConfig config =
-                    agentConfigRepository.findById(agentConfigId).orElse(null);
+            if (acid != null && !acid.isEmpty()) {
+                AgentConfig config = agentConfigRepository.findById(acid).orElse(null);
                 if (config == null) {
-                    return ApiResponse.error("Agent 配置不存在: " + agentConfigId);
+                    return ApiResponse.error("Agent 配置不存在: " + acid);
                 }
                 agent = agentFactory.createAgent(config);
                 log.info("Created agent from config: {}", config.getName());
             } else {
-                if ("custom".equals(agentType) || "http".equals(agentType)) {
-                    if (agentConfig == null || agentConfig.isEmpty()) {
+                if ("custom".equals(at) || "http".equals(at)) {
+                    if (ac == null || ac.isEmpty()) {
                         return ApiResponse.error("使用自定义/HTTP Agent 时必须提供 agentConfig 或选择已配置的 Agent");
                     }
-                    if (!agentConfig.containsKey("endpoint")) {
+                    if (!ac.containsKey("endpoint")) {
                         return ApiResponse.error("自定义/HTTP Agent 配置缺少 endpoint 参数");
                     }
                 }
-                agent = createAgent(agentType, agentConfig != null ? agentConfig : Map.of());
-                log.info("Created agent by type: {}", agentType);
+                agent = agentFactory.createAgent(at, ac != null ? ac : Map.of());
+                log.info("Created agent by type: {}", at);
             }
         } catch (IllegalArgumentException e) {
             log.error("Failed to create agent: {}", e.getMessage());
@@ -359,457 +235,104 @@ public class EvalController {
         // Build evaluator
         Evaluator.Builder builder = Evaluator.builder();
         EvalLlmConfig llmConfig = null;
-        
-        if (evalConfigId != null && !evalConfigId.isEmpty()) {
-            llmConfig = evalLlmConfigRepository.findById(evalConfigId).orElse(null);
+
+        if (eid != null && !eid.isEmpty()) {
+            llmConfig = evalLlmConfigRepository.findById(eid).orElse(null);
             if (llmConfig != null) {
                 log.info("Using explicit LLM eval config: {}", llmConfig.getName());
             }
         }
-        
-        if (llmConfig == null && project != null) {
-            llmConfig = evalDimensionService.resolveConfig(project, module, function);
-            log.info("Resolved eval config from dimensions: project={}, module={}, function={}", project, module, function);
+        if (llmConfig == null && prj != null) {
+            llmConfig = evalDimensionService.resolveConfig(prj, mod, fnc);
+            log.info("Resolved eval config from dimensions: project={}, module={}, function={}", prj, mod, fnc);
         }
-        
         if (llmConfig != null) {
             builder.evalLlmConfig(llmConfig);
         }
-        
-        for (String metric : metrics) {
+        for (String metric : m) {
             builder.metrics(metric);
         }
         Evaluator evaluator = builder.executorService(executorService).build();
 
         // Run evaluation
-        EvaluationReport report = evaluator.evaluate(agent, testCases);
+        io.github.panris.agenteval.EvaluationReport evalReport = evaluator.evaluate(agent, cases);
 
-        // Save to history (convert to serializable map)
+        // Save to history
         String reportId = "report_" + UUID.randomUUID().toString().substring(0, 8);
         Map<String, Object> reportData = new LinkedHashMap<>();
-        reportData.put("summary", report.getSummary());
-        reportData.put("evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases));
-        reportData.put("totalTestCases", report.getTotalTestCases());
-        reportData.put("passedTestCases", report.getPassedTestCases());
-        reportData.put("failedTestCases", report.getFailedTestCases());
-        reportData.put("executionTimeMs", report.getExecutionTimeMs());
+        reportData.put("summary", evalReport.getSummary());
+        reportData.put("evaluations", asyncEvalService.serializeEvaluations(evalReport.getEvaluations(), cases));
+        reportData.put("totalTestCases", evalReport.getTotalTestCases());
+        reportData.put("passedTestCases", evalReport.getPassedTestCases());
+        reportData.put("failedTestCases", evalReport.getFailedTestCases());
+        reportData.put("executionTimeMs", evalReport.getExecutionTimeMs());
         reportData.put("timestamp", System.currentTimeMillis());
-        putDimensions(reportData, group, project, module, function);
+        putDimensions(reportData, grp, prj, mod, fnc);
         reportService.saveReport(reportId, reportData);
-
 
         // Return result
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
         result.put("reportId", reportId);
-        result.put("summary", report.getSummary());
-        result.put("totalTestCases", report.getTotalTestCases());
-        result.put("passedTestCases", report.getPassedTestCases());
-        result.put("failedTestCases", report.getFailedTestCases());
-        result.put("executionTimeMs", report.getExecutionTimeMs());
-        result.put("evaluations", asyncEvalService.serializeEvaluations(report.getEvaluations(), testCases));
-        putDimensions(result, group, project, module, function);
+        result.put("summary", evalReport.getSummary());
+        result.put("totalTestCases", evalReport.getTotalTestCases());
+        result.put("passedTestCases", evalReport.getPassedTestCases());
+        result.put("failedTestCases", evalReport.getFailedTestCases());
+        result.put("executionTimeMs", evalReport.getExecutionTimeMs());
+        result.put("evaluations", asyncEvalService.serializeEvaluations(evalReport.getEvaluations(), cases));
+        putDimensions(result, grp, prj, mod, fnc);
         return result;
     }
 
-    /**
-     * Helper: set dimension fields on a map, trimming and skipping null/blank values.
-     */
-    private void putDimensions(Map<String, Object> map, String group, String project, String module, String function) {
-        if (group != null && !group.trim().isEmpty()) {
-            map.put("group", group.trim());
+    private Map<String, Object> validateMetrics(List<String> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            return ApiResponse.error("评测指标不能为空");
         }
-        if (project != null && !project.trim().isEmpty()) {
-            map.put("project", project.trim());
-        }
-        if (module != null && !module.trim().isEmpty()) {
-            map.put("module", module.trim());
-        }
-        if (function != null && !function.trim().isEmpty()) {
-            map.put("function", function.trim());
-        }
-    }
-
-    @GetMapping("/api/reports")
-    @ResponseBody
-    public Map<String, Object> getReports(
-            @RequestParam(defaultValue = "desc") String sort,
-            @RequestParam(required = false) Long since,
-            @RequestParam(required = false) Long until,
-            @RequestParam(required = false) String group,
-            @RequestParam(required = false) String project,
-            @RequestParam(required = false) String module,
-            @RequestParam(required = false) String function,
-            @RequestParam(required = false) Boolean favorite,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "time") String sortBy,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "false") boolean all) {
-        if (size < 1) size = 20;
-        if (size > 100) size = 100;
-        return reportService.getAllReports(sort, since, until, group, project, module, function, favorite, status, keyword, sortBy, page, size, all);
-    }
-
-    @GetMapping("/api/reports/{id}")
-    @ResponseBody
-    public Map<String, Object> getReport(@PathVariable String id) {
-        Map<String, Object> report = reportService.getReport(id);
-        if (report == null) {
-            return ApiResponse.error("报告不存在");
-        }
-        Map<String, Object> detail = new LinkedHashMap<>();
-        detail.put("success", true);
-        detail.put("reportId", id);
-        detail.put("summary", report.get("summary"));
-        detail.put("evaluations", report.get("evaluations"));
-        detail.put("totalTestCases", report.get("totalTestCases"));
-        detail.put("passedTestCases", report.get("passedTestCases"));
-        detail.put("failedTestCases", report.get("failedTestCases"));
-        detail.put("executionTimeMs", report.get("executionTimeMs"));
-        detail.put("project", report.getOrDefault("project", null));
-        detail.put("module", report.getOrDefault("module", null));
-        detail.put("function", report.getOrDefault("function", null));
-        detail.put("group", report.getOrDefault("group", null));
-        return detail;
-    }
-
-    @DeleteMapping("/api/reports/{id}")
-    @ResponseBody
-    public Map<String, Object> deleteReport(@PathVariable String id) {
-        return reportService.deleteReport(id);
-    }
-
-    @Operation(summary = "清空所有评测报告")
-    @RequestMapping(value = "/api/reports", method = RequestMethod.DELETE)
-    @ResponseBody
-    public Map<String, Object> clearAllReports(@RequestBody(required = false) Map<String, String> body) {
-        if (body != null && "clearAll".equals(body.get("action"))) {
-            return reportService.clearAllReports();
-        }
-        return ApiResponse.error("无效的操作");
-    }
-
-    @GetMapping("/api/reports/{id}/export")
-    public ResponseEntity<?> exportReport(
-            @PathVariable String id,
-            @RequestParam(defaultValue = "json") String format) {
-        
-        Map<String, Object> report = reportService.getReport(id);
-        if (report == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        if ("csv".equalsIgnoreCase(format)) {
-            return exportAsCsv(report, id);
-        } else {
-            return exportAsJson(report, id);
-        }
-    }
-    
-    private ResponseEntity<?> exportAsJson(Map<String, Object> report, String reportId) {
-        try {
-            Map<String, Object> json = Map.of(
-                "reportId", reportId,
-                "summary", report.get("summary"),
-                "evaluations", report.get("evaluations"),
-                "exportTime", Instant.now().toString()
-            );
-            
-            String jsonStr = objectMapper.writeValueAsString(json);
-            byte[] bytes = jsonStr.getBytes(StandardCharsets.UTF_8);
-            
-            return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report_" + reportId + ".json")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(bytes);
-        } catch (Exception e) {
-            log.error("Failed to export report JSON: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    private ResponseEntity<?> exportAsCsv(Map<String, Object> report, String reportId) {
-        String csv = buildCsvMeta(report, reportId) + generateCsvFromMap(report);
-        byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
-        
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report_" + reportId + ".csv")
-            .contentType(MediaType.parseMediaType("text/csv"))
-            .body(bytes);
-    }
-    
-    /**
-     * 报告级元信息（分组维度）以注释行形式置于 CSV 顶部，
-     * 大多数表格解析器会忽略 # 开头的行。
-     */
-    private String buildCsvMeta(Map<String, Object> report, String reportId) {
-        StringBuilder meta = new StringBuilder();
-        meta.append("# 报告ID,").append(escapeCsv(reportId)).append("\n");
-        Object group = report.get("group");
-        if (group != null && !String.valueOf(group).trim().isEmpty()) {
-            meta.append("# 分组,").append(escapeCsv(group)).append("\n");
-        }
-        Object project = report.get("project");
-        if (project != null && !String.valueOf(project).trim().isEmpty()) {
-            meta.append("# 项目,").append(escapeCsv(project)).append("\n");
-        }
-        Object module = report.get("module");
-        if (module != null && !String.valueOf(module).trim().isEmpty()) {
-            meta.append("# 模块,").append(escapeCsv(module)).append("\n");
-        }
-        Object func = report.get("function");
-        if (func != null && !String.valueOf(func).trim().isEmpty()) {
-            meta.append("# 功能,").append(escapeCsv(func)).append("\n");
-        }
-        Object ts = report.get("timestamp");
-        if (ts instanceof Number) {
-            meta.append("# 评测时间,").append(escapeCsv(new java.util.Date(((Number) ts).longValue()))).append("\n");
-        }
-        return meta.toString();
-    }
-    
-    @SuppressWarnings("unchecked")
-    private String generateCsvFromMap(Map<String, Object> report) {
-        StringBuilder csv = new StringBuilder();
-        csv.append("Test Case ID,Test Case Input,Passed,Overall Score");
-        
-        Object evaluationsObj = report.get("evaluations");
-        if (evaluationsObj instanceof List<?> list && !list.isEmpty()) {
-            Object first = list.get(0);
-            if (first instanceof Map) {
-                Map<String, Object> firstMap = (Map<String, Object>) first;
-                Object results = firstMap.get("scorerResults");
-                if (results instanceof Map) {
-                    for (String name : ((Map<String, Object>) results).keySet()) {
-                        csv.append(",").append(name).append(" Score");
-                        csv.append(",").append(name).append(" Passed");
-                        csv.append(",").append(name).append(" Rationale");
-                    }
-                }
+        for (String metric : metrics) {
+            if (metric == null || metric.trim().isEmpty()) {
+                return ApiResponse.error("评测指标名称不能为空");
             }
         }
-        csv.append("\n");
-        
-        if (evaluationsObj instanceof List<?> list) {
-            for (Object item : list) {
-                if (item instanceof Map) {
-                    Map<String, Object> m = (Map<String, Object>) item;
-                    csv.append(escapeCsv(m.get("testCaseId"))).append(",")
-                        .append(escapeCsv(m.get("testCaseInput"))).append(",");
-                    csv.append(escapeCsv(m.get("passed"))).append(",");
-                    csv.append(escapeCsv(m.get("overallScore")));
-                    
-                    Object results = m.get("scorerResults");
-                    if (results instanceof Map) {
-                        for (Object sr : ((Map<String, Object>) results).values()) {
-                            if (sr instanceof Map) {
-                                Map<String, Object> srMap = (Map<String, Object>) sr;
-                                csv.append(",").append(escapeCsv(srMap.get("score")));
-                                csv.append(",").append(escapeCsv(srMap.get("passed")));
-                                csv.append(",").append(escapeCsv(srMap.get("rationale")));
-                            }
-                        }
-                    }
-                    csv.append("\n");
-                }
-            }
+        return null;
+    }
+
+    private EvalCaseService.CaseResolution resolveCases(EvalRequest request) {
+        if (request == null) {
+            return new EvalCaseService.CaseResolution("评测请求格式错误");
         }
-        
-        return csv.toString();
-    }
-
-    /**
-     * Escape a value for safe CSV field inclusion.
-     * Prevents CSV formula injection (leading =, +, -, @) and handles commas/quotes/newlines.
-     */
-    private String escapeCsv(Object value) {
-        if (value == null) return "";
-        String s = value.toString();
-        if (s.isEmpty()) return "";
-        // Prefix formula-like starts to prevent CSV injection
-        if (s.startsWith("=") || s.startsWith("+") || s.startsWith("-") || s.startsWith("@")) {
-            s = "'" + s;
+        // Try cases (inline DTOs) first
+        if (request.getCases() != null && !request.getCases().isEmpty()) {
+            return evalCaseService.resolveFromDtos(request.getCases());
         }
-        boolean needsQuotes = s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r");
-        if (needsQuotes) {
-            return "\"" + s.replace("\"", "\"\"") + "\"";
+        // Then caseIds
+        if (request.getCaseIds() != null && !request.getCaseIds().isEmpty()) {
+            return evalCaseService.resolveFromCaseIds(request.getCaseIds());
         }
-        return s;
-    }
-
-    // 复制报告
-    @Operation(summary = "复制报告（生成新 ID）")
-    @PostMapping("/api/reports/{id}/copy")
-    @ResponseBody
-    public Map<String, Object> copyReport(@PathVariable String id) {
-        return reportService.copyReport(id);
-    }
-
-    // 收藏/取消收藏
-    @Operation(summary = "切换报告收藏状态")
-    @PostMapping("/api/reports/{id}/favorite")
-    @ResponseBody
-    public Map<String, Object> toggleFavorite(@PathVariable String id) {
-        return reportService.toggleFavorite(id);
-    }
-
-    // 生成报告分享链接
-    @Operation(summary = "生成分享链接")
-    @PostMapping("/api/reports/{id}/share")
-    @ResponseBody
-    public Map<String, Object> shareReport(@PathVariable String id) {
-        return reportService.createShareLink(id);
-    }
-
-    // 获取分享列表
-    @Operation(summary = "获取收藏报告列表")
-    @GetMapping("/api/reports/favorites")
-    @ResponseBody
-    public Map<String, Object> getFavorites() {
-        return reportService.getFavorites();
-    }
-
-    // 更新报告标签
-    @Operation(summary = "批量更新报告标签")
-    @PutMapping("/api/reports/{id}/tags")
-    @ResponseBody
-    public Map<String, Object> updateTags(
-            @PathVariable String id,
-            @RequestBody Map<String, Object> body) {
-        Object tags = body.get("tags");
-        if (!(tags instanceof List)) {
-            return ApiResponse.error("tags 必须是一个列表");
+        // Then dimensions
+        if (request.getProject() != null || request.getModule() != null || request.getFunction() != null) {
+            return evalCaseService.resolveFromDimensions(
+                    request.getProject(), request.getModule(), request.getFunction());
         }
-        @SuppressWarnings("unchecked")
-        List<String> tagList = (List<String>) tags;
-        return reportService.updateTags(id, tagList);
+        return new EvalCaseService.CaseResolution("请提供测试用例（cases / caseIds / project+module+function 三选一）");
     }
 
-    // 更新报告备注
-    @Operation(summary = "更新报告备注")
-    @PutMapping("/api/reports/{id}/note")
-    @ResponseBody
-    public Map<String, Object> updateNote(
-            @PathVariable String id,
-            @RequestBody Map<String, Object> body) {
-        return reportService.updateNote(id, (String) body.getOrDefault("note", ""));
+    private EvalCaseService.CaseResolution resolveCases(EvalRequest request,
+                                                       String project,
+                                                       String module,
+                                                       String function) {
+        if (request != null) return resolveCases(request);
+        // Dimensional resolution used by evaluateByCaseIds / evaluateByDimensions
+        if (project != null || module != null || function != null) {
+            return evalCaseService.resolveFromDimensions(project, module, function);
+        }
+        return new EvalCaseService.CaseResolution("请提供测试用例（cases / caseIds / project+module+function 三选一）");
     }
 
-    // 对比报告
-    @GetMapping("/api/reports/compare")
-    @ResponseBody
-    public Map<String, Object> compareReports(
-            @RequestParam String ids,
-            @RequestParam(required = false) String metric) {
-        List<String> idList = java.util.Arrays.asList(ids.split(",")).stream()
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .distinct()
-            .collect(java.util.stream.Collectors.toList());
-        if (idList.size() < 2) {
-            return ApiResponse.error("至少需要 2 个报告进行对比");
-        }
-        return reportService.compareReports(idList);
-    }
-
-    /**
-     * Create agent using AgentFactory.
-     */
-    private Agent createAgent(String type, Map<String, Object> config) {
-        return agentFactory.createAgent(type, config);
-    }
-
-    /** Result holder for test-case resolution. */
-    private record CaseResolution(List<TestCase> testCases, String errorMessage) {
-        CaseResolution(List<TestCase> testCases) { this(testCases, null); }
-        CaseResolution(String errorMessage) { this(null, errorMessage); }
-        boolean hasError() { return errorMessage != null; }
-    }
-
-    /** Resolve test cases from DTO list (used by sync evaluate + async). */
-    private CaseResolution resolveFromDtos(List<TestCaseDto> dtos) {
-        if (dtos.size() > Constants.MAX_CASES_PER_EVAL) {
-            return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个");
-        }
-        for (int i = 0; i < dtos.size(); i++) {
-            TestCaseDto dto = dtos.get(i);
-            if (dto.getInput() == null || dto.getInput().trim().isEmpty()) {
-                return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入不能为空");
-            }
-            if (dto.getInput().length() > Constants.MAX_INPUT_LENGTH) {
-                return new CaseResolution("第 " + (i + 1) + " 个测试用例的输入过长（最大 " + Constants.MAX_INPUT_LENGTH + " 字符）");
-            }
-            if (dto.getExpected() != null && dto.getExpected().length() > Constants.MAX_INPUT_LENGTH) {
-                return new CaseResolution("第 " + (i + 1) + " 个测试用例的期望输出过长（最大 " + Constants.MAX_INPUT_LENGTH + " 字符）");
-            }
-        }
-        List<TestCase> cases = dtos.stream()
-            .map(dto -> new TestCase(dto.getInput(), dto.getExpected()))
-            .toList();
-        return new CaseResolution(cases);
-    }
-
-    /** Resolve test cases from repository by IDs (used by evaluateByCaseIds + async). */
-    private CaseResolution resolveFromCaseIds(List<String> caseIds) {
-        log.info("Resolving {} case IDs", caseIds != null ? caseIds.size() : 0);
-        if (caseIds.size() > Constants.MAX_CASES_PER_EVAL) {
-            return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个");
-        }
-        List<TestCase> cases = caseIds.stream()
-            .map(id -> testCaseRepository.findTestCaseById(id))
-            .filter(java.util.Optional::isPresent)
-            .map(opt -> {
-                TestCaseEntity e = opt.get();
-                return new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null,
-                    e.getProject(), e.getModule(), e.getFunction());
-            })
-            .toList();
-        log.info("Resolved {} test cases from {} IDs", cases.size(), caseIds.size());
-        if (cases.isEmpty()) {
-            return new CaseResolution("未找到有效的测试用例");
-        }
-        return new CaseResolution(cases);
-    }
-
-    /** Resolve test cases by project/module/function dimensions (used by evaluateByDimensions + async). */
-    private CaseResolution resolveFromDimensions(String project, String module, String function) {
-        List<TestCaseEntity> byDims = testCaseRepository.findTestCasesByDimensions(project, module, function);
-        if (byDims.isEmpty()) {
-            return new CaseResolution("没有符合所选维度的测试用例");
-        }
-        if (byDims.size() > Constants.MAX_CASES_PER_EVAL) {
-            return new CaseResolution("测试用例数量不能超过 " + Constants.MAX_CASES_PER_EVAL + " 个（当前 " + byDims.size() + "）");
-        }
-        List<TestCase> cases = byDims.stream()
-            .map(e -> new TestCase(e.getId(), e.getInput(), e.getExpected(), null, null,
-                e.getProject(), e.getModule(), e.getFunction()))
-            .toList();
-        return new CaseResolution(cases);
+    private void putDimensions(Map<String, Object> map,
+                              String group, String project, String module, String function) {
+        if (group != null && !group.trim().isEmpty())   map.put("group",   group.trim());
+        if (project != null && !project.trim().isEmpty()) map.put("project",  project.trim());
+        if (module != null && !module.trim().isEmpty())  map.put("module",   module.trim());
+        if (function != null && !function.trim().isEmpty()) map.put("function", function.trim());
     }
 }
-
-class EvaluateByCaseIdsRequest {
-    private List<String> caseIds;
-    private List<String> metrics;
-    private String agentType;
-    private Map<String, Object> agentConfig;
-    private String agentConfigId;
-    private String evalConfigId;
-
-    public List<String> getCaseIds() { return caseIds; }
-    public void setCaseIds(List<String> caseIds) { this.caseIds = caseIds; }
-    public List<String> getMetrics() { return metrics; }
-    public void setMetrics(List<String> metrics) { this.metrics = metrics; }
-    public String getAgentType() { return agentType; }
-    public void setAgentType(String agentType) { this.agentType = agentType; }
-    public Map<String, Object> getAgentConfig() { return agentConfig; }
-    public void setAgentConfig(Map<String, Object> agentConfig) { this.agentConfig = agentConfig; }
-    public String getAgentConfigId() { return agentConfigId; }
-    public void setAgentConfigId(String agentConfigId) { this.agentConfigId = agentConfigId; }
-    public String getEvalConfigId() { return evalConfigId; }
-    public void setEvalConfigId(String evalConfigId) { this.evalConfigId = evalConfigId; }
-}
-
-// TEST_MARKER_1234567890XYZ
