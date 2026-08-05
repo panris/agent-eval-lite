@@ -371,6 +371,70 @@
         }
         .table tr:hover { background: var(--bg-table-row-hover); }
 
+        /* History table specific styles */
+        .history-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+        }
+        #history-table {
+            table-layout: fixed;
+            min-width: 1100px;
+            width: 100%;
+        }
+        #history-table th, #history-table td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #history-table th:nth-child(1), #history-table td:nth-child(1) { width: 45px; text-align: center; }
+        #history-table th:nth-child(2), #history-table td:nth-child(2) { width: 180px; }
+        #history-table th:nth-child(3), #history-table td:nth-child(3) { width: 150px; }
+        #history-table th:nth-child(4), #history-table td:nth-child(4) { width: 80px; text-align: center; }
+        #history-table th:nth-child(5), #history-table td:nth-child(5) { width: 80px; text-align: center; }
+        #history-table th:nth-child(6), #history-table td:nth-child(6) { width: 140px; }
+        #history-table th:nth-child(7), #history-table td:nth-child(7) { width: 140px; }
+        #history-table th:nth-child(8), #history-table td:nth-child(8) { width: 120px; }
+        #history-table th:nth-child(9), #history-table td:nth-child(9) { width: 190px; }
+
+        .history-id-cell {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            max-width: 170px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .history-time-cell {
+            font-size: 13px;
+        }
+        .history-group-cell, .history-tag-cell {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            max-height: 48px;
+            overflow: hidden;
+        }
+        .history-group-cell .badge, .history-tag-cell .badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            margin: 0;
+        }
+        .history-note-cell {
+            max-width: 110px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .history-actions-cell {
+            white-space: nowrap;
+        }
+        .history-actions-cell .btn {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
         .checkbox-cell { width: 40px; text-align: center; }
         .checkbox-cell input { width: 18px; height: 18px; cursor: pointer; }
 

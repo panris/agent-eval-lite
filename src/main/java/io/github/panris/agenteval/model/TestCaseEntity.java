@@ -48,7 +48,7 @@ public class TestCaseEntity {
     @Column(length = 100)
     private String module;
     
-    @Column(length = 100)
+    @Column(name = "`function`", length = 100)
     private String function;
     
     @Column(length = 500)

@@ -177,8 +177,8 @@
             <div class="action-bar">
                 <div class="metric-checkboxes u-display-inline-flex u-gap-8px u-align-items-center u-flex-wrap-wrap">
                 <label class="u-font-size-12px u-color-var-text-secondary">指标:</label>
-                <label><input type="checkbox" class="eval-metric" value="correctness" checked> 正确性</label>
-                <label><input type="checkbox" class="eval-metric" value="llm"> LLM</label>
+                <label><input type="checkbox" class="eval-metric" value="llm" checked> LLM</label>
+                <label><input type="checkbox" class="eval-metric" value="correctness"> 正确性</label>
                 <label><input type="checkbox" class="eval-metric" value="safety"> 安全</label>
                 <label><input type="checkbox" class="eval-metric" value="response_time"> 响应时间</label>
                 <label><input type="checkbox" class="eval-metric" value="bleu"> BLEU</label>
@@ -338,22 +338,24 @@
                 <button class="btn btn-sm" id="page-next" onclick="goToPage(_reportPage+1)" disabled>下一页 ▶</button>
             </div>
 
-            <table class="table" id="history-table">
-                <thead>
-                    <tr>
-                        <th class="u-width-40px"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
-                        <th>报告ID</th>
-                        <th>时间</th>
-                        <th>通过率</th>
-                        <th>平均分</th>
-                        <th>三维分组</th>
-                        <th>标签</th>
-                        <th>备注</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="history-tbody"></tbody>
-            </table>
+            <div class="history-table-wrapper">
+                <table class="table" id="history-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 45px; text-align: center;"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
+                            <th style="width: 180px;">报告ID</th>
+                            <th style="width: 150px;">时间</th>
+                            <th style="width: 80px; text-align: center;">通过率</th>
+                            <th style="width: 80px; text-align: center;">平均分</th>
+                            <th style="width: 140px;">三维分组</th>
+                            <th style="width: 140px;">标签</th>
+                            <th style="width: 120px;">备注</th>
+                            <th style="width: 190px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 

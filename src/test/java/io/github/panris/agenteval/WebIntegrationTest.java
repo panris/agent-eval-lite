@@ -3,15 +3,11 @@ package io.github.panris.agenteval;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.nio.file.Path;
 import java.util.List;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -21,28 +17,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration test: boots the full Spring context against an isolated temp SQLite DB
- * and exercises the real wiring end-to-end (controller -> service -> JPA -> SQLite).
+ * Integration test: boots the full Spring context against an in-memory SQLite DB
+ * (activated via the 'test' profile, see application-test.yml) and exercises the
+ * real wiring end-to-end (controller → service → JPA → SQLite).
  *
  * This closes the long-standing gap of "no integration / front-end tests": every
  * application page template is rendered through the Thymeleaf view resolver (so a
  * broken template fails the build), and a real evaluate flow persists a report.
- *
- * No Spring Security is configured, so MockMvc needs no credentials.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class WebIntegrationTest {
-
-    @TempDir
-    static Path tempDir;
-
-    @DynamicPropertySource
-    static void props(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url",
-                () -> "jdbc:sqlite:" + tempDir.resolve("example_db.sqlite").toAbsolutePath());
-        registry.add("data.dir", () -> tempDir.toAbsolutePath().toString());
-    }
 
     @Autowired
     private MockMvc mockMvc;

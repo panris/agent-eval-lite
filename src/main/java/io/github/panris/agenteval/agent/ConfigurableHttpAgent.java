@@ -1,5 +1,10 @@
 package io.github.panris.agenteval.agent;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.panris.agenteval.Agent;
 import io.github.panris.agenteval.model.AgentConfig;
 import io.github.panris.agenteval.util.JsonPathUtils;
@@ -11,6 +16,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Configurable HTTP Agent that calls external REST API.
@@ -19,6 +26,8 @@ import java.util.Map;
 public class ConfigurableHttpAgent implements Agent {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigurableHttpAgent.class);
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
 
     private final RestTemplate restTemplate;
     private final AgentConfig config;
@@ -85,6 +94,23 @@ public class ConfigurableHttpAgent implements Agent {
      */
     private String buildRequestBody(String input) {
         AgentConfig.RequestMapping requestMapping = config.getRequestMapping();
+
+        // Build values map - input has highest priority
+        Map<String, Object> values = new HashMap<>();
+
+        // Add type-specific config first (lower priority)
+        if (config.getConfig() != null) {
+            values.putAll(config.getConfig());
+        }
+
+        // Add static fields
+        if (requestMapping != null && requestMapping.getStaticFields() != null) {
+            values.putAll(requestMapping.getStaticFields());
+        }
+
+        // Add input with highest priority (will override any same key in config/static)
+        values.put("input", input);
+
         if (requestMapping == null) {
             // Default format
             return String.format("{\"input\":\"%s\"}", escapeJson(input));
@@ -95,22 +121,76 @@ public class ConfigurableHttpAgent implements Agent {
             template = "{\"input\":\"${input}\"}";
         }
 
-        // Build values map
-        Map<String, Object> values = new HashMap<>();
-        values.put("input", input);
+        // Try to parse template as JSON and process it
+        try {
+            JsonNode jsonNode = objectMapper.readTree(template);
+            JsonNode processed = processJsonNode(jsonNode, values);
+            return objectMapper.writeValueAsString(processed);
+        } catch (JsonProcessingException e) {
+            logger.debug("Template is not valid JSON, using string replacement: {}", e.getMessage());
+            // Fallback: simple string replacement
+            return JsonPathUtils.buildJson(template, values);
+        }
+    }
 
-        // Add static fields
-        if (requestMapping.getStaticFields() != null) {
-            values.putAll(requestMapping.getStaticFields());
+    /**
+     * Recursively process JSON nodes, replacing ${...} placeholders in string values.
+     */
+    private JsonNode processJsonNode(JsonNode node, Map<String, Object> values) {
+        if (node == null) {
+            return null;
         }
 
-        // Add type-specific config
-        if (config.getConfig() != null) {
-            values.putAll(config.getConfig());
+        if (node.isTextual()) {
+            String text = node.asText();
+            if (text.contains("${")) {
+                return objectMapper.getNodeFactory().textNode(replacePlaceholders(text, values));
+            }
+            return node;
+        } else if (node.isObject()) {
+            ObjectNode objectNode = ((ObjectNode) node).deepCopy();
+            objectNode.fields().forEachRemaining(entry -> {
+                JsonNode processed = processJsonNode(entry.getValue(), values);
+                objectNode.set(entry.getKey(), processed);
+            });
+            return objectNode;
+        } else if (node.isArray()) {
+            ArrayNode arrayNode = ((ArrayNode) node).deepCopy();
+            for (int i = 0; i < arrayNode.size(); i++) {
+                JsonNode processed = processJsonNode(arrayNode.get(i), values);
+                arrayNode.set(i, processed);
+            }
+            return arrayNode;
         }
 
-        // Replace placeholders
-        return JsonPathUtils.buildJson(template, values);
+        return node;
+    }
+
+    /**
+     * Replace placeholders in template string with actual values.
+     */
+    private String replacePlaceholders(String template, Map<String, Object> values) {
+        StringBuffer result = new StringBuffer();
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
+
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            Object value = values.get(key);
+            String replacement;
+            if (value != null) {
+                if (value instanceof String) {
+                    replacement = (String) value;
+                } else {
+                    replacement = value.toString();
+                }
+            } else {
+                replacement = "";
+            }
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
     }
 
     /**

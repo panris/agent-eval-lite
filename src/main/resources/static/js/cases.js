@@ -557,36 +557,6 @@ async function loadTestCases() {
             `;
         }).join('');
 
-        // 更新评测表格 - 先保存选中状态
-        const evalTbody = document.getElementById('eval-tbody');
-        const selectedCaseIds = new Set();
-        if (evalTbody) {
-            evalTbody.querySelectorAll('.eval-checkbox:checked').forEach(cb => {
-                selectedCaseIds.add(cb.value);
-            });
-        }
-        
-        evalTbody.innerHTML = testCases.map(tc => {
-            const _name = utils.escapeHtml(tc.name);
-            const _input = utils.escapeHtml(tc.input);
-            const _expected = utils.escapeHtml(tc.expected);
-            const _project = tc.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(tc.project)}</span>` : '-';
-            const _module = tc.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(tc.module)}</span>` : '-';
-            const _function = tc.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(tc.function)}</span>` : '-';
-            const isSelected = selectedCaseIds.has(tc.id) ? 'checked' : '';
-            return `
-            <tr>
-                <td class="checkbox-cell"><input type="checkbox" class="eval-checkbox" value="${utils.escapeHtml(tc.id)}" ${isSelected}></td>
-                <td>${_name}</td>
-                <td>${_input}</td>
-                <td>${_expected}</td>
-                <td>${_project}</td>
-                <td>${_module}</td>
-                <td>${_function}</td>
-            </tr>
-            `;
-        }).join('');
-
         renderTcPagination();
         if (typeof updateEvalSelectedCount === 'function') updateEvalSelectedCount();
         if (typeof updateSelectAllState === 'function') updateSelectAllState();

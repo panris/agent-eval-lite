@@ -128,6 +128,20 @@ public class TestCaseController {
     }
 
     /**
+     * 获取全部测试用例（不分页，供评测页面使用）。
+     */
+    @Operation(summary = "获取全部测试用例（不分页）")
+    @GetMapping("/all")
+    public Map<String, Object> getAllTestCases() {
+        List<TestCaseEntity> testCases = repository.findAllTestCases();
+        return Map.of(
+            "success", true,
+            "testCases", testCases,
+            "total", testCases.size()
+        );
+    }
+
+    /**
      * Get a specific test case.
      */
     @Operation(summary = "获取指定测试用例详情")

@@ -291,54 +291,47 @@ function filterHistory(reports) {
     const tbody = document.getElementById('history-tbody');
     const total = window._reportTotal || 0;
     if (!reports || reports.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-secondary);">${total === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">${total === 0 ? '暂无评测记录' : '无匹配结果'}</td></tr>`;
         return;
     }
     tbody.innerHTML = reports.map(report => {
         const _id = utils.escapeHtml(report.id);
         const _note = utils.escapeHtml(report.note || '');
         const _tags = (report.tags || []).map(t => utils.escapeHtml(t));
-        const _displayNote = _note.length > 15 ? _note.substring(0, 15) + '...' : _note;
+        const _displayNote = _note.length > 12 ? _note.substring(0, 12) + '...' : _note;
         const _group = utils.escapeHtml(report.group || '');
         return `
         <tr>
             <td><input type="checkbox" class="history-checkbox" value="${_id}"></td>
-            <td><code>${_id}</code></td>
-            <td>${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
+            <td class="history-id-cell" title="${_id}">${_id}</td>
+            <td class="history-time-cell">${report.timestamp ? new Date(report.timestamp).toLocaleString() : '-'}</td>
             <td>
                 <span class="badge ${(report.summary?.pass_rate || 0) >= 70 ? 'badge-success' : 'badge-danger'}">
                     ${report.summary ? report.summary.pass_rate.toFixed(1) : 0}%
                 </span>
             </td>
-            <td>${report.summary?.average_score ? report.summary.average_score.toFixed(2) : '-'}</td>
-            <td>${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 8px; font-size: 11px;">${_group}</span>` : '-'}</td>
+            <td style="text-align: center; font-weight: 600;">${report.summary?.average_score ? report.summary.average_score.toFixed(2) : '-'}</td>
             <td>
-                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    ${report.project ? `<span class="badge" style="background: #2563eb; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.project)}</span>` : ''}
-                    ${report.module ? `<span class="badge" style="background: #7c3aed; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.module)}</span>` : ''}
-                    ${report.function ? `<span class="badge" style="background: #db2777; padding: 2px 6px; font-size: 11px;">${utils.escapeHtml(report.function)}</span>` : ''}
-                    ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
-                </div>
+                ${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 6px; font-size: 10px;">${_group}</span>` : '-'}
             </td>
-            <td>
-                <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                    ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
-                    <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openTagsModal('${_id}', ${JSON.stringify(report.tags || []).replace(/"/g, '&quot;')})">+标签</button>
-                </div>
+            <td class="history-group-cell">
+                ${report.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(report.project)}</span>` : ''}
+                ${report.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(report.module)}</span>` : ''}
+                ${report.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(report.function)}</span>` : ''}
+                ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
             </td>
-            <td>
-                <div style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${_note}">
-                    ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
-                </div>
+            <td class="history-tag-cell">
+                ${_tags.map(tag => `<span class="badge" style="background: #667eea;">${tag}</span>`).join('')}
+                ${_tags.length === 0 ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
             </td>
-            <td>
-                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    <button class="btn btn-sm" onclick="openNoteModal('${_id}', '${_note.replace(/'/g, "&#39;")}')">📝</button>
-                    <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" onclick="toggleFavorite('${_id}')" title="收藏">${report.favorite ? '⭐' : '☆'}</button>
-                    <button class="btn btn-sm" onclick="viewHistoryDetails('${_id}')">详情</button>
-                    <button class="btn btn-sm" onclick="shareReport('${_id}')" title="分享">🔗</button>
-                    <button class="btn btn-sm" onclick="copyReport('${_id}')">📋</button>
-                </div>
+            <td class="history-note-cell" title="${_note}">
+                ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
+            </td>
+            <td class="history-actions-cell">
+                <button class="btn btn-sm" title="编辑备注" onclick="openNoteModal('${_id}', '${_note.replace(/'/g, "&#39;")}')">📝</button>
+                <button class="btn btn-sm ${report.favorite ? 'btn-warning' : ''}" title="收藏" onclick="toggleFavorite('${_id}')">${report.favorite ? '⭐' : '☆'}</button>
+                <button class="btn btn-sm" title="详情" onclick="viewHistoryDetails('${_id}')">详情</button>
+                <button class="btn btn-sm" title="分享" onclick="shareReport('${_id}')">🔗</button>
             </td>
         </tr>
         `;

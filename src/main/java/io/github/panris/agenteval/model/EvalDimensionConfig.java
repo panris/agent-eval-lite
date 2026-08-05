@@ -12,7 +12,7 @@ public class EvalDimensionConfig {
     @Column(length = 36)
     private String id;
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "`level`", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private DimensionLevel level;
 
@@ -22,7 +22,7 @@ public class EvalDimensionConfig {
     @Column(length = 100)
     private String module;
 
-    @Column(length = 100)
+    @Column(name = "`function`", length = 100)
     private String function;
 
     @Column(length = 36)

@@ -47,6 +47,7 @@ public class ReportEntity {
 
     private String module;
 
+    @Column(name = "`function`")
     private String function;
 
     @Column(name = "async_task_id", length = 50)

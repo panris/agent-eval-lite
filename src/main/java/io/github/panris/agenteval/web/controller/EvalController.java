@@ -249,7 +249,7 @@ public class EvalController {
                 log.info("Using explicit LLM eval config: {}", llmConfig.getName());
             }
         }
-        if (llmConfig == null && prj != null) {
+        if (llmConfig == null) {
             llmConfig = evalDimensionService.resolveConfig(prj, mod, fnc);
             log.info("Resolved eval config from dimensions: project={}, module={}, function={}", prj, mod, fnc);
         }

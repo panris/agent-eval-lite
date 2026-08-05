@@ -61,7 +61,7 @@ function loadTheme() {
             document.getElementById(`${tab}-card`).classList.add('show');
 
             if (tab === 'cases') loadTestCases();
-            else if (tab === 'evaluate') loadTestCases();
+            else if (tab === 'evaluate') loadEvalTestCases();
             else if (tab === 'history') loadHistory();
         }
 

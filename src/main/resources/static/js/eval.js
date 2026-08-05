@@ -8,6 +8,52 @@ function exportReport(format) {
     window.open(url, '_blank');
 }
 
+// 独立加载全部测试用例到评测表格（不分页）
+async function loadEvalTestCases() {
+    const evalTbody = document.getElementById('eval-tbody');
+    if (!evalTbody) return;
+
+    // 保存当前选中状态
+    const selectedCaseIds = new Set();
+    evalTbody.querySelectorAll('.eval-checkbox:checked').forEach(cb => {
+        selectedCaseIds.add(cb.value);
+    });
+
+    try {
+        const response = await fetch('/api/testcases/all');
+        const data = await response.json();
+        const allCases = data.testCases || [];
+        window._testCases = allCases;
+
+        evalTbody.innerHTML = allCases.map(tc => {
+            const _name = utils.escapeHtml(tc.name);
+            const _input = utils.escapeHtml(tc.input);
+            const _expected = utils.escapeHtml(tc.expected);
+            const _project = tc.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(tc.project)}</span>` : '-';
+            const _module = tc.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(tc.module)}</span>` : '-';
+            const _function = tc.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(tc.function)}</span>` : '-';
+            const isSelected = selectedCaseIds.has(tc.id) ? 'checked' : '';
+            return `
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox" class="eval-checkbox" value="${utils.escapeHtml(tc.id)}" ${isSelected}></td>
+                <td>${_name}</td>
+                <td>${_input}</td>
+                <td>${_expected}</td>
+                <td>${_project}</td>
+                <td>${_module}</td>
+                <td>${_function}</td>
+            </tr>
+            `;
+        }).join('');
+
+        if (typeof updateEvalSelectedCount === 'function') updateEvalSelectedCount();
+        if (typeof updateSelectAllState === 'function') updateSelectAllState();
+    } catch (error) {
+        logError('Failed to load eval test cases:', error);
+        showToast('加载评测用例失败', 'error');
+    }
+}
+
 async function exportReportPdf() {
     if (!window.lastReportId) {
         showToast('没有可导出的评测报告', 'info');
@@ -400,7 +446,14 @@ async function runEvaluation() {
     document.getElementById('eval-result').style.display = 'none';
     document.getElementById('eval-details').style.display = 'none';
 
+    // 从选中的测试用例中获取维度信息
+    const selectedCases = (window._testCases || []).filter(tc => caseIds.includes(tc.id));
+    const project = selectedCases.length > 0 ? selectedCases[0].project : null;
+    const module = selectedCases.length > 0 ? selectedCases[0].module : null;
+    const function_ = selectedCases.length > 0 ? selectedCases[0].function : null;
+
     console.log('Sending evaluation for', caseIds.length, 'cases:', caseIds);
+    console.log('Dimensions:', { project, module, function: function_ });
 
     try {
         const response = await fetch('/api/evaluate/cases', {
@@ -411,7 +464,10 @@ async function runEvaluation() {
                 metrics: getSelectedEvalMetrics(),
                 agentType: getSelectedAgentType(),
                 agentConfigId: getSelectedAgentConfigId(),
-                evalConfigId: getSelectedEvalConfigId()
+                evalConfigId: getSelectedEvalConfigId(),
+                project: project || null,
+                module: module || null,
+                function: function_ || null
             })
         });
 
@@ -443,6 +499,12 @@ async function runSelectedEvaluation() {
 
     const caseIds = Array.from(checked).map(cb => cb.value);
 
+    // 从选中的测试用例中获取维度信息
+    const selectedCases = (window._testCases || []).filter(tc => caseIds.includes(tc.id));
+    const project = selectedCases.length > 0 ? selectedCases[0].project : null;
+    const module = selectedCases.length > 0 ? selectedCases[0].module : null;
+    const function_ = selectedCases.length > 0 ? selectedCases[0].function : null;
+
     try {
         document.getElementById('cases-loading').classList.add('show');
 
@@ -454,7 +516,10 @@ async function runSelectedEvaluation() {
                 metrics: getSelectedEvalMetrics(),
                 agentType: getSelectedAgentType(),
                 agentConfigId: getSelectedAgentConfigId(),
-                evalConfigId: getSelectedEvalConfigId()
+                evalConfigId: getSelectedEvalConfigId(),
+                project: project || null,
+                module: module || null,
+                function: function_ || null
             })
         });
 
@@ -564,7 +629,7 @@ function getSelectedEvalMetrics() {
     const checks = document.querySelectorAll('.eval-metric:checked');
     const list = [];
     checks.forEach(c => list.push(c.value));
-    return list.length > 0 ? list : ['correctness'];
+    return list.length > 0 ? list : ['llm'];
 }
 
 function getSelectedAgentConfigId() {
