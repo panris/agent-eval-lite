@@ -201,7 +201,11 @@
 
             <div class="loading" id="eval-loading">
                 <div class="spinner"></div>
-                <p>评测中...</p>
+                <p id="eval-loading-text">评测中...</p>
+                <div id="eval-progress-bar" style="width:200px;height:8px;background:#e2e8f0;border-radius:4px;margin:8px auto;overflow:hidden;display:none;">
+                    <div id="eval-progress-fill" style="height:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed);border-radius:4px;width:0%;transition:width .3s;"></div>
+                </div>
+                <p id="eval-progress-text" style="font-size:12px;color:var(--text-secondary);display:none;"></p>
             </div>
 
             <div id="eval-result" class="u-display-none">
@@ -619,7 +623,7 @@
 
     <script src="/js/manage.js?v=202607251230"></script>
     <script src="/js/cases.js?v=202607281700"></script>
-    <script src="/js/eval.js?v=202607251230"></script>
+    <script src="/js/eval.js?v=202608061800"></script>
     <script src="/js/history.js?v=202607251230"></script>
 </body>
 </html>

@@ -455,8 +455,17 @@ async function runEvaluation() {
     console.log('Sending evaluation for', caseIds.length, 'cases:', caseIds);
     console.log('Dimensions:', { project, module, function: function_ });
 
+    // 显示进度条
+    const progressBar = document.getElementById('eval-progress-bar');
+    const progressText = document.getElementById('eval-progress-text');
+    if (progressBar) progressBar.style.display = 'block';
+    if (progressText) {
+        progressText.style.display = 'block';
+        progressText.textContent = `提交评测任务中... (0/${caseIds.length})`;
+    }
+
     try {
-        const response = await fetch('/api/evaluate/cases', {
+        const response = await fetch('/api/evaluate/async', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -473,21 +482,100 @@ async function runEvaluation() {
 
         const data = await response.json();
         if (data.success) {
-            const passRate = data.summary.pass_rate.toFixed(1);
-            document.getElementById('pass-rate').textContent = passRate + '%';
-            document.getElementById('eval-result').style.display = 'block';
-            showToast(`评测完成!通过率: ${passRate}%`, 'success');
-
-            window.lastEvaluation = data;
-            window.lastReportId = data.reportId;
-            await loadHistory();
+            const taskId = data.taskId;
+            showToast(`评测任务已提交 (共 ${caseIds.length} 条用例)`, 'success');
+            await startTaskPolling(taskId, caseIds.length);
+        } else {
+            showToast(data.error || '评测任务提交失败', 'error');
+            document.getElementById('eval-loading').classList.remove('show');
+            if (progressBar) progressBar.style.display = 'none';
+            if (progressText) progressText.style.display = 'none';
         }
     } catch (error) {
         logError('Evaluation failed:', error);
-        showToast('评测失败', 'error');
-    } finally {
+        showToast('评测请求失败', 'error');
         document.getElementById('eval-loading').classList.remove('show');
+        if (progressBar) progressBar.style.display = 'none';
+        if (progressText) progressText.style.display = 'none';
     }
+}
+
+async function startTaskPolling(taskId, totalCases) {
+    const progressBar = document.getElementById('eval-progress-bar');
+    const progressFill = document.getElementById('eval-progress-fill');
+    const progressText = document.getElementById('eval-progress-text');
+    
+    const maxAttempts = 120; // 最多轮询120次，每次2秒 = 4分钟
+    const pollInterval = 2000;
+    let attempts = 0;
+
+    return new Promise((resolve) => {
+        const timer = setInterval(async () => {
+            attempts++;
+            if (attempts > maxAttempts) {
+                clearInterval(timer);
+                showToast('评测任务超时，请查看异步任务列表', 'error');
+                document.getElementById('eval-loading').classList.remove('show');
+                if (progressBar) progressBar.style.display = 'none';
+                if (progressText) progressText.style.display = 'none';
+                resolve();
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/tasks/${taskId}`);
+                const taskData = await resp.json();
+                
+                if (taskData.success) {
+                    // 后端返回扁平结构，直接使用 taskData
+                    const completedCount = taskData.completedCases || 0;
+                    const status = taskData.status;
+                    
+                    // 更新进度
+                    const progress = totalCases > 0 ? (completedCount / totalCases) * 100 : 0;
+                    if (progressFill) progressFill.style.width = progress + '%';
+                    if (progressText) progressText.textContent = `评测中... (${completedCount}/${totalCases})`;
+
+                    if (status === 'COMPLETED') {
+                        clearInterval(timer);
+                        showToast('评测完成!', 'success');
+                        document.getElementById('eval-loading').classList.remove('show');
+                        if (progressBar) progressBar.style.display = 'none';
+                        if (progressText) progressText.style.display = 'none';
+                        
+                        // 加载评测详情和刷新历史
+                        if (taskData.reportId) {
+                            try {
+                                const reportResp = await fetch(`/api/reports/${taskData.reportId}`);
+                                const reportData = await reportResp.json();
+                                if (reportData.success) {
+                                    window.lastReportId = taskData.reportId;
+                                    window.lastEvaluation = reportData.data;
+                                    showEvalDetails();
+                                    document.getElementById('eval-result').style.display = 'block';
+                                }
+                            } catch (e) {
+                                logError('Failed to load report:', e);
+                            }
+                        }
+                        
+                        // 刷新历史记录
+                        await loadHistory();
+                        resolve();
+                    } else if (status === 'FAILED' || status === 'TIMED_OUT') {
+                        clearInterval(timer);
+                        showToast(`评测失败: ${taskData.error || status}`, 'error');
+                        document.getElementById('eval-loading').classList.remove('show');
+                        if (progressBar) progressBar.style.display = 'none';
+                        if (progressText) progressText.style.display = 'none';
+                        resolve();
+                    }
+                }
+            } catch (e) {
+                logError('Polling error:', e);
+            }
+        }, pollInterval);
+    });
 }
 
 async function runSelectedEvaluation() {
@@ -507,8 +595,17 @@ async function runSelectedEvaluation() {
 
     try {
         document.getElementById('cases-loading').classList.add('show');
+        
+        // 显示进度条
+        const progressBar = document.getElementById('eval-progress-bar');
+        const progressText = document.getElementById('eval-progress-text');
+        if (progressBar) progressBar.style.display = 'block';
+        if (progressText) {
+            progressText.style.display = 'block';
+            progressText.textContent = `提交评测任务中... (0/${caseIds.length})`;
+        }
 
-        const response = await fetch('/api/evaluate/cases', {
+        const response = await fetch('/api/evaluate/async', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -524,18 +621,85 @@ async function runSelectedEvaluation() {
         });
 
         const data = await response.json();
-        document.getElementById('cases-loading').classList.remove('show');
 
         if (data.success) {
-            window.lastEvaluation = data;
-            const passRate = data.totalTestCases > 0 
-                ? ((data.passedTestCases / data.totalTestCases) * 100).toFixed(1) 
-                : '0';
-            showToast(`评测完成! 通过 ${data.passedTestCases}/${data.totalTestCases} (${passRate}%)`, 'success');
-            await loadHistory();
-            switchTab('history');
+            const taskId = data.taskId;
+            showToast(`评测任务已提交 (共 ${caseIds.length} 条用例)`, 'success');
+            
+            // 轮询任务状态
+            const maxAttempts = 120;
+            const pollInterval = 2000;
+            let attempts = 0;
+            
+            await new Promise((resolve) => {
+                const timer = setInterval(async () => {
+                    attempts++;
+                    if (attempts > maxAttempts) {
+                        clearInterval(timer);
+                        showToast('评测任务超时，请查看异步任务列表', 'error');
+                        document.getElementById('cases-loading').classList.remove('show');
+                        if (progressBar) progressBar.style.display = 'none';
+                        if (progressText) progressText.style.display = 'none';
+                        resolve();
+                        return;
+                    }
+
+                    try {
+                        const resp = await fetch(`/api/tasks/${taskId}`);
+                        const taskData = await resp.json();
+                        
+                        if (taskData.success) {
+                            // 后端返回扁平结构，直接使用 taskData
+                            const completedCount = taskData.completedCases || 0;
+                            const status = taskData.status;
+                            
+                            const progress = caseIds.length > 0 ? (completedCount / caseIds.length) * 100 : 0;
+                            const progressFill = document.getElementById('eval-progress-fill');
+                            if (progressFill) progressFill.style.width = progress + '%';
+                            if (progressText) progressText.textContent = `评测中... (${completedCount}/${caseIds.length})`;
+
+                            if (status === 'COMPLETED') {
+                                clearInterval(timer);
+                                document.getElementById('cases-loading').classList.remove('show');
+                                if (progressBar) progressBar.style.display = 'none';
+                                if (progressText) progressText.style.display = 'none';
+                                
+                                if (taskData.reportId) {
+                                    try {
+                                        const reportResp = await fetch(`/api/reports/${taskData.reportId}`);
+                                        const reportData = await reportResp.json();
+                                        if (reportData.success) {
+                                            window.lastReportId = taskData.reportId;
+                                            window.lastEvaluation = reportData.data;
+                                        }
+                                    } catch (e) {
+                                        logError('Failed to load report:', e);
+                                    }
+                                }
+                                
+                                showToast('评测完成!', 'success');
+                                await loadHistory();
+                                switchTab('history');
+                                resolve();
+                            } else if (status === 'FAILED' || status === 'TIMED_OUT') {
+                                clearInterval(timer);
+                                document.getElementById('cases-loading').classList.remove('show');
+                                if (progressBar) progressBar.style.display = 'none';
+                                if (progressText) progressText.style.display = 'none';
+                                showToast(`评测失败: ${taskData.error || status}`, 'error');
+                                resolve();
+                            }
+                        }
+                    } catch (e) {
+                        logError('Polling error:', e);
+                    }
+                }, pollInterval);
+            });
         } else {
-            showToast(data.error || '评测失败', 'error');
+            document.getElementById('cases-loading').classList.remove('show');
+            if (progressBar) progressBar.style.display = 'none';
+            if (progressText) progressText.style.display = 'none';
+            showToast(data.error || '评测任务提交失败', 'error');
         }
     } catch (e) {
         document.getElementById('cases-loading').classList.remove('show');
