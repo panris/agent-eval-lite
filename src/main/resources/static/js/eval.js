@@ -29,9 +29,9 @@ async function loadEvalTestCases() {
             const _name = utils.escapeHtml(tc.name);
             const _input = utils.escapeHtml(tc.input);
             const _expected = utils.escapeHtml(tc.expected);
-            const _project = tc.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(tc.project)}</span>` : '-';
-            const _module = tc.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(tc.module)}</span>` : '-';
-            const _function = tc.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(tc.function)}</span>` : '-';
+            const _project = tc.project ? `<span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 500;">${utils.escapeHtml(tc.project)}</span>` : '-';
+            const _module = tc.module ? `<span class="badge" style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; font-weight: 500;">${utils.escapeHtml(tc.module)}</span>` : '-';
+            const _function = tc.function ? `<span class="badge" style="background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; font-weight: 500;">${utils.escapeHtml(tc.function)}</span>` : '-';
             const isSelected = selectedCaseIds.has(tc.id) ? 'checked' : '';
             return `
             <tr>
@@ -171,7 +171,7 @@ function renderCharts(evaluations) {
                 labels: ['通过', '失败'],
                 datasets: [{
                     data: [passed, failed],
-                    backgroundColor: ['#28a745', '#dc3545'],
+                    backgroundColor: ['#86efac', '#fca5a5'],
                     borderWidth: 2,
                     borderColor: isDark ? '#252542' : 'white'
                 }]
@@ -203,7 +203,7 @@ function renderCharts(evaluations) {
                 datasets: [{
                     label: '评分',
                     data: scores.map(s => s.score),
-                    backgroundColor: scores.map(s => s.score >= 0.7 ? '#28a745' : s.score >= 0.4 ? '#ffc107' : '#dc3545'),
+                    backgroundColor: scores.map(s => s.score >= 0.7 ? '#86efac' : s.score >= 0.4 ? '#fde68a' : '#fca5a5'),
                     borderRadius: 4
                 }]
             },
@@ -261,13 +261,13 @@ function renderReportMeta(report) {
 
     const badges = [];
     if (project && String(project).trim() !== '') {
-        badges.push(`<span class="badge" style="background: #2563eb;">${utils.escapeHtml(String(project))}</span>`);
+        badges.push(`<span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 500;">${utils.escapeHtml(String(project))}</span>`);
     }
     if (module && String(module).trim() !== '') {
-        badges.push(`<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(String(module))}</span>`);
+        badges.push(`<span class="badge" style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; font-weight: 500;">${utils.escapeHtml(String(module))}</span>`);
     }
     if (func && String(func).trim() !== '') {
-        badges.push(`<span class="badge" style="background: #db2777;">${utils.escapeHtml(String(func))}</span>`);
+        badges.push(`<span class="badge" style="background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; font-weight: 500;">${utils.escapeHtml(String(func))}</span>`);
     }
     dimsSpan.innerHTML = badges.join(' ');
     dimsSpan.style.display = badges.length ? 'inline' : 'none';
@@ -316,7 +316,7 @@ function renderTrendChart(reportsOverride) {
                 {
                     label: '通过率 (%)',
                     data: passRates,
-                    borderColor: '#667eea',
+                    borderColor: '#818cf8',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     fill: true,
                     tension: 0.3,
@@ -325,8 +325,8 @@ function renderTrendChart(reportsOverride) {
                 {
                     label: '平均分',
                     data: avgScores.map(s => s * 100),
-                    borderColor: '#28a745',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
                     fill: true,
                     tension: 0.3,
                     yAxisID: 'y1'
@@ -733,7 +733,7 @@ function showEvalDetails() {
         for (const [key, sr] of Object.entries(ev.scorerResults || {})) {
             const reason = utils.escapeHtml(sr.rationale || '');
             if (reason) {
-                rationaleHtml += `<div style="font-size:12px;color:#666;margin-top:2px;">${key}: ${reason}</div>`;
+                rationaleHtml += `<div style="font-size:12px;color:var(--text-secondary,#5c6370);margin-top:2px;">${key}: ${reason}</div>`;
             }
         }
 

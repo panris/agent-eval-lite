@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>评测配置管理 - Agent Eval Lite</title>
-<link rel="stylesheet" th:href="@{/css/app.css}" />
-<script src="/js/utils.js?v=202607302000"></script>
+<link rel="stylesheet" th:href="@{/css/app.css?v=20260807d}" />
+    <script src="/js/utils.js?v=20260807d"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -65,7 +65,7 @@
       <p class="text-gray-500 text-xs mb-4">统一维护可用的LLM评测模型</p>
       
       <div class="mb-4">
-        <button onclick="showModelModal()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">+ 新增模型</button>
+        <button onclick="showModelModal()" class="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded hover:bg-blue-100 text-sm">+ 新增模型</button>
       </div>
       
       <div id="modelList" class="space-y-3 max-h-96 overflow-y-auto"></div>
@@ -78,7 +78,7 @@
       <p class="text-gray-500 text-xs mb-4">按全局/项目/模块/功能配置评测参数</p>
       
       <div class="mb-4">
-        <button onclick="showDimensionModal()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">+ 新增配置</button>
+        <button onclick="showDimensionModal()" class="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded hover:bg-green-100 text-sm">+ 新增配置</button>
       </div>
       
       <div id="dimensionList" class="space-y-3 max-h-96 overflow-y-auto"></div>
@@ -142,7 +142,7 @@
     </div>
     
     <div class="mt-6 flex gap-2">
-      <button onclick="saveModel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+      <button onclick="saveModel()" class="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded hover:bg-blue-100">保存</button>
       <button onclick="closeModelModal()" class="border px-4 py-2 rounded hover:bg-gray-50">取消</button>
     </div>
   </div>
@@ -215,7 +215,7 @@
     </div>
     
     <div class="mt-6 flex gap-2">
-      <button onclick="saveDimension()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">保存</button>
+      <button onclick="saveDimension()" class="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded hover:bg-green-100">保存</button>
       <button onclick="closeDimensionModal()" class="border px-4 py-2 rounded hover:bg-gray-50">取消</button>
     </div>
   </div>

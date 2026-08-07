@@ -513,13 +513,13 @@ async function loadTestCases() {
                     </td>
                     <td>
                         <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                            ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                            ${_tags.map(tag => `<span class="badge" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
                             <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${_id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
                         </div>
                     </td>
                     <td class="actions" style="white-space:nowrap;">
                         <button class="btn btn-success btn-sm" onclick="saveTestCaseRow('${_id}')" style="margin-right:4px;">保存</button>
-                        <button class="btn btn-sm" onclick="cancelEditTestCaseRow()" style="background:#6c757d;color:white;">取消</button>
+                        <button class="btn btn-sm" onclick="cancelEditTestCaseRow()" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">取消</button>
                     </td>
                 </tr>`;
             }
@@ -537,20 +537,20 @@ async function loadTestCases() {
                 </td>
                 <td>
                     <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                        ${tc.project ? `<span class="badge" style="background: #2563eb;">${_project}</span>` : ''}
-                        ${tc.module ? `<span class="badge" style="background: #7c3aed;">${_module}</span>` : ''}
-                        ${tc.function ? `<span class="badge" style="background: #db2777;">${_function}</span>` : ''}
+                        ${tc.project ? `<span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 500;">${_project}</span>` : ''}
+                        ${tc.module ? `<span class="badge" style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; font-weight: 500;">${_module}</span>` : ''}
+                        ${tc.function ? `<span class="badge" style="background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; font-weight: 500;">${_function}</span>` : ''}
                         ${(!tc.project && !tc.module && !tc.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
                     </div>
                 </td>
                 <td>
                     <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-                        ${_tags.map(tag => `<span class="badge" style="background: #667eea; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
+                        ${_tags.map(tag => `<span class="badge" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 2px 8px; font-size: 11px;">${tag}</span>`).join('')}
                         <button class="btn btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="openCaseTagsModal('${_id}', ${JSON.stringify(tc.metadata?.tags || []).replace(/"/g, '&quot;')})">+标签</button>
                     </div>
                 </td>
                 <td class="actions" style="white-space:nowrap;">
-                    <button class="btn btn-sm" onclick="editTestCaseRow('${_id}')" style="background:#0d6efd;color:white;margin-right:4px;">编辑</button>
+                    <button class="btn btn-sm" onclick="editTestCaseRow('${_id}')" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin-right:4px;">编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteTestCase('${_id}')">删除</button>
                 </td>
             </tr>
@@ -626,7 +626,7 @@ function removeCaseTag(index) {
 function renderCaseTags() {
     const container = document.getElementById('case-tags-list');
     container.innerHTML = currentCaseTags.map((tag, i) => `
-        <span class="badge" style="background: #667eea; padding: 5px 10px; margin: 3px; display: inline-flex; align-items: center; gap: 5px;">
+        <span class="badge" style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 5px 10px; margin: 3px; display: inline-flex; align-items: center; gap: 5px;">
             ${utils.escapeHtml(tag)}
             <span style="cursor: pointer; font-weight: bold;" onclick="removeCaseTag(${i})">×</span>
         </span>
@@ -665,7 +665,7 @@ function renderTcPagination() {
         if (p === '...') {
             return `<span style="padding: 4px 8px; color: var(--text-secondary);">...</span>`;
         }
-        const active = p === tcPage ? 'background: var(--accent); color: #fff; border-color: var(--accent);' : '';
+        const active = p === tcPage ? 'background:#eef2ff;color:#4338ca;border-color:#c7d2fe;' : '';
         return `<button class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 13px; ${active}" onclick="tcGoToPage(${p})">${p}</button>`;
     }).join('');
 }

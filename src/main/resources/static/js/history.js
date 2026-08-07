@@ -103,16 +103,16 @@ async function compareSelectedReports() {
                 <td><code>${reportIds[i] || '-'}</code></td>
                 <td>${ts}</td>
                 <td>${totalCases}</td>
-                <td style="color: #4CAF50; font-weight: bold;">${passRate}%</td>
-                <td style="color: #2196F3; font-weight: bold;">${avgScore}</td>
+                <td style="color: #15803d; font-weight: bold;">${passRate}%</td>
+                <td style="color: #1d4ed8; font-weight: bold;">${avgScore}</td>
                 <td>${execTime > 0 ? execTime + 'ms' : '-'}</td>
             </tr>`;
         }).join('');
 
         const scoreBarHtml = stats ? `<div style="margin: 16px 0; padding: 16px; background: var(--bg-card,#f5f7fa); border-radius: 8px; display: flex; gap: 16px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">📊 平均评分</h4><div style="display: flex; gap: 16px;"><span>最低 <strong style="color:#f44336;">${stats.min.toFixed(2)}</strong></span><span>均分 <strong style="color:#2196F3;">${stats.avg.toFixed(2)}</strong></span><span>最高 <strong style="color:#4CAF50;">${stats.max.toFixed(2)}</strong></span></div></div>
-            ${data.comparison.passRateStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">✅ 通过率</h4><div style="display: flex; gap: 16px;"><span>最低 <strong style="color:#f44336;">${data.comparison.passRateStats.min.toFixed(1)}%</strong></span><span>均分 <strong style="color:#2196F3;">${data.comparison.passRateStats.avg.toFixed(1)}%</strong></span><span>最高 <strong style="color:#4CAF50;">${data.comparison.passRateStats.max.toFixed(1)}%</strong></span></div></div>` : ''}
-            ${data.comparison.execTimeStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">⏱ 耗时</h4><div style="display: flex; gap: 16px;"><span>最快 <strong style="color:#4CAF50;">${data.comparison.execTimeStats.min}ms</strong></span><span>均耗 <strong style="color:#2196F3;">${Math.round(data.comparison.execTimeStats.avg)}ms</strong></span><span>最慢 <strong style="color:#f44336;">${data.comparison.execTimeStats.max}ms</strong></span></div></div>` : ''}
+            <div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">📊 平均评分</h4><div style="display: flex; gap: 16px;"><span>最低 <strong style="color:#b91c1c;">${stats.min.toFixed(2)}</strong></span><span>均分 <strong style="color:#1d4ed8;">${stats.avg.toFixed(2)}</strong></span><span>最高 <strong style="color:#15803d;">${stats.max.toFixed(2)}</strong></span></div></div>
+            ${data.comparison.passRateStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">✅ 通过率</h4><div style="display: flex; gap: 16px;"><span>最低 <strong style="color:#b91c1c;">${data.comparison.passRateStats.min.toFixed(1)}%</strong></span><span>均分 <strong style="color:#1d4ed8;">${data.comparison.passRateStats.avg.toFixed(1)}%</strong></span><span>最高 <strong style="color:#15803d;">${data.comparison.passRateStats.max.toFixed(1)}%</strong></span></div></div>` : ''}
+            ${data.comparison.execTimeStats ? `<div style="flex: 1; min-width: 120px;"><h4 style="margin: 0 0 8px 0;">⏱ 耗时</h4><div style="display: flex; gap: 16px;"><span>最快 <strong style="color:#15803d;">${data.comparison.execTimeStats.min}ms</strong></span><span>均耗 <strong style="color:#1d4ed8;">${Math.round(data.comparison.execTimeStats.avg)}ms</strong></span><span>最慢 <strong style="color:#b91c1c;">${data.comparison.execTimeStats.max}ms</strong></span></div></div>` : ''}
         </div>` : '';
 
         // 逐评分器明细
@@ -126,7 +126,7 @@ async function compareSelectedReports() {
                 <div style="overflow-x: auto;">
                     <table style="width:100%;border-collapse:collapse;font-size:13px;">
                         <thead>
-                            <tr style="background:#e8f0fe;">
+                            <tr style="background:#eff6ff;">
                                 <th style="padding:6px 10px;text-align:left;">评分器</th>
                                 ${reportIdList.map((rid,i) => `<th style="padding:6px 10px;text-align:center;">报告 ${i+1}</th>`).join('')}
                                 <th style="padding:6px 10px;text-align:center;">最低</th>
@@ -141,16 +141,16 @@ async function compareSelectedReports() {
                                 const st = info.stats || {};
                                 // 计算各报告的平均分(保留2位)
                                 const vals = Object.values(sc);
-                                const minColor = vals.length ? (vals.reduce((a,b)=>a<b?a:b, vals[0]) === vals[0] ? '#f44336' : '#4CAF50') : '#999';
-                                const maxColor = vals.length ? (vals.reduce((a,b)=>a>b?a:b, vals[0]) === vals[0] ? '#4CAF50' : '#f44336') : '#999';
+                                const minColor = vals.length ? (vals.reduce((a,b)=>a<b?a:b, vals[0]) === vals[0] ? '#b91c1c' : '#15803d') : '#94a3b8';
+                                const maxColor = vals.length ? (vals.reduce((a,b)=>a>b?a:b, vals[0]) === vals[0] ? '#15803d' : '#b91c1c') : '#94a3b8';
                                 return `<tr>
                                     <td style="padding:6px 10px;font-weight:600;">${scorer}</td>
                                     ${reportIdList.map((rid,i) => {
                                         const v = sc[rid];
-                                        return `<td style="padding:6px 10px;text-align:center;color:#2196F3;font-weight:bold;">${v !== undefined ? v.toFixed(2) : '-'}</td>`;
+                                        return `<td style="padding:6px 10px;text-align:center;color:#1d4ed8;font-weight:bold;">${v !== undefined ? v.toFixed(2) : '-'}</td>`;
                                     }).join('')}
                                     <td style="padding:6px 10px;text-align:center;color:${minColor};font-weight:bold;">${st.min !== undefined ? st.min.toFixed(2) : '-'}</td>
-                                    <td style="padding:6px 10px;text-align:center;color:#2196F3;font-weight:bold;">${st.avg !== undefined ? st.avg.toFixed(2) : '-'}</td>
+                                    <td style="padding:6px 10px;text-align:center;color:#1d4ed8;font-weight:bold;">${st.avg !== undefined ? st.avg.toFixed(2) : '-'}</td>
                                     <td style="padding:6px 10px;text-align:center;color:${maxColor};font-weight:bold;">${st.max !== undefined ? st.max.toFixed(2) : '-'}</td>
                                 </tr>`;
                             }).join('')}
@@ -174,7 +174,7 @@ async function compareSelectedReports() {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 style="margin: 0;">📊 报告对比</h2>
                     <button onclick="this.closest('[style*=\\'position: fixed\\']').remove()" style="
-                        background: none; border: none; font-size: 24px; cursor: pointer; color: #999;
+                        background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8;
                     ">&times;</button>
                 </div>
 
@@ -300,6 +300,31 @@ function filterHistory(reports) {
         const _tags = (report.tags || []).map(t => utils.escapeHtml(t));
         const _displayNote = _note.length > 12 ? _note.substring(0, 12) + '...' : _note;
         const _group = utils.escapeHtml(report.group || '');
+
+        // 3D grouping (project / module / function) — collect for tooltip
+        const _groupParts = [];
+        if (report.project) _groupParts.push('项目:' + report.project);
+        if (report.module) _groupParts.push('模块:' + report.module);
+        if (report.function) _groupParts.push('功能:' + report.function);
+        const _groupTitle = _groupParts.length ? _groupParts.join('\n') : '';
+        const _tagsTitle = _tags.length ? _tags.join('\n') : '';
+
+        // Visible tags limited to first 2, show +N badge for overflow
+        const TAG_LIMIT = 2;
+        const _visibleTags = _tags.slice(0, TAG_LIMIT);
+        const _hiddenTagCount = _tags.length - TAG_LIMIT;
+        let tagsHtml = '';
+        if (_tags.length === 0) {
+            tagsHtml = '<span style="color: var(--text-secondary); font-size: 12px;">-</span>';
+        } else {
+            tagsHtml = _visibleTags.map(tag =>
+                `<span class="badge" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0;">${tag}</span>`
+            ).join('');
+            if (_hiddenTagCount > 0) {
+                tagsHtml += `<span class="ht-more" title="${_tagsTitle}">+${_hiddenTagCount}</span>`;
+            }
+        }
+
         return `
         <tr>
             <td><input type="checkbox" class="history-checkbox" value="${_id}"></td>
@@ -312,17 +337,16 @@ function filterHistory(reports) {
             </td>
             <td style="text-align: center; font-weight: 600;">${report.summary?.average_score ? report.summary.average_score.toFixed(2) : '-'}</td>
             <td>
-                ${_group ? `<span class="badge" style="background: #9333ea; padding: 2px 6px; font-size: 10px;">${_group}</span>` : '-'}
+                ${_group ? `<span class="badge" title="${_group}" style="background:#faf5ff;color:#7e22ce;border:1px solid #e9d5ff;">${_group}</span>` : '-'}
             </td>
-            <td class="history-group-cell">
-                ${report.project ? `<span class="badge" style="background: #2563eb;">${utils.escapeHtml(report.project)}</span>` : ''}
-                ${report.module ? `<span class="badge" style="background: #7c3aed;">${utils.escapeHtml(report.module)}</span>` : ''}
-                ${report.function ? `<span class="badge" style="background: #db2777;">${utils.escapeHtml(report.function)}</span>` : ''}
+            <td class="history-group-cell" ${_groupTitle ? `title="${_groupTitle}"` : ''}>
+                ${report.project ? `<span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;">${utils.escapeHtml(report.project)}</span>` : ''}
+                ${report.module ? `<span class="badge" style="background:#f5f3ff;color:#6d28d9;border:1px solid #ddd6fe;">${utils.escapeHtml(report.module)}</span>` : ''}
+                ${report.function ? `<span class="badge" style="background:#fdf2f8;color:#be185d;border:1px solid #fbcfe8;">${utils.escapeHtml(report.function)}</span>` : ''}
                 ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
             </td>
-            <td class="history-tag-cell">
-                ${_tags.map(tag => `<span class="badge" style="background: #667eea;">${tag}</span>`).join('')}
-                ${_tags.length === 0 ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
+            <td class="history-tag-cell" ${_tagsTitle ? `title="${_tagsTitle}"` : ''}>
+                ${tagsHtml}
             </td>
             <td class="history-note-cell" title="${_note}">
                 ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
@@ -459,11 +483,11 @@ function renderAsyncTasks(tasks) {
 
     const statusBadge = (s) => {
         const map = {
-            'PENDING': '<span style="background:#6c757d;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">⏳ 等待中</span>',
-            'RUNNING': '<span style="background:#007bff;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">🔄 运行中</span>',
-            'COMPLETED': '<span style="background:#28a745;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">✅ 完成</span>',
-            'FAILED': '<span style="background:#dc3545;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">❌ 失败</span>',
-            'TIMED_OUT': '<span style="background:#fd7e14;color:white;padding:2px 8px;border-radius:10px;font-size:12px;">⏱️ 超时</span>',
+            'PENDING': '<span style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:2px 8px;border-radius:10px;font-size:12px;">⏳ 等待中</span>',
+            'RUNNING': '<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 8px;border-radius:10px;font-size:12px;">🔄 运行中</span>',
+            'COMPLETED': '<span style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;padding:2px 8px;border-radius:10px;font-size:12px;">✅ 完成</span>',
+            'FAILED': '<span style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;padding:2px 8px;border-radius:10px;font-size:12px;">❌ 失败</span>',
+            'TIMED_OUT': '<span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;padding:2px 8px;border-radius:10px;font-size:12px;">⏱️ 超时</span>',
         };
         return map[s] || `<span>${s}</span>`;
     };
@@ -471,7 +495,7 @@ function renderAsyncTasks(tasks) {
     const progress = (t) => {
         if (!t.totalCases || t.totalCases === 0) return '';
         const pct = Math.round((t.completedCases / t.totalCases) * 100);
-        const color = t.status === 'COMPLETED' ? '#28a745' : t.status === 'FAILED' || t.status === 'TIMED_OUT' ? '#dc3545' : '#007bff';
+        const color = t.status === 'COMPLETED' ? '#86efac' : t.status === 'FAILED' || t.status === 'TIMED_OUT' ? '#fca5a5' : '#93c5fd';
         return `<div style="margin-top:6px;">
             <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:3px;">
                 <span>${t.completedCases}/${t.totalCases} 用例</span><span>${pct}%</span>
@@ -500,7 +524,7 @@ function renderAsyncTasks(tasks) {
         const viewBtn = t.reportId
             ? `<button class="btn btn-success btn-sm" style="padding:2px 10px;font-size:12px;" onclick="closeAsyncTasksModal();viewHistoryDetails('${t.reportId}')">查看报告</button>`
             : '';
-        const errInfo = t.error ? `<div style="font-size:11px;color:#dc3545;margin-top:4px;">${utils.escapeHtml(t.error)}</div>` : '';
+        const errInfo = t.error ? `<div style="font-size:11px;color:#b91c1c;margin-top:4px;">${utils.escapeHtml(t.error)}</div>` : '';
 
         return `<div style="padding:12px;border-bottom:1px solid var(--border-color);">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -522,7 +546,7 @@ function renderAsyncTasks(tasks) {
 function renderTags() {
     const container = document.getElementById('tags-list');
     container.innerHTML = currentTags.map((tag, i) => `
-        <span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
+        <span style="background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px;">
             ${utils.escapeHtml(tag)}
             <span style="cursor: pointer; font-weight: bold;" onclick="removeTag(${i})">×</span>
         </span>

@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>评测模型配置 - Agent Eval Lite</title>
-<link rel="stylesheet" th:href="@{/css/app.css}" />
-<script src="/js/utils.js?v=202607302000"></script>
+<link rel="stylesheet" th:href="@{/css/app.css?v=20260807d}" />
+    <script src="/js/utils.js?v=20260807d"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -76,7 +76,7 @@
       <div><label class="block text-sm font-medium mb-1">超时(ms)</label><input id="timeout" type="number" value="30000" class="w-full border rounded px-3 py-2"></div>
     </div>
     <div class="mt-4 flex gap-2">
-      <button onclick="saveConfig()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">保存</button>
+      <button onclick="saveConfig()" class="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded hover:bg-blue-100">保存</button>
       <button onclick="resetForm()" class="border px-4 py-2 rounded hover:bg-gray-50">重置</button>
     </div>
   </div>

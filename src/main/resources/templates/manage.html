@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>样例管理 - Agent Eval Lite</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <link rel="stylesheet" th:href="@{/css/app.css?v=20260807d}" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="/js/utils.js?v=20260723"></script>
+    <script src="/js/utils.js?v=20260807d"></script>
 <!-- Loading Progress Bar -->
     <style>
         #loading-bar {
@@ -15,7 +15,7 @@
             left: 0;
             width: 0%;
             height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #818cf8, #a78bfa);
             z-index: 9999;
             transition: width 0.3s ease;
         }
@@ -203,7 +203,7 @@
                 <div class="spinner"></div>
                 <p id="eval-loading-text">评测中...</p>
                 <div id="eval-progress-bar" style="width:200px;height:8px;background:#e2e8f0;border-radius:4px;margin:8px auto;overflow:hidden;display:none;">
-                    <div id="eval-progress-fill" style="height:100%;background:linear-gradient(90deg,#4f46e5,#7c3aed);border-radius:4px;width:0%;transition:width .3s;"></div>
+                    <div id="eval-progress-fill" style="height:100%;background:linear-gradient(90deg,#818cf8,#a78bfa);border-radius:4px;width:0%;transition:width .3s;"></div>
                 </div>
                 <p id="eval-progress-text" style="font-size:12px;color:var(--text-secondary);display:none;"></p>
             </div>
@@ -274,7 +274,7 @@
         <div id="history-card" class="card">
             <h2 class="card-title">评测历史记录
                 <button id="sort-btn" onclick="toggleSort()" title="切换排序" class="btn btn-sm u-margin-left-10px u-font-size-12px">↕️ 最新优先</button>
-                <button onclick="openAsyncTasksModal()" class="btn btn-sm u-margin-left-6px u-font-size-12px u-background-6f42c1 u-color-white">⚡ 任务监控</button>
+                <button onclick="openAsyncTasksModal()" class="btn btn-info btn-sm u-margin-left-6px u-font-size-12px">⚡ 任务监控</button>
             </h2>
 
             <!-- 趋势图表 -->
@@ -622,8 +622,8 @@
     </div>
 
     <script src="/js/manage.js?v=202607251230"></script>
-    <script src="/js/cases.js?v=202607281700"></script>
-    <script src="/js/eval.js?v=202608061800"></script>
-    <script src="/js/history.js?v=202607251230"></script>
+    <script src="/js/cases.js?v=20260807d"></script>
+    <script src="/js/eval.js?v=20260807d"></script>
+    <script src="/js/history.js?v=20260807d"></script>
 </body>
 </html>

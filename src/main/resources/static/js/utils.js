@@ -36,17 +36,18 @@ const Toast = {
         
         const toast = document.createElement('div');
         const colors = {
-            success: { bg: '#4CAF50', text: 'white' },
-            error: { bg: '#f44336', text: 'white' },
-            warning: { bg: '#ff9800', text: 'white' },
-            info: { bg: '#2196F3', text: 'white' }
+            success: { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' },
+            error: { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
+            warning: { bg: '#fef3c7', text: '#92400e', border: '#fde68a' },
+            info: { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' }
         };
         const color = colors[type] || colors.info;
-        
+
         toast.style.cssText = `
             padding: 12px 24px;
             background: ${color.bg};
             color: ${color.text};
+            border: 1px solid ${color.border};
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             font-size: 14px;
@@ -121,8 +122,8 @@ const Confirm = {
                 <h3 style="margin: 0 0 12px 0;">${_title(title)}</h3>
                 <p style="color: var(--text-secondary, #666); margin: 0 0 20px 0;">${_title(message)}</p>
                 <div style="display: flex; gap: 12px; justify-content: center;">
-                    <button class="btn" onclick="this.closest('[style*=\"position: fixed\"]').remove()">取消</button>
-                    <button class="btn btn-primary" style="background: #f44336; color: white;">确定</button>
+                    <button class="btn" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;" onclick="this.closest('[style*=\"position: fixed\"]').remove()">取消</button>
+                    <button class="btn btn-primary" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;">确定</button>
                 </div>
             </div>
         `;
