@@ -410,14 +410,14 @@
         .history-time-cell {
             font-size: 13px;
         }
-        .history-group-cell, .history-tag-cell {
+        .history-group-cell {
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
             align-items: center;
             min-height: 24px;
         }
-        .history-group-cell .badge, .history-tag-cell .badge {
+        .history-group-cell .badge {
             font-size: 11px;
             line-height: 1;
             padding: 3px 7px;
@@ -426,21 +426,16 @@
             font-weight: 500;
             white-space: nowrap;
         }
-        .history-tag-cell .ht-more {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 22px;
-            height: 20px;
-            padding: 0 6px;
-            font-size: 10px;
-            line-height: 1;
-            background: #f8fafc;
+        #history-table .history-tag-cell {
+            font-size: 12px;
             color: #64748b;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            cursor: default;
+            line-height: 1.5;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 24px;
+            padding: 12px 8px !important;
+            display: block;
         }
         .history-note-cell {
             max-width: 110px;

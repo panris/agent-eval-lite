@@ -307,23 +307,7 @@ function filterHistory(reports) {
         if (report.module) _groupParts.push('模块:' + report.module);
         if (report.function) _groupParts.push('功能:' + report.function);
         const _groupTitle = _groupParts.length ? _groupParts.join('\n') : '';
-        const _tagsTitle = _tags.length ? _tags.join('\n') : '';
-
-        // Visible tags limited to first 2, show +N badge for overflow
-        const TAG_LIMIT = 2;
-        const _visibleTags = _tags.slice(0, TAG_LIMIT);
-        const _hiddenTagCount = _tags.length - TAG_LIMIT;
-        let tagsHtml = '';
-        if (_tags.length === 0) {
-            tagsHtml = '<span style="color: var(--text-secondary); font-size: 12px;">-</span>';
-        } else {
-            tagsHtml = _visibleTags.map(tag =>
-                `<span class="badge" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0;">${tag}</span>`
-            ).join('');
-            if (_hiddenTagCount > 0) {
-                tagsHtml += `<span class="ht-more" title="${_tagsTitle}">+${_hiddenTagCount}</span>`;
-            }
-        }
+        const _tagsTitle = _tags.length ? _tags.join('、') : '';
 
         return `
         <tr>
@@ -346,7 +330,7 @@ function filterHistory(reports) {
                 ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
             </td>
             <td class="history-tag-cell" ${_tagsTitle ? `title="${_tagsTitle}"` : ''}>
-                ${tagsHtml}
+                ${_tags.length ? _tags.join('、') : '<span style="color: var(--text-secondary);">-</span>'}
             </td>
             <td class="history-note-cell" title="${_note}">
                 ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
