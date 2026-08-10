@@ -308,6 +308,7 @@ function filterHistory(reports) {
         if (report.function) _groupParts.push('功能:' + report.function);
         const _groupTitle = _groupParts.length ? _groupParts.join('\n') : '';
         const _tagsTitle = _tags.length ? _tags.join('、') : '';
+        const _tagsDisplay = _tags.length > 3 ? _tags.slice(0, 3).join('、') + ' 等' + _tags.length + '个' : _tags.join('、');
 
         return `
         <tr>
@@ -330,7 +331,7 @@ function filterHistory(reports) {
                 ${(!report.project && !report.module && !report.function) ? '<span style="color: var(--text-secondary); font-size: 12px;">-</span>' : ''}
             </td>
             <td class="history-tag-cell" ${_tagsTitle ? `title="${_tagsTitle}"` : ''}>
-                ${_tags.length ? _tags.join('、') : '<span style="color: var(--text-secondary);">-</span>'}
+                ${_tags.length ? _tagsDisplay : '<span style="color: var(--text-secondary);">-</span>'}
             </td>
             <td class="history-note-cell" title="${_note}">
                 ${_note ? _displayNote : '<span style="color: var(--text-secondary);">无</span>'}
