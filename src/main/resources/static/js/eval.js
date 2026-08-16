@@ -452,10 +452,7 @@ async function runEvaluation() {
     const module = selectedCases.length > 0 ? selectedCases[0].module : null;
     const function_ = selectedCases.length > 0 ? selectedCases[0].function : null;
 
-    console.log('Sending evaluation for', caseIds.length, 'cases:', caseIds);
-    console.log('Dimensions:', { project, module, function: function_ });
-
-    // 显示进度条
+        // 显示进度条
     const progressBar = document.getElementById('eval-progress-bar');
     const progressText = document.getElementById('eval-progress-text');
     if (progressBar) progressBar.style.display = 'block';
@@ -770,7 +767,8 @@ async function loadEvalConfigs() {
                 });
             }
         }
-    } catch (e) { console.error('Failed to load eval LLM configs:', e); }
+    } catch (e) {
+        logError('Failed to load eval LLM configs:', e);
 }
 
 async function loadEvalAgents() {
@@ -786,7 +784,8 @@ async function loadEvalAgents() {
                 });
             }
         }
-    } catch (e) { console.error('Failed to load agents:', e); }
+    } catch (e) {
+        logError('Failed to load agents:', e);
 }
 
 function getSelectedEvalMetrics() {

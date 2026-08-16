@@ -450,7 +450,7 @@ async function pollAsyncTasks() {
             _asyncPollTimer = null;
         }
     } catch (e) {
-        console.error('轮询异步任务失败:', e);
+        logError('轮询异步任务失败:', e);
     }
 }
 
