@@ -19,6 +19,7 @@ public class AgentTemplates {
         return List.of(
                 createOpenAITemplate(),
                 createClaudeTemplate(),
+                createAzureResponsesTemplate(),
                 createCustomHTTPTemplate(),
                 createSimpleHTTPPTemplate(),
                 createIntentServiceTemplate()
@@ -118,6 +119,27 @@ public class AgentTemplates {
     }
 
     /**
+     * Azure OpenAI Responses API template.
+     */
+    public static AgentConfig createAzureResponsesTemplate() {
+        AgentConfig config = new AgentConfig();
+        config.setName("Azure GPT-5.4 (Responses)");
+        config.setType("azure_responses");
+        config.setDescription("Azure OpenAI Responses API: /openai/v1/responses");
+        config.setEndpoint("https://chunyao-2131-resource.services.ai.azure.com/openai/v1/responses");
+        config.setTimeout(60000);
+
+        // Note: AzureResponsesAgent reads apiKey/model from config and endpoint directly;
+        // it does not use requestMapping/responseMapping (Responses API shape is fixed).
+        Map<String, Object> typeConfig = new HashMap<>();
+        typeConfig.put("apiKey", "");
+        typeConfig.put("model", "gpt-5.4-pro-1");
+        config.setConfig(typeConfig);
+
+        return config;
+    }
+
+    /**
      * Custom HTTP template with JSONPath mapping.
      */
     public static AgentConfig createCustomHTTPTemplate() {
@@ -192,6 +214,7 @@ public class AgentTemplates {
         return switch (type.toLowerCase()) {
             case "openai" -> createOpenAITemplate();
             case "claude" -> createClaudeTemplate();
+            case "azure_responses" -> createAzureResponsesTemplate();
             case "custom" -> createCustomHTTPTemplate();
             case "http" -> createSimpleHTTPPTemplate();
             case "intent" -> createIntentServiceTemplate();

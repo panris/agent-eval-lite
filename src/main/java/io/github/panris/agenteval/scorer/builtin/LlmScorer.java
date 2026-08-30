@@ -48,15 +48,29 @@ public class LlmScorer implements EvaluationScorer {
                 systemPrompt = EvalLlmConfig.buildDefaultSystemPrompt();
             }
 
-            Map<String, Object> body = Map.of(
-                "model", config.getModel(),
-                "messages", List.of(
+            boolean isResponses = "responses".equalsIgnoreCase(config.getApiType());
+
+            Map<String, Object> body;
+            if (isResponses) {
+                body = new java.util.LinkedHashMap<>();
+                body.put("model", config.getModel());
+                body.put("input", List.of(
                     Map.of("role", "system", "content", systemPrompt),
                     Map.of("role", "user", "content", prompt)
-                ),
-                "temperature", config.getTemperature(),
-                "max_tokens", config.getMaxTokens()
-            );
+                ));
+                body.put("temperature", config.getTemperature());
+                body.put("max_output_tokens", config.getMaxTokens());
+            } else {
+                body = Map.of(
+                    "model", config.getModel(),
+                    "messages", List.of(
+                        Map.of("role", "system", "content", systemPrompt),
+                        Map.of("role", "user", "content", prompt)
+                    ),
+                    "temperature", config.getTemperature(),
+                    "max_tokens", config.getMaxTokens()
+                );
+            }
 
             String reqBody = mapper.writeValueAsString(body);
 
@@ -64,7 +78,11 @@ public class LlmScorer implements EvaluationScorer {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            conn.setRequestProperty("Authorization", "Bearer " + (config.getApiKey() != null ? config.getApiKey() : ""));
+            if (isResponses) {
+                conn.setRequestProperty("api-key", config.getApiKey() != null ? config.getApiKey() : "");
+            } else {
+                conn.setRequestProperty("Authorization", "Bearer " + (config.getApiKey() != null ? config.getApiKey() : ""));
+            }
             conn.setDoOutput(true);
             conn.setConnectTimeout(config.getTimeout());
             conn.setReadTimeout(config.getTimeout());
@@ -85,9 +103,19 @@ public class LlmScorer implements EvaluationScorer {
             }
 
             Map<String, Object> respMap = mapper.readValue(respBody, Map.class);
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) respMap.get("choices");
-            Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
-            String content = (String) msg.get("content");
+            String content;
+            if (isResponses) {
+                List<Map<String, Object>> output = (List<Map<String, Object>>) respMap.get("output");
+                if (output == null || output.isEmpty()) {
+                    return ScorerResult.failed("LLM API错误: responses 未返回 output 字段");
+                }
+                List<Map<String, Object>> respContent = (List<Map<String, Object>>) output.get(0).get("content");
+                content = (String) respContent.get(0).get("text");
+            } else {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) respMap.get("choices");
+                Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
+                content = (String) msg.get("content");
+            }
             Map<String, Object> result = mapper.readValue(extractJson(content), Map.class);
 
             double score = ((Number) result.getOrDefault("score", 0.0)).doubleValue();

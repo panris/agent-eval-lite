@@ -21,8 +21,8 @@ public class AgentConfig {
     private String name;
 
     @NotBlank(message = "Agent类型不能为空")
-    @Pattern(regexp = "^(http|openai|claude|custom|intent)$", message = "不支持的Agent类型")
-    private String type;  // http, openai, claude, custom, intent
+    @Pattern(regexp = "^(http|openai|claude|custom|intent|azure_responses)$", message = "不支持的Agent类型")
+    private String type;  // http, openai, claude, custom, intent, azure_responses
 
     private String description;
 

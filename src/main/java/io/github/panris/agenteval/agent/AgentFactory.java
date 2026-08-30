@@ -66,6 +66,7 @@ public class AgentFactory {
             case "http", "custom", "intent" -> createHttpAgent(config);
             case "openai" -> createOpenAIAgent(config);
             case "claude" -> createClaudeAgent(config);
+            case "azure_responses" -> createAzureResponsesAgent(config);
             case "demo" -> createDemoAgent();
             case "echo" -> input -> input;
             case "upper" -> String::toUpperCase;
@@ -99,6 +100,7 @@ public class AgentFactory {
         return switch (type.toLowerCase()) {
             case "openai" -> createOpenAIAgentFromConfig(agentConfig);
             case "claude" -> createClaudeAgentFromConfig(agentConfig);
+            case "azure_responses" -> createAzureResponsesAgentFromConfig(agentConfig);
             case "http", "custom", "intent" -> new ConfigurableHttpAgent(restTemplate, agentConfig);
             default -> new ConfigurableHttpAgent(restTemplate, agentConfig);
         };
@@ -235,6 +237,24 @@ public class AgentFactory {
     }
 
     /**
+     * Create Azure Responses agent from configuration.
+     */
+    private Agent createAzureResponsesAgent(Map<String, Object> config) {
+        String apiKey = getStringConfig(config, "apiKey", "");
+        String model = getStringConfig(config, "model", "gpt-5.4-pro-1");
+        String endpoint = getStringConfig(config, "endpoint",
+                "https://chunyao-2131-resource.services.ai.azure.com/openai/v1/responses");
+        int timeout = getIntConfig(config, "timeout", 60000);
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            logger.warn("Azure Responses API key not configured, using demo agent");
+            return createDemoAgent();
+        }
+
+        return new AzureResponsesAgent(restTemplate, endpoint, apiKey, model, timeout);
+    }
+
+    /**
      * Create OpenAI agent from AgentConfig entity.
      */
     private Agent createOpenAIAgentFromConfig(AgentConfig config) {
@@ -264,6 +284,30 @@ public class AgentFactory {
         }
 
         return new ConfigurableHttpAgent(restTemplate, config);
+    }
+
+    /**
+     * Create Azure Responses agent from AgentConfig entity.
+     */
+    private Agent createAzureResponsesAgentFromConfig(AgentConfig config) {
+        String apiKey = config.getConfig() != null
+                ? (String) config.getConfig().getOrDefault("apiKey", "")
+                : "";
+
+        if (apiKey == null || apiKey.isEmpty()) {
+            logger.warn("Azure Responses API key not configured, using demo agent");
+            return createDemoAgent();
+        }
+
+        String model = config.getConfig() != null
+                ? (String) config.getConfig().getOrDefault("model", "gpt-5.4-pro-1")
+                : "gpt-5.4-pro-1";
+        String endpoint = config.getEndpoint() != null && !config.getEndpoint().isEmpty()
+                ? config.getEndpoint()
+                : "https://chunyao-2131-resource.services.ai.azure.com/openai/v1/responses";
+        int timeout = config.getTimeout() > 0 ? config.getTimeout() : 60000;
+
+        return new AzureResponsesAgent(restTemplate, endpoint, apiKey, model, timeout);
     }
 
     // Helper methods for configuration extraction

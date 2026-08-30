@@ -67,9 +67,10 @@ public class EvalLlmConfigController {
     @Operation(summary = "获取预设模板")
     public ResponseEntity<Map<String, Object>> getPresets() {
         return ResponseEntity.ok(Map.of("success", true, "presets", List.of(
-            Map.of("name","DashScope Qwen3.6-35B-A3B","baseUrl","https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions","model","qwen3.6-35b-a3b","apiKey","sk-xxx","temperature",0.1,"maxTokens",256,"passThreshold",0.7),
-            Map.of("name","OpenAI GPT-4o-mini","baseUrl","https://api.openai.com/v1/chat/completions","model","gpt-4o-mini","apiKey","sk-xxx","temperature",0.1,"maxTokens",256,"passThreshold",0.7),
-            Map.of("name","ThunderSoft意图模型","baseUrl","http://36.150.116.241:18088/v1/chat/completions","model","qwen3.6-35b-a3b","apiKey","novastack_2026","temperature",0.1,"maxTokens",256,"passThreshold",0.7)
+            Map.of("name","DashScope Qwen3.6-35B-A3B","baseUrl","https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions","model","qwen3.6-35b-a3b","apiKey","sk-xxx","apiType","chat","temperature",0.1,"maxTokens",256,"passThreshold",0.7),
+            Map.of("name","OpenAI GPT-4o-mini","baseUrl","https://api.openai.com/v1/chat/completions","model","gpt-4o-mini","apiKey","sk-xxx","apiType","chat","temperature",0.1,"maxTokens",256,"passThreshold",0.7),
+            Map.of("name","Azure Responses (GPT-5.4)","baseUrl","https://chunyao-2131-resource.services.ai.azure.com/openai/v1/responses","model","gpt-5.4-pro-1","apiKey","","apiType","responses","temperature",0.1,"maxTokens",256,"passThreshold",0.7),
+            Map.of("name","ThunderSoft意图模型","baseUrl","http://36.150.116.241:18088/v1/chat/completions","model","qwen3.6-35b-a3b","apiKey","novastack_2026","apiType","chat","temperature",0.1,"maxTokens",256,"passThreshold",0.7)
         )));
     }
 

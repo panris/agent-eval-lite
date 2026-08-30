@@ -114,6 +114,7 @@ function setFilter(type) {
 const TYPE_META = {
     openai: { label: 'OpenAI', cls: 'type-openai', icon: '🟢' },
     claude: { label: 'Claude', cls: 'type-claude', icon: '🟠' },
+    azure_responses: { label: 'Azure GPT', cls: 'type-azure', icon: '☁️' },
     http:   { label: 'HTTP',   cls: 'type-http',   icon: '🔵' },
     custom: { label: '自定义', cls: 'type-custom', icon: '⚪' },
     intent: { label: '意图',   cls: 'type-intent', icon: '🚗' },
@@ -266,6 +267,11 @@ function onTypeChange() {
     } else if (type === 'claude') {
         simple.style.display = 'block'; advanced.style.display = 'none';
         if (!endpoint.value) endpoint.value = 'https://api.anthropic.com/v1/messages';
+    } else if (type === 'azure_responses') {
+        simple.style.display = 'block'; advanced.style.display = 'none';
+        if (!endpoint.value) endpoint.value = 'https://chunyao-2131-resource.services.ai.azure.com/openai/v1/responses';
+        const modelInput = document.getElementById('agent-model');
+        if (!modelInput.value) modelInput.value = 'gpt-5.4-pro-1';
     } else {
         simple.style.display = 'none'; advanced.style.display = 'block';
     }
@@ -303,13 +309,13 @@ async function handleSubmit(e) {
         timeout: parseInt(document.getElementById('agent-timeout').value) || 30000,
     };
 
-    if (type === 'openai' || type === 'claude') {
+    if (type === 'openai' || type === 'claude' || type === 'azure_responses') {
         const apiKey = document.getElementById('agent-api-key').value.trim();
         if (!apiKey) { showFieldError('agent-api-key', '请填写 API Key'); return; }
         agentData.config = {
             apiKey,
             model: document.getElementById('agent-model').value.trim() ||
-                (type === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-sonnet-20240229'),
+                (type === 'openai' ? 'gpt-3.5-turbo' : type === 'claude' ? 'claude-3-sonnet-20240229' : 'gpt-5.4-pro-1'),
         };
     } else {
         const headersText = document.getElementById('agent-headers').value.trim();
@@ -432,7 +438,7 @@ function buildConfigFromForm() {
     const timeout = parseInt(document.getElementById('agent-timeout').value) || 30000;
     const payload = { name: '临时测试', type, endpoint, timeout };
 
-    if (type === 'openai' || type === 'claude') {
+    if (type === 'openai' || type === 'claude' || type === 'azure_responses') {
         payload.config = {
             apiKey: document.getElementById('agent-api-key').value.trim(),
             model: document.getElementById('agent-model').value.trim() || 'gpt-3.5-turbo',

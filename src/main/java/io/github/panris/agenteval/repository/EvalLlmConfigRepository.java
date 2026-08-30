@@ -84,6 +84,7 @@ public class EvalLlmConfigRepository {
         entity.setMaxTokens(config.getMaxTokens());
         entity.setTimeout(config.getTimeout());
         entity.setPassThreshold(config.getPassThreshold());
+        entity.setApiType(config.getApiType());
         entity.setSystemPrompt(config.getSystemPrompt());
         entity.setCreatedAt(config.getCreatedAt());
         entity.setUpdatedAt(config.getUpdatedAt());

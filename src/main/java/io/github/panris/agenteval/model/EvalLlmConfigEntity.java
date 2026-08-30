@@ -35,6 +35,9 @@ public class EvalLlmConfigEntity {
     @Column(name = "pass_threshold", nullable = false)
     private double passThreshold = 0.7;
 
+    @Column(name = "api_type", length = 20, nullable = false)
+    private String apiType = "chat";
+
     @Column(name = "system_prompt", columnDefinition = "TEXT")
     private String systemPrompt;
 
@@ -68,6 +71,8 @@ public class EvalLlmConfigEntity {
     public void setTimeout(int timeout) { this.timeout = timeout; }
     public double getPassThreshold() { return passThreshold; }
     public void setPassThreshold(double passThreshold) { this.passThreshold = passThreshold; }
+    public String getApiType() { return apiType; }
+    public void setApiType(String apiType) { this.apiType = apiType; }
     public String getSystemPrompt() { return systemPrompt; }
     public void setSystemPrompt(String systemPrompt) { this.systemPrompt = systemPrompt; }
     public Instant getCreatedAt() { return createdAt; }

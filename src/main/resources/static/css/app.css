@@ -947,7 +947,9 @@
 
 .agent-type-badge.type-openai { background: #10a37f15; color: #10a37f; }
 .agent-type-badge.type-claude { background: #d9770615; color: #d97706; }
+.agent-type-badge.type-azure { background: #0078d415; color: #0078d4; }
 .agent-type-badge.type-http { background: #8b5cf615; color: #8b5cf6; }
+.agent-type-badge.type-custom { background: #64748b15; color: #64748b; }
 .agent-type-badge.type-intent { background: #3b82f615; color: #3b82f6; }
 
 /* 空状态 */

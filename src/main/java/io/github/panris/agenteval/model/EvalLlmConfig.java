@@ -14,6 +14,7 @@ public class EvalLlmConfig {
     @JsonProperty("maxTokens") private int maxTokens = 256;
     @JsonProperty("timeout") private int timeout = 30000;
     @JsonProperty("passThreshold") private double passThreshold = 0.7;
+    @JsonProperty("apiType") private String apiType = "chat";
     @JsonProperty("systemPrompt") private String systemPrompt;
     @JsonProperty("createdAt") private Instant createdAt;
     @JsonProperty("updatedAt") private Instant updatedAt;
@@ -102,6 +103,8 @@ public class EvalLlmConfig {
     public void setTimeout(int timeout) { this.timeout = timeout; }
     public double getPassThreshold() { return passThreshold; }
     public void setPassThreshold(double passThreshold) { this.passThreshold = passThreshold; }
+    public String getApiType() { return apiType; }
+    public void setApiType(String apiType) { this.apiType = apiType; }
     public String getSystemPrompt() { return systemPrompt; }
     public void setSystemPrompt(String systemPrompt) { this.systemPrompt = systemPrompt; }
     public Instant getCreatedAt() { return createdAt; }

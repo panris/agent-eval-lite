@@ -19,6 +19,7 @@ async function loadAll() {
 
 function fillPreset(p) {
   ['name','baseUrl','apiKey','model'].forEach(function(f){document.getElementById(f).value=p[f]||'';});
+  document.getElementById('apiType').value = p.apiType||'chat';
   document.getElementById('temperature').value = p.temperature||0.1;
   document.getElementById('tempVal').textContent = p.temperature||0.1;
   document.getElementById('maxTokens').value = p.maxTokens||256;
@@ -32,6 +33,7 @@ function fillPreset(p) {
 function editConfig(c) {
   document.getElementById('configId').value = c.id;
   ['name','baseUrl','apiKey','model'].forEach(function(f){document.getElementById(f).value=c[f]||'';});
+  document.getElementById('apiType').value = c.apiType||'chat';
   document.getElementById('temperature').value = c.temperature||0.1;
   document.getElementById('tempVal').textContent = c.temperature||0.1;
   document.getElementById('maxTokens').value = c.maxTokens||256;
@@ -44,6 +46,7 @@ function editConfig(c) {
 function resetForm() {
   document.getElementById('configId').value = '';
   document.getElementById('formTitle').textContent = '新建配置';
+  document.getElementById('apiType').value = 'chat';
   ['name','baseUrl','apiKey','model'].forEach(function(f){document.getElementById(f).value='';});
   document.getElementById('temperature').value = 0.1;
   document.getElementById('tempVal').textContent = '0.1';
@@ -59,6 +62,7 @@ async function saveConfig() {
     baseUrl: document.getElementById('baseUrl').value,
     apiKey: document.getElementById('apiKey').value,
     model: document.getElementById('model').value,
+    apiType: document.getElementById('apiType').value,
     temperature: parseFloat(document.getElementById('temperature').value),
     maxTokens: parseInt(document.getElementById('maxTokens').value),
     passThreshold: parseFloat(document.getElementById('passThreshold').value),
