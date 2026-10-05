@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 public class LlmScorer implements EvaluationScorer {
     private static final Logger log = LoggerFactory.getLogger(LlmScorer.class);
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final int LLM_MAX_ATTEMPTS = 2;
+    private static final long LLM_RETRY_BACKOFF_MS = 300;
     private final EvalLlmConfig config;
 
     public LlmScorer(EvalLlmConfig config) {
@@ -74,32 +76,53 @@ public class LlmScorer implements EvaluationScorer {
 
             String reqBody = mapper.writeValueAsString(body);
 
-            URL url = URI.create(config.getBaseUrl()).toURL();
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            if (isResponses) {
-                conn.setRequestProperty("api-key", config.getApiKey() != null ? config.getApiKey() : "");
-            } else {
-                conn.setRequestProperty("Authorization", "Bearer " + (config.getApiKey() != null ? config.getApiKey() : ""));
-            }
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(config.getTimeout());
-            conn.setReadTimeout(config.getTimeout());
+            String respBody = null;
+            java.io.IOException lastIoError = null;
+            int attempt = 0;
+            while (attempt < LLM_MAX_ATTEMPTS) {
+                attempt++;
+                try {
+                    URL url = URI.create(config.getBaseUrl()).toURL();
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    if (isResponses) {
+                        conn.setRequestProperty("api-key", config.getApiKey() != null ? config.getApiKey() : "");
+                    } else {
+                        conn.setRequestProperty("Authorization", "Bearer " + (config.getApiKey() != null ? config.getApiKey() : ""));
+                    }
+                    conn.setDoOutput(true);
+                    conn.setConnectTimeout(config.getTimeout());
+                    conn.setReadTimeout(config.getTimeout());
 
-            try (OutputStream os = conn.getOutputStream()) {
-                byte[] input = reqBody.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
+                    try (OutputStream os = conn.getOutputStream()) {
+                        byte[] input = reqBody.getBytes(StandardCharsets.UTF_8);
+                        os.write(input, 0, input.length);
+                    }
 
-            int status = conn.getResponseCode();
-            String respBody;
-            if (status >= 200 && status < 300) {
-                respBody = new String(conn.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            } else {
-                InputStream errStream = conn.getErrorStream();
-                respBody = errStream != null ? new String(errStream.readAllBytes(), StandardCharsets.UTF_8) : "";
-                return ScorerResult.failed("LLM API错误: " + status + " " + respBody);
+                    int status = conn.getResponseCode();
+                    if (status >= 200 && status < 300) {
+                        respBody = new String(conn.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                    } else {
+                        InputStream errStream = conn.getErrorStream();
+                        String err = errStream != null ? new String(errStream.readAllBytes(), StandardCharsets.UTF_8) : "";
+                        return ScorerResult.failed("LLM API错误: " + status + " " + err);
+                    }
+                    lastIoError = null;
+                    break;
+                } catch (java.io.IOException e) {
+                    lastIoError = e;
+                    if (attempt < LLM_MAX_ATTEMPTS) {
+                        log.warn("LLM API 网络调用失败(第{}次)，{}ms 后重试", attempt, LLM_RETRY_BACKOFF_MS);
+                        try { Thread.sleep(LLM_RETRY_BACKOFF_MS); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                    }
+                }
+            }
+            if (lastIoError != null) {
+                return ScorerResult.failed("LLM评测失败(网络异常): " + lastIoError.getMessage());
+            }
+            if (respBody == null) {
+                return ScorerResult.failed("LLM 未返回有效响应");
             }
 
             Map<String, Object> respMap = mapper.readValue(respBody, Map.class);

@@ -28,7 +28,7 @@ public class AgentFactory {
     }
 
     @Value("${agent.default.type:http}")
-    private String defaultAgentType;
+    private String defaultAgentType = "http";
 
     @Value("${agent.http.endpoint:}")
     private String httpEndpoint;
