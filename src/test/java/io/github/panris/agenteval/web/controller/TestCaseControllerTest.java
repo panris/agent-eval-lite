@@ -3,6 +3,7 @@ package io.github.panris.agenteval.web.controller;
 import io.github.panris.agenteval.model.TestCaseEntity;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.service.RequirementParser;
+import io.github.panris.agenteval.web.dto.TestCaseRequest;
 import org.junit.jupiter.api.*;
 import org.springframework.ui.Model;
 
@@ -18,6 +19,8 @@ import static org.mockito.Mockito.*;
 class TestCaseControllerTest {
 
     private TestCaseController controller;
+    private TestCaseBatchController batchController;
+    private RequirementParseController parseController;
     private TestCaseRepository mockRepository;
     private RequirementParser mockRequirementParser;
 
@@ -25,7 +28,9 @@ class TestCaseControllerTest {
     void setUp() {
         mockRepository = mock(TestCaseRepository.class);
         mockRequirementParser = mock(RequirementParser.class);
-        controller = new TestCaseController(mockRepository, mockRequirementParser);
+        controller = new TestCaseController(mockRepository);
+        batchController = new TestCaseBatchController(mockRepository);
+        parseController = new RequirementParseController(mockRequirementParser, mockRepository);
     }
 
     // ============ POST /api/testcases — create ============
@@ -284,7 +289,7 @@ class TestCaseControllerTest {
     @Test
     @DisplayName("PUT /api/testcases/{id}/tags with null body → BAD_REQUEST")
     void testUpdateTagsNullBody() {
-        Map<String, Object> resp = controller.updateTags("tc-1", null);
+        Map<String, Object> resp = batchController.updateTags("tc-1", null);
 
         assertFalse((Boolean) resp.get("success"));
         assertTrue(((String) resp.get("error")).contains("tags"));
@@ -295,7 +300,7 @@ class TestCaseControllerTest {
     void testUpdateTagsMissingKey() {
         Map<String, Object> body = Map.of("other", "value");
 
-        Map<String, Object> resp = controller.updateTags("tc-1", body);
+        Map<String, Object> resp = batchController.updateTags("tc-1", body);
 
         assertFalse((Boolean) resp.get("success"));
     }
@@ -305,7 +310,7 @@ class TestCaseControllerTest {
     void testUpdateTagsNotAList() {
         Map<String, Object> body = Map.of("tags", "not-a-list");
 
-        Map<String, Object> resp = controller.updateTags("tc-1", body);
+        Map<String, Object> resp = batchController.updateTags("tc-1", body);
 
         assertFalse((Boolean) resp.get("success"));
     }
@@ -316,7 +321,7 @@ class TestCaseControllerTest {
         Map<String, Object> body = Map.of("tags", List.of("tag1", "tag2"));
         when(mockRepository.findTestCaseById("ghost")).thenReturn(Optional.empty());
 
-        Map<String, Object> resp = controller.updateTags("ghost", body);
+        Map<String, Object> resp = batchController.updateTags("ghost", body);
 
         assertFalse((Boolean) resp.get("success"));
         assertEquals("测试用例不存在", resp.get("error"));
@@ -334,7 +339,7 @@ class TestCaseControllerTest {
         when(mockRepository.findTestCaseById("tc-1")).thenReturn(Optional.of(tc));
         when(mockRepository.saveTestCase(any(TestCaseEntity.class))).thenReturn(saved);
 
-        Map<String, Object> resp = controller.updateTags("tc-1", body);
+        Map<String, Object> resp = batchController.updateTags("tc-1", body);
 
         assertTrue((Boolean) resp.get("success"));
     }
@@ -344,7 +349,7 @@ class TestCaseControllerTest {
     @Test
     @DisplayName("POST /api/testcases/batch with null list → BAD_REQUEST")
     void testBatchImportNull() {
-        Map<String, Object> resp = controller.batchImport(null);
+        Map<String, Object> resp = batchController.batchImport(null);
 
         assertFalse((Boolean) resp.get("success"));
     }
@@ -352,7 +357,7 @@ class TestCaseControllerTest {
     @Test
     @DisplayName("POST /api/testcases/batch with empty list → BAD_REQUEST")
     void testBatchImportEmpty() {
-        Map<String, Object> resp = controller.batchImport(List.of());
+        Map<String, Object> resp = batchController.batchImport(List.of());
 
         assertFalse((Boolean) resp.get("success"));
     }
@@ -369,7 +374,7 @@ class TestCaseControllerTest {
             requests.add(req);
         }
 
-        Map<String, Object> resp = controller.batchImport(requests);
+        Map<String, Object> resp = batchController.batchImport(requests);
 
         assertFalse((Boolean) resp.get("success"));
         assertTrue(((String) resp.get("error")).contains("100"));
@@ -383,7 +388,7 @@ class TestCaseControllerTest {
             createInvalidRequestNullInput("c2")
         );
 
-        Map<String, Object> resp = controller.batchImport(requests);
+        Map<String, Object> resp = batchController.batchImport(requests);
 
         assertFalse((Boolean) resp.get("success"));
     }
@@ -400,7 +405,7 @@ class TestCaseControllerTest {
             new TestCaseEntity("case-name", "in", "out")
         ));
 
-        Map<String, Object> resp = controller.batchImport(requests);
+        Map<String, Object> resp = batchController.batchImport(requests);
 
         assertTrue((Boolean) resp.get("success"));
         assertEquals(2, resp.get("imported"));

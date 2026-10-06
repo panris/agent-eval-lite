@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent 配置 - Agent Eval Lite</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=20260830a}" />
+    <link rel="stylesheet" th:href="@{/css/app.css?v=20261006a}" />
     <script src="/js/utils.js?v=20260809a"></script>
 </head>
 <body>
@@ -93,7 +93,7 @@
     </div>
 
     <!-- 模板选择弹窗 -->
-    <div id="template-modal" class="modal" style="display:none;">
+    <div id="template-modal" class="modal u-display-none">
         <div class="modal-panel">
             <div class="modal-header">
                 <h3>📦 选择模板</h3>
@@ -108,7 +108,7 @@
     </div>
 
     <!-- 创建 / 编辑 Agent 弹窗 -->
-    <div id="agent-modal" class="modal" style="display:none;">
+    <div id="agent-modal" class="modal u-display-none">
         <div class="modal-panel modal-panel-wide">
             <div class="modal-header">
                 <h3 id="modal-title">新建 Agent</h3>
@@ -166,7 +166,7 @@
                             </div>
                         </div>
 
-                        <div id="type-advanced" style="display:none;">
+                        <div id="type-advanced" class="u-display-none">
                             <div class="form-group">
                                 <label class="form-label">请求头 (JSON)</label>
                                 <textarea id="agent-headers" class="form-textarea code" rows="2"
@@ -212,7 +212,7 @@
     </div>
 
     <!-- 快速测试弹窗 -->
-    <div id="test-modal" class="modal" style="display:none;">
+    <div id="test-modal" class="modal u-display-none">
         <div class="modal-panel">
             <div class="modal-header">
                 <h3 id="test-modal-title">🧪 测试</h3>
@@ -224,7 +224,7 @@
                     <input type="text" id="test-input" class="form-input" placeholder="输入测试内容" value="你好，请介绍一下你自己" onkeydown="if(event.key==='Enter')runTest()">
                 </div>
                 <div id="test-result" class="test-result-area"></div>
-                <div class="form-footer" style="border-top:none;margin-top:12px;">
+                <div class="form-footer u-border-top-none u-margin-top-12px">
                     <div></div>
                     <div class="form-footer-right">
                         <button class="btn btn-secondary" onclick="closeTestModal()">关闭</button>
@@ -236,8 +236,8 @@
     </div>
 
     <!-- 隐藏文件导入 -->
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImportFile(event)">
+    <input type="file" id="import-file" accept=".json" class="u-display-none" onchange="handleImportFile(event)">
 
-    <script src="/js/agents.js?v=20260830a"></script>
+    <script src="/js/agents.js?v=20261006a"></script>
 </body>
 </html>

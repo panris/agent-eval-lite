@@ -2,14 +2,14 @@ package io.github.panris.agenteval.repository;
 
 import io.github.panris.agenteval.model.ReportEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ReportJpaRepository extends JpaRepository<ReportEntity, String> {
+public interface ReportJpaRepository extends JpaRepository<ReportEntity, String>, JpaSpecificationExecutor<ReportEntity> {
 
     List<ReportEntity> findByFavoriteTrue();
 

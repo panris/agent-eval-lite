@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>样例管理 - Agent Eval Lite</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=20260830a}" />
+    <link rel="stylesheet" th:href="@{/css/app.css?v=20261006a}" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/js/utils.js?v=20260809a"></script>
 <!-- Loading Progress Bar -->
@@ -202,10 +202,10 @@
             <div class="loading" id="eval-loading">
                 <div class="spinner"></div>
                 <p id="eval-loading-text">评测中...</p>
-                <div id="eval-progress-bar" style="width:200px;height:8px;background:#e2e8f0;border-radius:4px;margin:8px auto;overflow:hidden;display:none;">
-                    <div id="eval-progress-fill" style="height:100%;background:linear-gradient(90deg,#818cf8,#a78bfa);border-radius:4px;width:0%;transition:width .3s;"></div>
+                <div id="eval-progress-bar" class="u-width-200px u-height-8px u-background-e2e8f0 u-border-radius-4px u-margin-8px-auto u-overflow-hidden u-display-none">
+                    <div id="eval-progress-fill" class="u-height-100pct u-background-linear-gradient-primary u-border-radius-4px u-width-0pct u-transition-width-0-3s"></div>
                 </div>
-                <p id="eval-progress-text" style="font-size:12px;color:var(--text-secondary);display:none;"></p>
+                <p id="eval-progress-text" class="u-font-size-12px u-color-var-text-secondary u-display-none"></p>
             </div>
 
             <div id="eval-result" class="u-display-none">
@@ -346,15 +346,15 @@
                 <table class="table" id="history-table">
                     <thead>
                         <tr>
-                            <th style="width: 45px; text-align: center;"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
-                            <th style="width: 180px;">报告ID</th>
-                            <th style="width: 150px;">时间</th>
-                            <th style="width: 80px; text-align: center;">通过率</th>
-                            <th style="width: 80px; text-align: center;">平均分</th>
-                            <th style="width: 140px;">三维分组</th>
-                            <th style="width: 140px;">标签</th>
-                            <th style="width: 120px;">备注</th>
-                            <th style="width: 190px;">操作</th>
+                            <th class="u-width-45px u-text-align-center"><input type="checkbox" id="select-all-history" onchange="toggleAllHistory()"></th>
+                            <th class="u-width-180px">报告ID</th>
+                            <th class="u-width-150px">时间</th>
+                            <th class="u-width-80px-2 u-text-align-center">通过率</th>
+                            <th class="u-width-80px-2 u-text-align-center">平均分</th>
+                            <th class="u-width-140px">三维分组</th>
+                            <th class="u-width-140px">标签</th>
+                            <th class="u-width-120px">备注</th>
+                            <th class="u-width-190px">操作</th>
                         </tr>
                     </thead>
                     <tbody id="history-tbody"></tbody>

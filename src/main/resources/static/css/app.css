@@ -1464,3 +1464,32 @@
 .u-width-auto { width:auto; }
 .u-z-index-1000 { z-index:1000; }
 
+
+/* P1 内联样式清零补充 */
+.u-display-none { display:none; }
+.u-width-200px { width:200px; }
+.u-height-8px { height:8px; }
+.u-background-e2e8f0 { background:#e2e8f0; }
+.u-border-radius-4px { border-radius:4px; }
+.u-margin-8px-auto { margin:8px auto; }
+.u-overflow-hidden { overflow:hidden; }
+.u-height-100pct { height:100%; }
+.u-background-linear-gradient-primary { background:linear-gradient(90deg,#818cf8,#a78bfa); }
+.u-width-0pct { width:0%; }
+.u-transition-width-0-3s { transition:width .3s; }
+.u-font-size-12px { font-size:12px; }
+.u-color-var-text-secondary { color:var(--text-secondary); }
+.u-border-top-none { border-top:none; }
+.u-margin-top-12px { margin-top:12px; }
+.u-font-size-18px { font-size:18px; }
+.u-font-weight-600 { font-weight:600; }
+.u-margin-bottom-16px { margin-bottom:16px; }
+.u-color-var-text-primary { color:var(--text-primary); }
+.u-text-align-center { text-align:center; }
+.u-width-45px { width:45px; }
+.u-width-180px { width:180px; }
+.u-width-150px { width:150px; }
+.u-width-80px-2 { width:80px; }
+.u-width-140px { width:140px; }
+.u-width-120px { width:120px; }
+.u-width-190px { width:190px; }

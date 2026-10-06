@@ -5,6 +5,10 @@ import io.github.panris.agenteval.model.SharedReportEntity;
 import io.github.panris.agenteval.repository.ReportJpaRepository;
 import io.github.panris.agenteval.repository.SharedReportJpaRepository;
 import org.junit.jupiter.api.*;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,6 +90,44 @@ class ReportServiceTest {
                     return null;
                 }).when(mockSharedReportJpaRepo).deleteAll(anyList());
 
+        // ---- JpaSpecificationExecutor in-memory behavior ----
+        when(mockReportJpaRepo.findAll(any(Specification.class))).thenAnswer(inv ->
+                new ArrayList<>(reportStore.values()));
+        when(mockReportJpaRepo.findAll(any(Specification.class), any(Sort.class))).thenAnswer(inv -> {
+            Sort sort = inv.getArgument(1);
+            Comparator<ReportEntity> cmp = Comparator.comparingLong((ReportEntity e) ->
+                    e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed();
+            if (sort.getOrderFor("timestamp") != null && sort.getOrderFor("timestamp").isAscending()) {
+                cmp = Comparator.comparingLong((ReportEntity e) ->
+                        e.getTimestamp() == null ? 0L : e.getTimestamp());
+            }
+            return reportStore.values().stream().sorted(cmp).collect(Collectors.toList());
+        });
+        when(mockReportJpaRepo.findAll(any(Specification.class), any(Pageable.class))).thenAnswer(inv -> {
+            Pageable pg = inv.getArgument(1);
+            Comparator<ReportEntity> cmp = Comparator.comparingLong((ReportEntity e) ->
+                    e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed();
+            if (pg.getSort().getOrderFor("timestamp") != null && pg.getSort().getOrderFor("timestamp").isAscending()) {
+                cmp = Comparator.comparingLong((ReportEntity e) ->
+                        e.getTimestamp() == null ? 0L : e.getTimestamp());
+            }
+            List<ReportEntity> sorted = reportStore.values().stream().sorted(cmp).collect(Collectors.toList());
+            int from = (int) pg.getOffset();
+            int to = Math.min(from + pg.getPageSize(), sorted.size());
+            List<ReportEntity> page = from < sorted.size() ? sorted.subList(from, to) : List.of();
+            return new PageImpl<>(page, pg, sorted.size());
+        });
+        when(mockReportJpaRepo.findAll(any(Sort.class))).thenAnswer(inv -> {
+            Sort sort = inv.getArgument(0);
+            Comparator<ReportEntity> cmp = Comparator.comparingLong((ReportEntity e) ->
+                    e.getTimestamp() == null ? 0L : e.getTimestamp()).reversed();
+            if (sort.getOrderFor("timestamp") != null && sort.getOrderFor("timestamp").isAscending()) {
+                cmp = Comparator.comparingLong((ReportEntity e) ->
+                        e.getTimestamp() == null ? 0L : e.getTimestamp());
+            }
+            return reportStore.values().stream().sorted(cmp).collect(Collectors.toList());
+        });
+
         reportService = new ReportService(mockReportJpaRepo, mockSharedReportJpaRepo);
     }
 
@@ -106,7 +148,7 @@ class ReportServiceTest {
         reportService.deleteReport("r1");
 
         assertThat(reportService.resolveShareId(shareId)).isNull();
-        assertThat(reportService.getReport("r1")).isNull();
+        assertThat(reportService.getReport("r1").get("success")).isEqualTo(false);
     }
 
     @Test
@@ -374,8 +416,8 @@ class ReportServiceTest {
         List<?> reports = (List<?>) result.get("reports");
         assertThat(reports).hasSize(3);
         // Old share links should be cleaned up
-        assertThat(reportService.getReport("r0")).isNull();
-        assertThat(reportService.getReport("r1")).isNull();
+        assertThat(reportService.getReport("r0").get("success")).isEqualTo(false);
+        assertThat(reportService.getReport("r1").get("success")).isEqualTo(false);
     }
 
     // ============ copyReport ============
