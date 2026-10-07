@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>样例管理 - Agent Eval Lite</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=20261006a}" />
+    <link rel="stylesheet" th:href="@{/css/app.css?v=20261007a}" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="/js/utils.js?v=20260809a"></script>
+    <script src="/js/utils.js?v=20261007a"></script>
 <!-- Loading Progress Bar -->
     <style>
         #loading-bar {
@@ -22,14 +22,7 @@
         #loading-bar.loading { width: 70%; }
         #loading-bar.loaded { width: 100%; transition: width 0.2s ease; }
     </style>
-    <script>
-        // Create loading bar
-        const loadingBar = document.createElement("div");
-        loadingBar.id = "loading-bar";
-        document.head.appendChild(loadingBar);
-        // Start loading animation
-        setTimeout(() => loadingBar.classList.add("loading"), 10);
-    </script>
+    <script th:src="@{/js/manage-init.js?v=20261007a}"></script>
 </head>
 <body>
     <div class="container">
@@ -622,8 +615,8 @@
     </div>
 
     <script src="/js/manage.js?v=202607251230"></script>
-    <script src="/js/cases.js?v=20260809a"></script>
-    <script src="/js/eval.js?v=20260809a"></script>
-    <script src="/js/history.js?v=20260809a"></script>
+    <script src="/js/cases.js?v=20261007a"></script>
+    <script src="/js/eval.js?v=20261007a"></script>
+    <script src="/js/history.js?v=20261007a"></script>
 </body>
 </html>

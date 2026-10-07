@@ -26,7 +26,7 @@ class AgentFactoryTest {
         Agent a = factory.createAgent("demo");
         assertEquals("5", a.execute("2 + 3"));
         assertEquals("6", a.execute("2 * 3"));
-        assertTrue(a.execute("hello").contains("demo agent"));
+        assertTrue(a.execute("hello").contains("[DEMO]"));
     }
 
     @Test
@@ -64,7 +64,7 @@ class AgentFactoryTest {
     @DisplayName("claude 无 apiKey → 回退 demo")
     void testClaudeMapWithoutKey() {
         Agent a = factory.createAgent("claude", Map.of());
-        assertTrue(a.execute("hello").contains("demo agent"));
+        assertTrue(a.execute("hello").contains("[DEMO]"));
     }
 
     @Test
@@ -78,7 +78,7 @@ class AgentFactoryTest {
     @DisplayName("azure_responses 无 apiKey → 回退 demo")
     void testAzureResponsesMapWithoutKey() {
         Agent a = factory.createAgent("azure_responses", Map.of());
-        assertTrue(a.execute("hello").contains("demo agent"));
+        assertTrue(a.execute("hello").contains("[DEMO]"));
     }
 
     @Test
@@ -98,7 +98,7 @@ class AgentFactoryTest {
     @DisplayName("未知类型 → 回退 demo")
     void testUnknownTypeFallback() {
         Agent a = factory.createAgent("nonexistent-type", Map.of());
-        assertTrue(a.execute("hello").contains("demo agent"));
+        assertTrue(a.execute("hello").contains("[DEMO]"));
     }
 
     @Test

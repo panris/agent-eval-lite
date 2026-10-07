@@ -206,7 +206,7 @@ public class AgentFactory {
                     }
                 }
             }
-            return "I'm a demo agent. You asked: " + input;
+            return "[DEMO] " + input;
         };
     }
 

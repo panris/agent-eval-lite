@@ -392,16 +392,21 @@ async function loadHistory() {
         ]);
     const [data, allData] = await Promise.all([pagedRes.json(), allRes.json()]);
 
-        window._allReports = data.reports || [];
+        // 存全量过滤结果（用于搜索/收藏过滤），渲染时取当前页切片
+        const allFiltered = allData.reports || [];
+        window._allReports = allFiltered;
         window._reportTotal = data.total || 0;
-        window._reportFiltered = data.filtered || 0;
-        _reportTotalPages = data.totalPages || 1;
+        window._reportFiltered = allFiltered.length;
+        _reportTotalPages = Math.max(1, Math.ceil(allFiltered.length / _reportSize));
         if (_reportPage > _reportTotalPages) { _reportPage = _reportTotalPages; }
         updateHistoryStats();
         updatePaginationUI();
 
-        filterHistory(window._allReports);
-        renderTrendChart(allData.reports || []);
+        // 当前页切片（用于标签/收藏等前端过滤）
+        const pageStart = (_reportPage - 1) * _reportSize;
+        const pageSlice = allFiltered.slice(pageStart, pageStart + _reportSize);
+        filterHistory(pageSlice);
+        renderTrendChart(allFiltered);
 
     } catch (error) {
         logError('Failed to load history:', error);
