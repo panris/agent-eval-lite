@@ -1,6 +1,7 @@
 package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.web.dto.ReportPageResult;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
@@ -41,18 +42,15 @@ class ReportControllerTest {
                 any(),
                 any(), any(), any(),
                 anyInt(), anyInt(), anyBoolean()
-        )).thenReturn(Map.of(
-                "reports", List.of(report),
-                "total", 1, "filtered", 1, "page", 1, "size", 20, "totalPages", 1
-        ));
+        )).thenReturn(new ReportPageResult(List.of(report), 1, 1, 1, 20, 1));
 
-        Map<String, Object> resp = controller.getReports(
+        ReportPageResult resp = controller.getReports(
                 "desc", null, null, null, null, null, null, null, null, null, "time", 1, 20, false
         );
 
         assertNotNull(resp);
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> reports = (List<Map<String, Object>>) resp.get("reports");
+        List<Map<String, Object>> reports = (List<Map<String, Object>>) resp.getReports();
         assertEquals(1, reports.size());
         assertEquals("report-001", reports.get(0).get("id"));
     }
@@ -67,12 +65,9 @@ class ReportControllerTest {
                 any(),
                 any(), eq("test"), any(),
                 anyInt(), anyInt(), anyBoolean()
-        )).thenReturn(Map.of(
-                "reports", List.of(),
-                "total", 0, "filtered", 0, "page", 1, "size", 20, "totalPages", 0
-        ));
+        )).thenReturn(new ReportPageResult(List.of(), 0, 0, 1, 20, 0));
 
-        Map<String, Object> resp = controller.getReports(
+        ReportPageResult resp = controller.getReports(
                 "desc", null, null, null, null, null, null, null, null, "test", "time", 1, 20, false
         );
 

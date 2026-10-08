@@ -176,7 +176,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, null, null, null, null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).isEmpty();
         assertThat(reportService.getFavorites().get("total")).isEqualTo(0);
     }
@@ -278,7 +278,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, "GroupA", null, null, null, null, null, null, null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(1);
     }
 
@@ -297,7 +297,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, true, null, null, null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(1);
         assertThat(((Map<?, ?>) reports.get(0)).get("id")).isEqualTo("r1");
     }
@@ -316,7 +316,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, null, "passed", null, null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(1);
     }
 
@@ -334,7 +334,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, null, "failed", null, null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(1);
     }
 
@@ -356,7 +356,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, null, null, "api", null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(1);
         assertThat(((Map<?, ?>) reports.get(0)).get("id")).isEqualTo("r1");
     }
@@ -373,7 +373,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, null, null, null, "time", 1, 3, true);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(8); // size=3 ignored when all=true
     }
 
@@ -390,7 +390,7 @@ class ReportServiceTest {
         var asc = reportService.getAllReports("asc", null, null, null, null, null, null, null, null, null, "time", 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> ascReports = (List<?>) asc.get("reports");
+        List<?> ascReports = (List<?>) asc.getReports();
         assertThat(((Map<?, ?>) ascReports.get(0)).get("id")).isEqualTo("r0");
         assertThat(((Map<?, ?>) ascReports.get(2)).get("id")).isEqualTo("r2");
     }
@@ -413,7 +413,7 @@ class ReportServiceTest {
         var result = reportService.getAllReports("desc", null, null, null, null, null, null, null, null, null, null, 1, 20, false);
 
         @SuppressWarnings("unchecked")
-        List<?> reports = (List<?>) result.get("reports");
+        List<?> reports = (List<?>) result.getReports();
         assertThat(reports).hasSize(3);
         // Old share links should be cleaned up
         assertThat(reportService.getReport("r0").get("success")).isEqualTo(false);

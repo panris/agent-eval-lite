@@ -16,3 +16,20 @@ logging:
   level:
     io.github.panris.agenteval: INFO
     org.springframework.web: WARN
+
+# ============ Actuator（生产环境，安全优先）============
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never   # 生产环境不暴露内部细节
+    info:
+      env:
+        enabled: false
+  info:
+    git:
+      mode: full

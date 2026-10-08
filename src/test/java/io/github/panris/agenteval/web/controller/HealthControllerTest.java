@@ -3,6 +3,7 @@ package io.github.panris.agenteval.web.controller;
 import io.github.panris.agenteval.repository.TestCaseRepository;
 import io.github.panris.agenteval.repository.AgentConfigRepository;
 import io.github.panris.agenteval.service.ReportService;
+import io.github.panris.agenteval.web.dto.ReportPageResult;
 import org.junit.jupiter.api.*;
 
 import java.util.*;
@@ -37,7 +38,7 @@ class HealthControllerTest {
         when(mockRepository.countAllTestCases()).thenReturn(42);
         when(mockReportService.getAllReports(
                 anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyString(), anyInt(), anyInt(), anyBoolean()
-        )).thenReturn(Map.of("total", 10));
+        )).thenReturn(new ReportPageResult(null, 10, 0, 1, 20, 1));
 
         Map<String, Object> resp = controller.health();
 
@@ -56,7 +57,7 @@ class HealthControllerTest {
         when(mockRepository.countAllTestCases()).thenReturn(0);
         when(mockReportService.getAllReports(
                 anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyString(), anyInt(), anyInt(), anyBoolean()
-        )).thenReturn(Map.of("total", 0));
+        )).thenReturn(new ReportPageResult(null, 0, 0, 1, 20, 1));
 
         Map<String, Object> resp = controller.health();
 
@@ -86,7 +87,7 @@ class HealthControllerTest {
         when(mockRepository.countAllTestCases()).thenReturn(0);
         when(mockReportService.getAllReports(
                 anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyString(), anyInt(), anyInt(), anyBoolean()
-        )).thenReturn(Map.of("total", 0));
+        )).thenReturn(new ReportPageResult(null, 0, 0, 1, 20, 1));
 
         Map<String, Object> resp = controller.health();
 
@@ -99,7 +100,7 @@ class HealthControllerTest {
         when(mockRepository.countAllTestCases()).thenReturn(0);
         when(mockReportService.getAllReports(
                 anyString(), any(), any(), any(), any(), any(), any(), any(), any(), any(), anyString(), anyInt(), anyInt(), anyBoolean()
-        )).thenReturn(Map.of("total", 0));
+        )).thenReturn(new ReportPageResult(null, 0, 0, 1, 20, 1));
 
         Map<String, Object> resp = controller.health();
 

@@ -4,6 +4,7 @@ import io.github.panris.agenteval.model.ReportEntity;
 import io.github.panris.agenteval.repository.ReportJpaRepository;
 import io.github.panris.agenteval.repository.SharedReportJpaRepository;
 import io.github.panris.agenteval.web.dto.ApiResponse;
+import io.github.panris.agenteval.web.dto.ReportPageResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class ReportService {
 
     // ============ 查询委托 ============
 
-    public Map<String, Object> getAllReports(String sort, Long since, Long until, String group,
+    public ReportPageResult getAllReports(String sort, Long since, Long until, String group,
                                               String project, String module, String function,
                                               Boolean favorite, String status,
                                               String keyword, String sortBy, int page, int size, boolean all) {

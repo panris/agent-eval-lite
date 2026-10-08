@@ -3,6 +3,7 @@ package io.github.panris.agenteval.service;
 import io.github.panris.agenteval.model.ReportEntity;
 import io.github.panris.agenteval.repository.ReportJpaRepository;
 import io.github.panris.agenteval.web.dto.ApiResponse;
+import io.github.panris.agenteval.web.dto.ReportPageResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class ReportQueryService {
     /**
      * 分页查询报告，所有过滤条件在 SQL 层完成。
      */
-    public Map<String, Object> getReports(String sort, Long since, Long until, String group,
+    public ReportPageResult getReports(String sort, Long since, Long until, String group,
                                           String project, String module, String function,
                                           Boolean favorite, String status,
                                           String keyword, String sortBy, int page, int size, boolean all) {
@@ -61,14 +62,7 @@ public class ReportQueryService {
                 sortInMemoryByScore(list, dir);
             }
 
-            Map<String, Object> allResult = new LinkedHashMap<>();
-            allResult.put("reports", list);
-            allResult.put("total", reportJpaRepository.count());
-            allResult.put("filtered", list.size());
-            allResult.put("page", 1);
-            allResult.put("size", list.size());
-            allResult.put("totalPages", 1);
-            return allResult;
+            return new ReportPageResult(list, reportJpaRepository.count(), list.size(), 1, list.size(), 1);
         }
 
         // 分页查询
@@ -96,14 +90,7 @@ public class ReportQueryService {
         int to = Math.min(from + size, filtered);
         List<Map<String, Object>> paged = from < filtered ? list.subList(from, to) : List.of();
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("reports", paged);
-        result.put("total", reportJpaRepository.count());
-        result.put("filtered", filtered);
-        result.put("page", safePage);
-        result.put("size", size);
-        result.put("totalPages", totalPages);
-        return result;
+        return new ReportPageResult(paged, reportJpaRepository.count(), filtered, safePage, size, totalPages);
     }
 
     public Map<String, Object> getReport(String reportId) {
@@ -323,7 +310,7 @@ public class ReportQueryService {
      * status 过滤需基于 pass_rate（存储在 summary JSON 中），SQL 层无法高效过滤。
      * 当 status 非空时，走全量查询 + 内存过滤。
      */
-    public Map<String, Object> getReportsWithStatusFilter(String sort, Long since, Long until, String group,
+    public ReportPageResult getReportsWithStatusFilter(String sort, Long since, Long until, String group,
                                                            String project, String module, String function,
                                                            Boolean favorite, String status,
                                                            String keyword, String sortBy, int page, int size) {
@@ -362,14 +349,7 @@ public class ReportQueryService {
         int to = Math.min(from + size, filtered);
         List<Map<String, Object>> paged = from < filtered ? list.subList(from, to) : List.of();
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("reports", paged);
-        result.put("total", reportJpaRepository.count());
-        result.put("filtered", filtered);
-        result.put("page", page);
-        result.put("size", size);
-        result.put("totalPages", totalPages);
-        return result;
+        return new ReportPageResult(paged, reportJpaRepository.count(), filtered, page, size, totalPages);
     }
 
     private void sortInMemoryByScore(List<Map<String, Object>> list, Sort.Direction dir) {

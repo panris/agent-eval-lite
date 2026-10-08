@@ -2,6 +2,7 @@ package io.github.panris.agenteval.web.controller;
 
 import io.github.panris.agenteval.service.ReportService;
 import io.github.panris.agenteval.web.dto.ApiResponse;
+import io.github.panris.agenteval.web.dto.ReportPageResult;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class ReportController {
 
     @GetMapping
     @Operation(summary = "分页查询评测报告列表")
-    public Map<String, Object> getReports(
+    public ReportPageResult getReports(
             @RequestParam(defaultValue = "desc") String sort,
             @RequestParam(required = false) Long since,
             @RequestParam(required = false) Long until,
