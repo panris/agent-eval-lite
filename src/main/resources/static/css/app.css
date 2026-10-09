@@ -1493,3 +1493,17 @@
 .u-width-140px { width:140px; }
 .u-width-120px { width:120px; }
 .u-width-190px { width:190px; }
+
+/* 页面加载进度条 */
+#loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #818cf8, #a78bfa);
+    z-index: 9999;
+    transition: width 0.3s ease;
+}
+#loading-bar.loading { width: 70%; }
+#loading-bar.loaded { width: 100%; transition: width 0.2s ease; }
